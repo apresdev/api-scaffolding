@@ -1,0 +1,252 @@
+openapi: 3.0.3
+info:
+  title: "TODO: Insert title"
+  version: 0.0.0
+
+tags: []
+
+servers: []
+
+paths: {}
+
+components:
+  parameters:
+    VersionParameter:
+      in: path
+      name: version
+      required: true
+      schema:
+        $ref: "#/components/schemas/DataVersion"
+
+    LimitParameter:
+      in: query
+      name: limit
+      description: >
+        An optional query parameter used to indicate the number of records in a pagination result.  
+
+
+        For example please list the "limit" records after the given optional "offset" position.
+      required: false
+      schema:
+        type: number
+        minimum: 0
+
+    OffsetParameter:
+      in: query
+      name: offset
+      description: >
+        An optional query parameter used to indicate the offset position to resume from in a pagination result. 
+
+
+        For example please list the "limit" records after the given optional "offset" position.
+      required: false
+      schema:
+        type: number
+        minimum: 0
+
+  requestBodies: {}
+  responses:
+    # ##################################################################################################################
+    # Common Success Modes
+    # ##################################################################################################################
+    NoContent:
+      description: >
+        The request completed successfully.  No response body will be sent.
+
+    # ##################################################################################################################
+    # Failure Modes
+    # ##################################################################################################################
+    # 400 Bad Request
+    BadRequest:
+      description: >
+        An error occurred.  The client provided one or more invalid inputs.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/APIError"
+          example:
+            status: failure
+            data:
+              errors:
+                - message: bad_request
+                  description: The supplied value was invalid.
+                  path: request
+
+    # 404 Not Found
+    NotFound:
+      description: >
+        An error occurred.  The client requested a resource that does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/APIError"
+          example:
+            status: failure
+            data:
+              errors:
+                - message: not_found
+                  description: Could not find to requested resource.
+
+    # 401 Unauthorized
+    Unauthorized:
+      description: >
+        An error occurred.  The client is not authenticated in the system.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/APIError"
+          example:
+            status: failure
+            data:
+              errors:
+                - message: unauthorized
+                  description: The client should authenticate itself to get the requested response.
+
+    # 403 Forbidden
+    Forbidden:
+      description: >
+        An error occurred.  The client is not authorized to perform the requested action.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/APIError"
+          example:
+            status: failure
+            data:
+              errors:
+                - message: forbidden
+                  description: The client does not have the access right for the content.
+
+    # 409 Conflict
+    Conflict:
+      description: >
+        An error occurred.  Indicates a request conflict with the current state of the target resource.
+
+
+        The primary use case for the 409 Conflict is to signal that a sync collection is too far out of date with the  current server
+        state.  As such, the client should truncate the current local state and should restart the  checkpoint iteration from the beginning
+        of time (i.e. start with an empty sync anchor).  This is useful for the  OLAP view sync collections that can add or remove
+        reseources, without deleting the resources, simply by  modifying the WHERE clause of the view.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/APIError"
+          example:
+            status: failure
+            data:
+              errors:
+                - message: conflict
+                  description: The request conflicts with the current state of the target resource.
+
+    # 412 Conflict
+    PreConditionsFailed:
+      description: >
+        An error occurred.  Indicates a request conflict with the current state of the target resource.
+
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/APIError"
+          example:
+            status: failure
+            data:
+              errors:
+                - message: preconditions_failed
+                  description: The request failed due to a pre-conditions check. Possible merge conflict detected.
+
+    # 500 Internal Server Error
+    InternalServerError:
+      description: >
+        An unexexpected error occurred during the request.
+
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/APIError"
+          example:
+            status: failure
+            data:
+              errors:
+                - message: server_error
+                  description: An error occurred while processing the request.
+
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      description: This API uses OAuth 2 with the implicit grant flow. [More info](https://api.example.com/docs/auth)
+      flows:
+        authorizationCode: # <---- OAuth flow(authorizationCode, implicit, password or clientCredentials)
+          authorizationUrl: /authorize
+          tokenUrl: /token
+          scopes: {}
+
+    cognito:
+      type: apiKey
+      name: Authorization
+      in: header
+      x-amazon-apigateway-authtype: cognito_user_pools
+      x-amazon-apigateway-authorizer:
+        type: cognito_user_pools
+        providerARNs:
+          - ${cognito_provider_arn}
+
+  schemas:
+    # ##################################################################################################################
+    # Standard Common Domain Objects
+    # ##################################################################################################################
+    ApiStatus:
+      type: string
+      enum: [success, failure]
+
+    DataVersion:
+      type: number
+      minimum: 1
+
+    CommitMessage:
+      type: string
+      minLength: 1
+
+    EntityIdentifier:
+      type: string
+      format: uuid
+
+    Metadata:
+      type: object
+      properties:
+        total:
+          type: number
+          description: >
+            Returned in a paginated result set.  Indicates the total number of records in the given result set.
+          example: 1
+
+    Search:
+      type: object
+      properties:
+        query:
+          type: string          
+
+    # ##################################################################################################################
+    # Failure Mode Domain Objects
+    # ##################################################################################################################
+    FieldError:
+      type: object
+      properties:
+        message:
+          type: string
+        description:
+          type: string
+        path:
+          type: string
+
+    APIError:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          type: object
+          properties:
+            errors:
+              type: array
+              items:
+                $ref: "#/components/schemas/FieldError"

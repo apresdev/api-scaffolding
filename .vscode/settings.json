@@ -1,0 +1,21 @@
+{
+  "yaml.schemas": {
+    "schemas/service_description.json": ["api/service/service.yaml"],
+    "schemas/relationships.json": ["api/service/relationships/**.yaml"],
+    "schemas/queries.json": ["api/service/operations/queries/**.yaml"],
+    "schemas/policies.json": ["api/service/policies/**.yaml"],
+    "schemas/model.json": ["api/service/models/*.yaml"],
+    "schemas/datatypes.yaml": ["api/service/models/datatype/*.yaml"],
+    "https://json-schema.org/draft/2020-12/schema#": ["api/service/models/definitions/*.yaml"]
+  },
+  "yaml.format.printWidth": 140,
+  "yaml.format.proseWrap": "always",
+  "prettier.printWidth": 140,
+  "prettier.proseWrap": "always",
+  "editor.wordWrapColumn": 140,
+  "editor.formatOnSave": true,
+  "eslint.validate": ["typescript"],
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit"
+  }
+}

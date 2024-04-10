@@ -1,0 +1,27 @@
+extends: ["spectral:oas", "spectral:asyncapi"]
+formats: ["oas3"]
+aliases:
+  PathItem: ["$.paths[*]"]
+  OperationObject: ["#PathItem[get,put,post,delete,options,head,patch,trace]"]
+  SecurityRequirementObject: ["$.security[*]", "#OperationObject.security[*]"]
+  ResponseObject:
+    targets:
+      - formats: [oas2]
+        given: ["#OperationObject.responses[*]", "$.responses[*]"]
+
+      - formats: [oas3]
+        given: ["#OperationObject.responses[*]", "$.components.responses[*]"]
+  LinkObject:
+    targets:
+      - formats: [oas3]
+        given: ["$.components.links[*]", "#ResponseObject.links[*]"]
+
+functions:
+  - adSensitiveParameterCheck
+rules:
+  ad-no-sensitive-data-in-url:
+    severity: error
+    # description: "Operations must not pass sensitive data in the URL"
+    given: "#OperationObject"
+    then:
+      function: adSensitiveParameterCheck

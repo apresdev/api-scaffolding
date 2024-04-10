@@ -1,0 +1,603 @@
+{
+  "$ref": "#/definitions/EntitySchema",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "AnySchema": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ObjectSchema"
+        },
+        {
+          "$ref": "#/definitions/ArraySchema"
+        },
+        {
+          "$ref": "#/definitions/StringSchema"
+        },
+        {
+          "$ref": "#/definitions/NumberSchema"
+        },
+        {
+          "$ref": "#/definitions/BooleanSchema"
+        },
+        {
+          "$ref": "#/definitions/NullSchema"
+        },
+        {
+          "$ref": "#/definitions/ReferenceSchema"
+        },
+        {
+          "$ref": "#/definitions/RelationshipSchema"
+        }
+      ],
+      "description": "References any valid sub-schema."
+    },
+    "ArraySchema": {
+      "additionalProperties": false,
+      "description": "Arrays are used for ordered elements. In JSON, each element in an array may be of a different type.",
+      "properties": {
+        "default": {
+          "items": {},
+          "type": "array"
+        },
+        "description": {
+          "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "editable": {
+          "type": "boolean"
+        },
+        "example": {
+          "items": {},
+          "type": "array"
+        },
+        "examples": {
+          "items": {
+            "items": {},
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "items": {
+          "$ref": "#/definitions/AnySchema",
+          "description": "List validation is useful for arrays of arbitrary length where each item matches the same schema. For this kind of array, set the `items` keyword to a single schema that will be used to validate all of the items in the array."
+        },
+        "maxItems": {
+          "description": "The maximum length of the array can be specified using the `maxItems` keywords. The value of each keyword must be a non-negative number.",
+          "type": "number"
+        },
+        "minItems": {
+          "description": "The minimum length of the array can be specified using the `minItems` keywords. The value of each keyword must be a non-negative number.",
+          "type": "number"
+        },
+        "readOnly": {
+          "type": "boolean"
+        },
+        "title": {
+          "description": "The `title` keyword must be a string. A \"title\" will preferably be short explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "type": {
+          "const": "array",
+          "type": "string"
+        },
+        "uniqueItemProperties": {
+          "description": "The keyword allows to check that some properties in array items are unique.\n\nThis keyword applies only to arrays. If the data is not an array, the validation succeeds.\n\nThe value of this keyword must be an array of strings - property names that should have unique values across all items.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "uniqueItems": {
+          "description": "A schema can ensure that each of the items in an array is unique. Simply set the uniqueItems keyword to true.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "items"
+      ],
+      "type": "object"
+    },
+    "BooleanSchema": {
+      "additionalProperties": false,
+      "description": "The boolean type matches only two special values: `true` and `false`. Note that values that evaluate to true or false, such as 1 and 0, are not accepted by the schema.",
+      "properties": {
+        "data-classification": {
+          "$ref": "#/definitions/DataClassification"
+        },
+        "default": {
+          "type": "boolean"
+        },
+        "description": {
+          "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "editable": {
+          "type": "boolean"
+        },
+        "enum": {
+          "items": {
+            "type": "boolean"
+          },
+          "type": "array"
+        },
+        "example": {
+          "type": "boolean"
+        },
+        "examples": {
+          "items": {
+            "type": "boolean"
+          },
+          "type": "array"
+        },
+        "readOnly": {
+          "type": "boolean"
+        },
+        "title": {
+          "description": "The `title` keyword must be a string. A \"title\" will preferably be short explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "type": {
+          "const": "boolean",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "Cardinality": {
+      "enum": [
+        "*..*",
+        "*..1",
+        "1..*",
+        "1..1"
+      ],
+      "type": "string"
+    },
+    "DataClassification": {
+      "enum": [
+        "sensitive",
+        "public"
+      ],
+      "type": "string"
+    },
+    "Definitions": {
+      "additionalProperties": {
+        "$ref": "#/definitions/AnySchema"
+      },
+      "type": "object"
+    },
+    "EntityName": {
+      "type": "string"
+    },
+    "EntitySchema": {
+      "additionalProperties": false,
+      "properties": {
+        "alias": {
+          "description": "The alias for the entity name.  Renames all references to the entity with the given alias.",
+          "type": "string"
+        },
+        "createable": {
+          "type": "boolean"
+        },
+        "default": {
+          "type": "object"
+        },
+        "definitions": {
+          "$ref": "#/definitions/Definitions"
+        },
+        "deleteable": {
+          "type": "boolean"
+        },
+        "description": {
+          "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "editable": {
+          "type": "boolean"
+        },
+        "example": {
+          "type": "object"
+        },
+        "examples": {
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "linkProperties": {
+          "additionalProperties": {
+            "$ref": "#/definitions/LinkProperty"
+          },
+          "type": "object"
+        },
+        "links": {
+          "$ref": "#/definitions/Links"
+        },
+        "ownership": {
+          "$ref": "#/definitions/OwnershipTypes"
+        },
+        "properties": {
+          "additionalProperties": {
+            "$ref": "#/definitions/AnySchema"
+          },
+          "description": "The properties (key-value pairs) on an object are defined using the `properties` keyword. The value of `properties` is an object, where each key is the name of a property and each value is a schema used to validate that property. Any property that doesn't match any of the property names in the properties keyword is ignored by this keyword.",
+          "type": "object"
+        },
+        "readOnly": {
+          "type": "boolean"
+        },
+        "required": {
+          "description": "By default, the properties defined by the `properties` keyword are not required. However, one can provide a list of required properties using the `required` keyword.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "singleton": {
+          "type": "boolean"
+        },
+        "title": {
+          "description": "The `title` keyword must be a string. A \"title\" will preferably be short explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "type": {
+          "const": "object",
+          "type": "string"
+        },
+        "versioned": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "Link": {
+      "additionalProperties": false,
+      "properties": {
+        "cardinality": {
+          "$ref": "#/definitions/Cardinality"
+        },
+        "description": {
+          "type": "string"
+        },
+        "rel": {
+          "$ref": "#/definitions/EntityName"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/RelationshipType"
+        },
+        "via": {
+          "$ref": "#/definitions/RelationshipName"
+        }
+      },
+      "required": [
+        "rel",
+        "cardinality"
+      ],
+      "type": "object"
+    },
+    "LinkProperty": {
+      "additionalProperties": false,
+      "properties": {
+        "cardinality": {
+          "$ref": "#/definitions/Cardinality"
+        },
+        "description": {
+          "type": "string"
+        },
+        "readOnly": {
+          "type": "boolean"
+        },
+        "rel": {
+          "$ref": "#/definitions/EntityName"
+        },
+        "via": {
+          "$ref": "#/definitions/RelationshipName"
+        }
+      },
+      "required": [
+        "rel",
+        "cardinality"
+      ],
+      "type": "object"
+    },
+    "Links": {
+      "additionalProperties": {
+        "$ref": "#/definitions/Link"
+      },
+      "type": "object"
+    },
+    "NullSchema": {
+      "additionalProperties": false,
+      "description": "When a schema specifies a `type` of `null`, it has only one acceptable value: `null`.",
+      "properties": {
+        "description": {
+          "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "editable": {
+          "type": "boolean"
+        },
+        "readOnly": {
+          "type": "boolean"
+        },
+        "title": {
+          "description": "The `title` keyword must be a string. A \"title\" will preferably be short explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "type": {
+          "const": "null",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "NumberSchema": {
+      "additionalProperties": false,
+      "description": "There are two numeric types: `integer` and `number`. They share the same validation keywords.\n\nThe `integer` type is used for integral numbers. JSON does not have distinct types for integers and floating-point values. Therefore, the presence or absence of a decimal point is not enough to distinguish between integers and non-integers. For example, 1 and 1.0 are two ways to represent the same value in JSON. JSON Schema considers that value an integer no matter which representation was used.\n\nThe `number` type is used for any numeric type, either integers or floating point numbers.",
+      "properties": {
+        "data-classification": {
+          "$ref": "#/definitions/DataClassification"
+        },
+        "default": {
+          "type": "number"
+        },
+        "description": {
+          "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "editable": {
+          "type": "boolean"
+        },
+        "enum": {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        "example": {
+          "type": "number"
+        },
+        "examples": {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        "maximum": {
+          "description": "Numbers can be restricted to a maximum value, using the `maximum` keyword. It may be set to any non-negative number.\n\nminimum 0",
+          "type": "number"
+        },
+        "minimum": {
+          "description": "Numbers can be restricted to a minimum value, using the `minimum` keyword. It may be set to any non-negative number.\n\nminimum 0",
+          "type": "number"
+        },
+        "multipleOf": {
+          "description": "Numbers can be restricted to a multiple of a given number, using the `multipleOf` keyword. It may be set to any positive number.\n\nminimum 1",
+          "type": "number"
+        },
+        "readOnly": {
+          "type": "boolean"
+        },
+        "title": {
+          "description": "The `title` keyword must be a string. A \"title\" will preferably be short explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "number",
+            "integer"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "ObjectSchema": {
+      "additionalProperties": false,
+      "description": "Objects are the mapping type in JSON. They map \"keys\" to \"values\". In JSON, the \"keys\" must always be strings. Each of these pairs is conventionally referred to as a \"property\".",
+      "properties": {
+        "default": {
+          "type": "object"
+        },
+        "description": {
+          "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "editable": {
+          "type": "boolean"
+        },
+        "example": {
+          "type": "object"
+        },
+        "examples": {
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "properties": {
+          "additionalProperties": {
+            "$ref": "#/definitions/AnySchema"
+          },
+          "description": "The properties (key-value pairs) on an object are defined using the `properties` keyword. The value of `properties` is an object, where each key is the name of a property and each value is a schema used to validate that property. Any property that doesn't match any of the property names in the properties keyword is ignored by this keyword.",
+          "type": "object"
+        },
+        "readOnly": {
+          "type": "boolean"
+        },
+        "required": {
+          "description": "By default, the properties defined by the `properties` keyword are not required. However, one can provide a list of required properties using the `required` keyword.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "title": {
+          "description": "The `title` keyword must be a string. A \"title\" will preferably be short explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "type": {
+          "const": "object",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "OwnershipTypes": {
+      "enum": [
+        "global",
+        "tenant",
+        "user"
+      ],
+      "type": "string"
+    },
+    "ReferenceSchema": {
+      "additionalProperties": false,
+      "description": "Used to reference another schema",
+      "properties": {
+        "$ref": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "$ref"
+      ],
+      "type": "object"
+    },
+    "RelationshipName": {
+      "type": "string"
+    },
+    "RelationshipSchema": {
+      "additionalProperties": false,
+      "description": "The relationship schema is used to create a relationship between two entities.  Moreover, it is intended to embed the related entities unique identifier as a named property in the current entities schema.\n\nThe entity for which this relation is defined acts as the left-hand-side of the relationship.\n\nFor example, in a chat application a chat-message may have to linked user's, the sending user and the recieving user.\n\nBy default the relationship is a \"..1\" relationship; however, if the relationship is contained inside an array schema, then the relationship is promoted to a \"..*\" relationship",
+      "properties": {
+        "description": {
+          "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "editable": {
+          "type": "boolean"
+        },
+        "fromOne": {
+          "description": "By default all embeded relationships are from-many relationships.  The `fromOne` flag forces the relationship to act as a \"1..\" relationship.",
+          "type": "boolean"
+        },
+        "readOnly": {
+          "type": "boolean"
+        },
+        "rel": {
+          "$ref": "#/definitions/EntityName",
+          "description": "The name of the entity that serves as the left-right-hand side of the relationship."
+        },
+        "summary": {
+          "type": "string"
+        },
+        "title": {
+          "description": "The `title` keyword must be a string. A \"title\" will preferably be short explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/RelationshipType"
+        },
+        "via": {
+          "$ref": "#/definitions/RelationshipName"
+        }
+      },
+      "required": [
+        "rel"
+      ],
+      "type": "object"
+    },
+    "RelationshipType": {
+      "enum": [
+        "association",
+        "composition",
+        "aggregation"
+      ],
+      "type": "string"
+    },
+    "StringSchema": {
+      "additionalProperties": false,
+      "description": "The `string` type is used for strings of text. It may contain Unicode characters.",
+      "properties": {
+        "data-classification": {
+          "$ref": "#/definitions/DataClassification"
+        },
+        "default": {
+          "type": "string"
+        },
+        "description": {
+          "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "editable": {
+          "type": "boolean"
+        },
+        "enum": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "example": {
+          "type": "string"
+        },
+        "examples": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "format": {
+          "description": "The format keyword allows for basic semantic identification of certain kinds of string values that are commonly used. For example, because JSON doesn't have a \"DateTime\" type, dates need to be encoded as strings. format allows the schema author to indicate that the string value should be interpreted as a date. By default, format is just an annotation and does not effect validation.",
+          "type": "string"
+        },
+        "maxLength": {
+          "description": "The length of a string can be constrained to a maximum length using the `maxLength`. For both keywords, the value must be a non-negative number.",
+          "type": "number"
+        },
+        "minLength": {
+          "description": "The length of a string can be constrained to a minimum length using the `minLength`. For both keywords, the value must be a non-negative number.",
+          "type": "number"
+        },
+        "pattern": {
+          "description": "The pattern keyword is used to restrict a string to a particular regular expression. The regular expression syntax is the one defined in JavaScript ([ECMA 262](https://www.ecma-international.org/publications-and-standards/standards/ecma-262/) specifically) with Unicode support. See [Regular Expressions](https://json-schema.org/understanding-json-schema/reference/regular_expressions) for more information.",
+          "type": "string"
+        },
+        "readOnly": {
+          "type": "boolean"
+        },
+        "title": {
+          "description": "The `title` keyword must be a string. A \"title\" will preferably be short explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "type": {
+          "const": "string",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    }
+  }
+}

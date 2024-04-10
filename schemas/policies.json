@@ -1,0 +1,232 @@
+{
+  "$ref": "#/definitions/Policies",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "ActionSelection": {
+      "description": "A selector that specifies the resource for which the action is being applied to.\n\nMay contain wildcards.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "ActionSelections": {
+      "description": "A collection of resource selections.\n\nMust contain at least on selection, if specified.",
+      "items": {
+        "$ref": "#/definitions/ActionSelection"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "Condition": {
+      "additionalProperties": false,
+      "description": "A condition the controls if the policy should be applied.",
+      "properties": {
+        "subject": {
+          "$ref": "#/definitions/SubjectCondition",
+          "description": "Adds a condition based on the subject."
+        }
+      },
+      "type": "object"
+    },
+    "Effect": {
+      "description": "The enumerated set of supported policy effects.\n\nCan be either \"allow\" or \"deny\".",
+      "enum": [
+        "allow",
+        "deny"
+      ],
+      "type": "string"
+    },
+    "InCondition": {
+      "additionalProperties": false,
+      "description": "A condition to check if the left-hand-side is \"in\" a specific collection.",
+      "properties": {
+        "resource": {
+          "description": "Defines the right-hand-side collection as a poperty of the target resource.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "IncludeDirective": {
+      "additionalProperties": false,
+      "properties": {
+        "$include": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/IncludePath"
+            },
+            {
+              "$ref": "#/definitions/IncludePaths"
+            }
+          ]
+        }
+      },
+      "required": [
+        "$include"
+      ],
+      "type": "object"
+    },
+    "IncludePath": {
+      "type": "string"
+    },
+    "IncludePaths": {
+      "items": {
+        "$ref": "#/definitions/IncludePath"
+      },
+      "type": "array"
+    },
+    "Policies": {
+      "description": "A collection of policies.",
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/Policy"
+          },
+          {
+            "$ref": "#/definitions/IncludeDirective"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "Policy": {
+      "additionalProperties": false,
+      "description": "A policy document.\n\nDefines a policy that either explicity allows or specifically denys permissions to perform one or more actions on one or more resources.",
+      "properties": {
+        "action": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ActionSelection"
+            },
+            {
+              "$ref": "#/definitions/ActionSelections"
+            }
+          ],
+          "description": "Filters which actions the policy applies to."
+        },
+        "condition": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Condition"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/Condition"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The conditional modifiers that affect when the policy applies."
+        },
+        "description": {
+          "description": "A long human readable description of the policy.",
+          "type": "string"
+        },
+        "effect": {
+          "$ref": "#/definitions/Effect",
+          "description": "The effect of the policy (i.e. allow or deny)"
+        },
+        "name": {
+          "description": "The name of the policy",
+          "type": "string"
+        },
+        "resource": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ResourceSelection"
+            },
+            {
+              "$ref": "#/definitions/ResourceSelections"
+            }
+          ],
+          "description": "Filters which resources the policy applies to."
+        },
+        "subject": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SubjectSelection"
+            },
+            {
+              "$ref": "#/definitions/SubjectSelections"
+            }
+          ],
+          "description": "Filters which subjects the policy applies to."
+        }
+      },
+      "required": [
+        "name",
+        "effect"
+      ],
+      "type": "object"
+    },
+    "ResourceSelection": {
+      "description": "A selector that specifies the resource for which the action is being applied to.\n\nMay contain wildcards.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "ResourceSelections": {
+      "description": "A collection of resource selections.\n\nMust contain at least on selection, if specified.",
+      "items": {
+        "$ref": "#/definitions/ResourceSelection"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "RoleName": {
+      "description": "The name of a role a subject may have assigned to them.",
+      "type": "string"
+    },
+    "RoleNames": {
+      "description": "A collection of role names.\n\nMust have at least one role name if specified.",
+      "items": {
+        "$ref": "#/definitions/RoleName"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "SubjectCondition": {
+      "additionalProperties": false,
+      "description": "A condition based on the subject attempting to perform the action on the given resource.",
+      "properties": {
+        "hasRole": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RoleName"
+            },
+            {
+              "$ref": "#/definitions/RoleNames"
+            }
+          ],
+          "description": "Adds a condition that requires the the subject has a role or one of a given set of roles.\n\nThis is the primary condition used for Role-Based-Access control.  This is useful when the collection of role names are known at design time (i.e. the roles are system defined not user defined.)"
+        },
+        "id": {
+          "$ref": "#/definitions/SubjectIdCondition",
+          "description": "Adds a condition that matches the current subject's identifier."
+        }
+      },
+      "type": "object"
+    },
+    "SubjectIdCondition": {
+      "additionalProperties": false,
+      "description": "Creates a condition based on the subject's identifier.",
+      "properties": {
+        "in": {
+          "$ref": "#/definitions/InCondition",
+          "description": "Creates a condition to check if the subject's identifier is \"in\" a specific collection."
+        }
+      },
+      "type": "object"
+    },
+    "SubjectSelection": {
+      "description": "A selector that specifies who the subject is that is invoking the action on the given resource.\n\nMay contain wildcards.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "SubjectSelections": {
+      "description": "A collection of subject selections.\n\nMust contain at least on selection, if specified.",
+      "items": {
+        "$ref": "#/definitions/SubjectSelection"
+      },
+      "minItems": 1,
+      "type": "array"
+    }
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "$ref": "#/definitions/Relationships",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Cardinality": {
+      "enum": [
+        "*..*",
+        "*..1",
+        "1..*",
+        "1..1"
+      ],
+      "type": "string"
+    },
+    "EntityName": {
+      "type": "string"
+    },
+    "Relationship": {
+      "additionalProperties": false,
+      "description": "Defines a relationship between two entities.\n\nIn GraphQL, this would represent an egde connection between two GraphQL nodes.",
+      "properties": {
+        "cardinality": {
+          "$ref": "#/definitions/Cardinality",
+          "description": "The cardinality of the relation expressed in terms of left-to-right"
+        },
+        "denormalize": {
+          "description": "Flag to indicate that the relationship is embedded in the entity.\n\nIf using \"byId\", then the relationship is denormalized by using the related entity identifiers. So an array of ids for a \"to-many\" relationship, or an identifier for a \"to-one\" relationship.\n\nIf using \"embed\", then the relationhisp is denormalized by embedding the entity schema into the left schema. So an array of objects for a \"to-many\" relationship, or an object for a \"to-one\" relationship.",
+          "enum": [
+            "byId",
+            "byEntity"
+          ],
+          "type": "string"
+        },
+        "description": {
+          "description": "A long text description of the relationship.",
+          "type": "string"
+        },
+        "left": {
+          "$ref": "#/definitions/EntityName",
+          "description": "The left node in the relationship.\n\nIn composition relationships, this represents the parent entity."
+        },
+        "name": {
+          "description": "The name of the relationship.\n\nThis is auto-generated if not defined.  The auto-generated name depends on the cardinality.  If the cardinality to \"to-many\" then the relation name is the pluralized form of the right entity, otherwise it is simply the right entity.",
+          "type": "string"
+        },
+        "right": {
+          "description": "The right node in the relationship.\n\nIn composition relationships, this represents the child entity.",
+          "type": "string"
+        },
+        "summary": {
+          "description": "A summarization of the relationship name.\n\nFor example, a physician \"practices at\" a facility.",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/RelationshipType",
+          "description": "The relationship type, e.g. composition vs aggregation vs association."
+        },
+        "via": {
+          "$ref": "#/definitions/Via",
+          "description": "This is used to indicate that the relationship is a transitive relation ship based on an intermediate relationship or sets of relationships.\n\nFor example, a region has a collection of territories, a territory has a collection of physicians, therefore a region can have a collection of physicians by applying a flatMap on all child territory physicians.  This is mostly to provide context in the diagrams."
+        }
+      },
+      "required": [
+        "type",
+        "cardinality",
+        "left",
+        "right"
+      ],
+      "type": "object"
+    },
+    "RelationshipName": {
+      "type": "string"
+    },
+    "RelationshipType": {
+      "enum": [
+        "association",
+        "composition",
+        "aggregation"
+      ],
+      "type": "string"
+    },
+    "Relationships": {
+      "items": {
+        "$ref": "#/definitions/Relationship"
+      },
+      "type": "array"
+    },
+    "Via": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ViaEntry"
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/ViaEntry"
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "ViaEntry": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/EntityName"
+        },
+        {
+          "$ref": "#/definitions/RelationshipName"
+        }
+      ]
+    }
+  }
+}
