@@ -34,7 +34,7 @@
     "generate.schema.policies": "npx ts-json-schema-generator -f ./tsconfig.json --path 'src/specification/policies.ts' --type 'Policies' > schemas/policies.json"
   },
   "devDependencies": {
-    "@babel/core": "^7.24.3",
+    "@babel/core": "^7.24.4",
     "@babel/preset-env": "^7.24.3",
     "@babel/preset-typescript": "^7.24.1",
     "@stoplight/spectral-cli": "^6.11.0",
