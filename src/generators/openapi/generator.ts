@@ -20,8 +20,7 @@ import {
   getServiceSourceMap,
 } from "../../specification";
 import { DeepReadonly, dumpJson } from "../../util";
-
-import { lintSpecification } from ".";
+import { lintSpecification } from "./lint";
 
 export class OpenAPIGenerator implements CodeGenerator {
   private readonly basePath: string;

@@ -10,6 +10,6 @@
     "rootDir": "src",
     "declaration": true
   },
-  "include": ["./src/**/*", "./test/**/*", "functions", "./schemas/*.json"],
+  "include": ["./src/**/*", "./test/**/*", "./src/schemas/*.json", "./src/generators/openapi/*.json"],
   "exclude": ["node_modules"]
 }

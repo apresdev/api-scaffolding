@@ -25,8 +25,8 @@ import { directoryName, fileNameWithoutExtension } from "../util";
 import { SchemaRegistry } from "./schema_registry";
 import { EntityIdentifier, defineIdentifier } from "./util";
 
-import * as dataTypeScema from "../../schemas/any.json";
-import * as entitySchema from "../../schemas/model.json";
+import * as dataTypeScema from "../schemas/any.json";
+import * as entitySchema from "../schemas/model.json";
 
 const sourceMaps = new SourceMaps();
 
