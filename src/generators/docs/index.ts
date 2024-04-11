@@ -1,0 +1,1 @@
+export { EntityRelationshipGenerator } from "./generator";

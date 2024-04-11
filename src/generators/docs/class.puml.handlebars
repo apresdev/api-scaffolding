@@ -1,0 +1,18 @@
+@startuml
+
+title {{ info.title }} Domain Objects
+
+left to right direction
+skinparam linetype ortho
+skinparam nodesep 75
+skinparam ranksep 75
+
+{{#each entities}}
+entity {{toPascalCase this}} 
+{{/each}}
+
+{{#each relationships}}
+{{ toPascalCase left }} "{{fromCardinality cardinality}}" {{relationshipSymbol type}} "{{toCardinality cardinality}}" {{ toPascalCase right }}{{#if summary}} : {{ summary }} {{/if}}
+{{/each}}
+
+@enduml

@@ -1,0 +1,6 @@
+generated.openapi.yaml
+openapi.json
+client/**
+coverage/**
+docs/**
+node_modules

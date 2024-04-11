@@ -1,0 +1,29 @@
+{
+  "root": true,
+  "env": {
+    "node": true,
+    "es2022" : true
+  },
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+    "@typescript-eslint",
+    "unused-imports",
+    "import"
+  ],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
+  ],
+  "ignorePatterns" : [
+    "dist",
+    "node_modules",
+    "babel.config.js",
+    "jest.config.ts"
+  ],
+  "rules": {
+    "unused-imports/no-unused-imports": "error",
+    "import/no-duplicates": "error"
+  }
+}

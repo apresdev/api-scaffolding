@@ -1,0 +1,1094 @@
+{
+  "$ref": "#/definitions/ServiceSpecification",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "ActionSelection": {
+      "description": "A selector that specifies the resource for which the action is being applied to.\n\nMay contain wildcards.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "ActionSelections": {
+      "description": "A collection of resource selections.\n\nMust contain at least on selection, if specified.",
+      "items": {
+        "$ref": "#/definitions/ActionSelection"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "Aggregation": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "sum": {
+              "$ref": "#/definitions/PerFieldMetricAggregationArguments"
+            }
+          },
+          "required": [
+            "sum"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "count": {
+              "additionalProperties": false,
+              "properties": {
+                "as": {
+                  "description": "The alias for the aggregate, (e.g. COUNT(*) as totalRecords)",
+                  "type": "string"
+                },
+                "distinct": {
+                  "description": "Flag indicating of only the distinct values should be counted.",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "count"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "min": {
+              "$ref": "#/definitions/PerFieldMetricAggregationArguments"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "min"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "max": {
+              "$ref": "#/definitions/PerFieldMetricAggregationArguments"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "max"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "mean": {
+              "$ref": "#/definitions/PerFieldMetricAggregationArguments"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "mean"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "percentile": {
+              "$ref": "#/definitions/PerFieldMetricAggregationArguments"
+            }
+          },
+          "required": [
+            "percentile"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "date_histogram": {
+              "additionalProperties": false,
+              "properties": {
+                "calculate": {
+                  "$ref": "#/definitions/MetricAggregation",
+                  "description": "The metric to calculate per bucket."
+                },
+                "interval": {
+                  "$ref": "#/definitions/Interval",
+                  "description": "The interval to use when generating buckets"
+                },
+                "last": {
+                  "description": "Specifies that only the most recent \"last\" buckets should be returned.",
+                  "type": "number"
+                }
+              },
+              "required": [
+                "calculate",
+                "interval"
+              ],
+              "type": "object"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "date_histogram"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "terms": {
+              "additionalProperties": false,
+              "properties": {
+                "calculate": {
+                  "$ref": "#/definitions/MetricAggregation",
+                  "description": "The metric to calculate per bucket."
+                },
+                "field": {
+                  "$ref": "#/definitions/FieldName",
+                  "description": "The name of the field where the distinct terms will be derived from."
+                },
+                "size": {
+                  "description": "Specifies that the query should return the top \"size\" buckets.",
+                  "type": "number"
+                }
+              },
+              "required": [
+                "calculate",
+                "field"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "terms"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "The top level Aggregation, includes all optional fields and is either a metric or bucket aggregation."
+    },
+    "Cardinality": {
+      "enum": [
+        "*..*",
+        "*..1",
+        "1..*",
+        "1..1"
+      ],
+      "type": "string"
+    },
+    "Condition": {
+      "additionalProperties": false,
+      "description": "A condition the controls if the policy should be applied.",
+      "properties": {
+        "subject": {
+          "$ref": "#/definitions/SubjectCondition",
+          "description": "Adds a condition based on the subject."
+        }
+      },
+      "type": "object"
+    },
+    "ContactInformation": {
+      "additionalProperties": false,
+      "description": "Contact information for the exposed API.",
+      "properties": {
+        "email": {
+          "description": "The email address of the contact person/organization. MUST be in the format of an email address.",
+          "format": "email",
+          "type": "string"
+        },
+        "name": {
+          "description": "The identifying name of the contact person/organization",
+          "type": "string"
+        },
+        "url": {
+          "description": "The URL pointing to the contact information. MUST be in the format of a URL.",
+          "format": "uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "email"
+      ],
+      "type": "object"
+    },
+    "CountAggregation": {
+      "additionalProperties": false,
+      "description": "Calculates the count  value of a given field.",
+      "properties": {
+        "count": {
+          "additionalProperties": false,
+          "properties": {
+            "as": {
+              "description": "The alias for the aggregate, (e.g. COUNT(*) as totalRecords)",
+              "type": "string"
+            },
+            "distinct": {
+              "description": "Flag indicating of only the distinct values should be counted.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "count"
+      ],
+      "type": "object"
+    },
+    "DistinctProjection": {
+      "additionalProperties": false,
+      "properties": {
+        "distinct": {
+          "$ref": "#/definitions/Projection"
+        }
+      },
+      "required": [
+        "distinct"
+      ],
+      "type": "object"
+    },
+    "Effect": {
+      "description": "The enumerated set of supported policy effects.\n\nCan be either \"allow\" or \"deny\".",
+      "enum": [
+        "allow",
+        "deny"
+      ],
+      "type": "string"
+    },
+    "EntityName": {
+      "type": "string"
+    },
+    "EntityProjection": {
+      "additionalProperties": {
+        "items": {
+          "$ref": "#/definitions/FieldName"
+        },
+        "type": "array"
+      },
+      "description": "A projection clause that lists which entity fields to include in the result set.",
+      "maxProperties": 1,
+      "minProperties": 1,
+      "type": "object"
+    },
+    "FieldName": {
+      "type": "string"
+    },
+    "FindType": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/JoinDirective"
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/JoinDirective"
+          },
+          "type": "array"
+        }
+      ],
+      "description": "The entity or entities to find in a query. Currently assumes that the last entity in the list is the \"source entity\" for a query."
+    },
+    "GroupBy": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/DistinctProjection"
+        },
+        {
+          "$ref": "#/definitions/Projection"
+        }
+      ]
+    },
+    "InCondition": {
+      "additionalProperties": false,
+      "description": "A condition to check if the left-hand-side is \"in\" a specific collection.",
+      "properties": {
+        "resource": {
+          "description": "Defines the right-hand-side collection as a poperty of the target resource.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "IncludeDirective": {
+      "additionalProperties": false,
+      "properties": {
+        "$include": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/IncludePath"
+            },
+            {
+              "$ref": "#/definitions/IncludePaths"
+            }
+          ]
+        }
+      },
+      "required": [
+        "$include"
+      ],
+      "type": "object"
+    },
+    "IncludePath": {
+      "type": "string"
+    },
+    "IncludePaths": {
+      "items": {
+        "$ref": "#/definitions/IncludePath"
+      },
+      "type": "array"
+    },
+    "Information": {
+      "additionalProperties": false,
+      "description": "The object provides metadata about the API. The metadata MAY be used by the clients if needed, and MAY be presented in editing or documentation generation tools for convenience.",
+      "properties": {
+        "baseUrl": {
+          "description": "The base URL for the service.",
+          "type": "string"
+        },
+        "contact": {
+          "$ref": "#/definitions/ContactInformation",
+          "description": "The contact information for the exposed API."
+        },
+        "description": {
+          "description": "A short description of the API. CommonMark syntax MAY be used for rich text representation.",
+          "type": "string"
+        },
+        "title": {
+          "description": "The title of the API.",
+          "type": "string"
+        },
+        "version": {
+          "description": "The version of the OpenAPI document (which is distinct from the OpenAPI Specification version or the API implementation version).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "version",
+        "baseUrl",
+        "description",
+        "contact"
+      ],
+      "type": "object"
+    },
+    "Interval": {
+      "description": "A bucket aggregation that uses date math to generate histograms for time-series data",
+      "enum": [
+        "day",
+        "month",
+        "year",
+        "week",
+        "quarter"
+      ],
+      "type": "string"
+    },
+    "Join": {
+      "items": {
+        "$ref": "#/definitions/JoinDirective"
+      },
+      "type": "array"
+    },
+    "JoinDirective": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ViaEntry"
+        },
+        {
+          "$ref": "#/definitions/EntityProjection"
+        }
+      ]
+    },
+    "ListQuery": {
+      "additionalProperties": false,
+      "description": "A query operation that is expected to return a list of source entities.",
+      "properties": {
+        "description": {
+          "description": "A verbose explanation of the query behavior. CommonMark syntax MAY be used for rich text representation.",
+          "type": "string"
+        },
+        "filterBy": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/EntityName"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/EntityName"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The option entity or entities to filter the query by. Currently assumes that the entity and entity identifier are included in the path of the query."
+        },
+        "findAll": {
+          "$ref": "#/definitions/FindType",
+          "description": "The collection of entities to list."
+        },
+        "join": {
+          "$ref": "#/definitions/Join",
+          "description": "The collection of entity or entities to join in the result set. Currently assumes these are relationships to the source entity of the query."
+        },
+        "name": {
+          "description": "The name of the query.",
+          "type": "string"
+        },
+        "summary": {
+          "description": "A short summary of what the query does.",
+          "type": "string"
+        },
+        "tag": {
+          "description": "The optional operation tag.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "findAll"
+      ],
+      "type": "object"
+    },
+    "MaximumAggregation": {
+      "additionalProperties": false,
+      "description": "Calculates the maximum value of a given field.",
+      "properties": {
+        "max": {
+          "$ref": "#/definitions/PerFieldMetricAggregationArguments"
+        }
+      },
+      "required": [
+        "max"
+      ],
+      "type": "object"
+    },
+    "MeanAggregation": {
+      "additionalProperties": false,
+      "description": "Calculates the mean value of a given field.",
+      "properties": {
+        "mean": {
+          "$ref": "#/definitions/PerFieldMetricAggregationArguments"
+        }
+      },
+      "required": [
+        "mean"
+      ],
+      "type": "object"
+    },
+    "MetricAggregation": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SumAggregation"
+        },
+        {
+          "$ref": "#/definitions/CountAggregation"
+        },
+        {
+          "$ref": "#/definitions/MinimumAggregation"
+        },
+        {
+          "$ref": "#/definitions/MaximumAggregation"
+        },
+        {
+          "$ref": "#/definitions/MeanAggregation"
+        },
+        {
+          "$ref": "#/definitions/PercentileAggregation"
+        }
+      ],
+      "description": "The set of metric aggregations."
+    },
+    "MinimumAggregation": {
+      "additionalProperties": false,
+      "description": "Calculates the minimum value of a given field.",
+      "properties": {
+        "min": {
+          "$ref": "#/definitions/PerFieldMetricAggregationArguments"
+        }
+      },
+      "required": [
+        "min"
+      ],
+      "type": "object"
+    },
+    "Mutation": {
+      "additionalProperties": false,
+      "description": "Defines a mutable entity in the service.",
+      "properties": {
+        "entity": {
+          "$ref": "#/definitions/EntityName",
+          "description": "The name of the entity to mutate."
+        },
+        "tag": {
+          "description": "The optional operation tag.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "entity"
+      ],
+      "type": "object"
+    },
+    "Mutations": {
+      "description": "A collection of Mutation objects.",
+      "items": {
+        "$ref": "#/definitions/Mutation"
+      },
+      "type": "array"
+    },
+    "Operations": {
+      "additionalProperties": false,
+      "description": "The mutation and query operations provided by the service.",
+      "properties": {
+        "mutations": {
+          "$ref": "#/definitions/Mutations",
+          "description": "A declaration of all mutations provided by the service."
+        },
+        "queries": {
+          "$ref": "#/definitions/Queries",
+          "description": "A declaration of all queries provided by the service."
+        }
+      },
+      "required": [
+        "mutations",
+        "queries"
+      ],
+      "type": "object"
+    },
+    "PerFieldMetricAggregationArguments": {
+      "additionalProperties": false,
+      "description": "The base arguments for all metric aggregations.",
+      "properties": {
+        "as": {
+          "description": "The alias for the aggregate, (e.g. COUNT(*) as totalRecords)",
+          "type": "string"
+        },
+        "field": {
+          "$ref": "#/definitions/FieldName"
+        }
+      },
+      "required": [
+        "field"
+      ],
+      "type": "object"
+    },
+    "PercentileAggregation": {
+      "additionalProperties": false,
+      "description": "Calculates the percentile values of a given field.",
+      "properties": {
+        "percentile": {
+          "$ref": "#/definitions/PerFieldMetricAggregationArguments"
+        }
+      },
+      "required": [
+        "percentile"
+      ],
+      "type": "object"
+    },
+    "Policies": {
+      "description": "A collection of policies.",
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/Policy"
+          },
+          {
+            "$ref": "#/definitions/IncludeDirective"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "Policy": {
+      "additionalProperties": false,
+      "description": "A policy document.\n\nDefines a policy that either explicity allows or specifically denys permissions to perform one or more actions on one or more resources.",
+      "properties": {
+        "action": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ActionSelection"
+            },
+            {
+              "$ref": "#/definitions/ActionSelections"
+            }
+          ],
+          "description": "Filters which actions the policy applies to."
+        },
+        "condition": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Condition"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/Condition"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The conditional modifiers that affect when the policy applies."
+        },
+        "description": {
+          "description": "A long human readable description of the policy.",
+          "type": "string"
+        },
+        "effect": {
+          "$ref": "#/definitions/Effect",
+          "description": "The effect of the policy (i.e. allow or deny)"
+        },
+        "name": {
+          "description": "The name of the policy",
+          "type": "string"
+        },
+        "resource": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ResourceSelection"
+            },
+            {
+              "$ref": "#/definitions/ResourceSelections"
+            }
+          ],
+          "description": "Filters which resources the policy applies to."
+        },
+        "subject": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SubjectSelection"
+            },
+            {
+              "$ref": "#/definitions/SubjectSelections"
+            }
+          ],
+          "description": "Filters which subjects the policy applies to."
+        }
+      },
+      "required": [
+        "name",
+        "effect"
+      ],
+      "type": "object"
+    },
+    "Projection": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ViaEntry"
+        },
+        {
+          "$ref": "#/definitions/EntityProjection"
+        }
+      ]
+    },
+    "Queries": {
+      "items": {
+        "$ref": "#/definitions/Query"
+      },
+      "type": "array"
+    },
+    "Query": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ListQuery"
+        },
+        {
+          "$ref": "#/definitions/RetrieveQuery"
+        },
+        {
+          "$ref": "#/definitions/SearchQuery"
+        },
+        {
+          "$ref": "#/definitions/SelectQuery"
+        },
+        {
+          "$ref": "#/definitions/IncludeDirective"
+        }
+      ]
+    },
+    "Relationship": {
+      "additionalProperties": false,
+      "description": "Defines a relationship between two entities.\n\nIn GraphQL, this would represent an egde connection between two GraphQL nodes.",
+      "properties": {
+        "cardinality": {
+          "$ref": "#/definitions/Cardinality",
+          "description": "The cardinality of the relation expressed in terms of left-to-right"
+        },
+        "denormalize": {
+          "description": "Flag to indicate that the relationship is embedded in the entity.\n\nIf using \"byId\", then the relationship is denormalized by using the related entity identifiers. So an array of ids for a \"to-many\" relationship, or an identifier for a \"to-one\" relationship.\n\nIf using \"embed\", then the relationhisp is denormalized by embedding the entity schema into the left schema. So an array of objects for a \"to-many\" relationship, or an object for a \"to-one\" relationship.",
+          "enum": [
+            "byId",
+            "byEntity"
+          ],
+          "type": "string"
+        },
+        "description": {
+          "description": "A long text description of the relationship.",
+          "type": "string"
+        },
+        "left": {
+          "$ref": "#/definitions/EntityName",
+          "description": "The left node in the relationship.\n\nIn composition relationships, this represents the parent entity."
+        },
+        "name": {
+          "description": "The name of the relationship.\n\nThis is auto-generated if not defined.  The auto-generated name depends on the cardinality.  If the cardinality to \"to-many\" then the relation name is the pluralized form of the right entity, otherwise it is simply the right entity.",
+          "type": "string"
+        },
+        "right": {
+          "description": "The right node in the relationship.\n\nIn composition relationships, this represents the child entity.",
+          "type": "string"
+        },
+        "summary": {
+          "description": "A summarization of the relationship name.\n\nFor example, a physician \"practices at\" a facility.",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/RelationshipType",
+          "description": "The relationship type, e.g. composition vs aggregation vs association."
+        },
+        "via": {
+          "$ref": "#/definitions/Via",
+          "description": "This is used to indicate that the relationship is a transitive relation ship based on an intermediate relationship or sets of relationships.\n\nFor example, a region has a collection of territories, a territory has a collection of physicians, therefore a region can have a collection of physicians by applying a flatMap on all child territory physicians.  This is mostly to provide context in the diagrams."
+        }
+      },
+      "required": [
+        "type",
+        "cardinality",
+        "left",
+        "right"
+      ],
+      "type": "object"
+    },
+    "RelationshipName": {
+      "type": "string"
+    },
+    "RelationshipType": {
+      "enum": [
+        "association",
+        "composition",
+        "aggregation"
+      ],
+      "type": "string"
+    },
+    "Relationships": {
+      "items": {
+        "$ref": "#/definitions/Relationship"
+      },
+      "type": "array"
+    },
+    "ResourceSelection": {
+      "description": "A selector that specifies the resource for which the action is being applied to.\n\nMay contain wildcards.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "ResourceSelections": {
+      "description": "A collection of resource selections.\n\nMust contain at least on selection, if specified.",
+      "items": {
+        "$ref": "#/definitions/ResourceSelection"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "RetrieveQuery": {
+      "additionalProperties": false,
+      "description": "A query operation that is expected to return a single source entity.",
+      "properties": {
+        "description": {
+          "description": "A verbose explanation of the query behavior. CommonMark syntax MAY be used for rich text representation.",
+          "type": "string"
+        },
+        "filterBy": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/EntityName"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/EntityName"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The option entity or entities to filter the query by. Currently assumes that the entity and entity identifier are included in the path of the query."
+        },
+        "findOne": {
+          "$ref": "#/definitions/FindType",
+          "description": "The entity to find."
+        },
+        "join": {
+          "$ref": "#/definitions/Join",
+          "description": "The collection of entity or entities to join in the result set. Currently assumes these are relationships to the source entity of the query."
+        },
+        "name": {
+          "description": "The name of the query.",
+          "type": "string"
+        },
+        "summary": {
+          "description": "A short summary of what the query does.",
+          "type": "string"
+        },
+        "tag": {
+          "description": "The optional operation tag.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "findOne"
+      ],
+      "type": "object"
+    },
+    "RoleName": {
+      "description": "The name of a role a subject may have assigned to them.",
+      "type": "string"
+    },
+    "RoleNames": {
+      "description": "A collection of role names.\n\nMust have at least one role name if specified.",
+      "items": {
+        "$ref": "#/definitions/RoleName"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "SearchQuery": {
+      "additionalProperties": false,
+      "description": "A query that is expected to execute a search against a specific entity.",
+      "properties": {
+        "description": {
+          "description": "A verbose explanation of the query behavior. CommonMark syntax MAY be used for rich text representation.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the query.",
+          "type": "string"
+        },
+        "search": {
+          "$ref": "#/definitions/EntityName",
+          "description": "The searchable entity."
+        },
+        "summary": {
+          "description": "A short summary of what the query does.",
+          "type": "string"
+        },
+        "tag": {
+          "description": "The optional operation tag.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "search"
+      ],
+      "type": "object"
+    },
+    "SelectQuery": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "description": "A verbose explanation of the query behavior. CommonMark syntax MAY be used for rich text representation.",
+          "type": "string"
+        },
+        "filterBy": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/EntityName"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/EntityName"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The option entity or entities to filter the query by. Currently assumes that the entity and entity identifier are included in the path of the query."
+        },
+        "from": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/EntityName"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/ViaEntry"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The collection of entity or entities to join in the result set. Currently assumes these are relationships to the source entity of the query."
+        },
+        "name": {
+          "description": "The name of the query.",
+          "type": "string"
+        },
+        "select": {
+          "description": "The values to project.",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/GroupBy"
+              },
+              {
+                "$ref": "#/definitions/Aggregation"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "summary": {
+          "description": "A short summary of what the query does.",
+          "type": "string"
+        },
+        "tag": {
+          "description": "The optional operation tag.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "select",
+        "from"
+      ],
+      "type": "object"
+    },
+    "ServiceSpecification": {
+      "$ref": "#/definitions/ServiceSpecificationVersion1",
+      "description": "An Apres Service Specification."
+    },
+    "ServiceSpecificationVersion1": {
+      "additionalProperties": false,
+      "description": "The specification for the service.  Defines all of the entities and entity relationships in the service.  Defines all query and mutation operations provided by the service.",
+      "properties": {
+        "apresApi": {
+          "const": "1.0.0",
+          "description": "The Apres API specification version.",
+          "type": "string"
+        },
+        "entities": {
+          "description": "The collection of entities managed by the service.",
+          "items": {
+            "$ref": "#/definitions/EntityName"
+          },
+          "type": "array"
+        },
+        "info": {
+          "$ref": "#/definitions/Information",
+          "description": "The object provides metadata about the API. The metadata MAY be used by the clients if needed, and MAY be presented in editing or documentation generation tools for convenience."
+        },
+        "operations": {
+          "$ref": "#/definitions/Operations",
+          "description": "The mutation and query operations provided by the service."
+        },
+        "policies": {
+          "$ref": "#/definitions/Policies",
+          "description": "The collection of policies for the service."
+        },
+        "relationships": {
+          "$ref": "#/definitions/Relationships",
+          "description": "The entity relationships defined by the service."
+        }
+      },
+      "required": [
+        "apresApi",
+        "entities",
+        "info",
+        "operations"
+      ],
+      "type": "object"
+    },
+    "SubjectCondition": {
+      "additionalProperties": false,
+      "description": "A condition based on the subject attempting to perform the action on the given resource.",
+      "properties": {
+        "hasRole": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RoleName"
+            },
+            {
+              "$ref": "#/definitions/RoleNames"
+            }
+          ],
+          "description": "Adds a condition that requires the the subject has a role or one of a given set of roles.\n\nThis is the primary condition used for Role-Based-Access control.  This is useful when the collection of role names are known at design time (i.e. the roles are system defined not user defined.)"
+        },
+        "id": {
+          "$ref": "#/definitions/SubjectIdCondition",
+          "description": "Adds a condition that matches the current subject's identifier."
+        }
+      },
+      "type": "object"
+    },
+    "SubjectIdCondition": {
+      "additionalProperties": false,
+      "description": "Creates a condition based on the subject's identifier.",
+      "properties": {
+        "in": {
+          "$ref": "#/definitions/InCondition",
+          "description": "Creates a condition to check if the subject's identifier is \"in\" a specific collection."
+        }
+      },
+      "type": "object"
+    },
+    "SubjectSelection": {
+      "description": "A selector that specifies who the subject is that is invoking the action on the given resource.\n\nMay contain wildcards.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "SubjectSelections": {
+      "description": "A collection of subject selections.\n\nMust contain at least on selection, if specified.",
+      "items": {
+        "$ref": "#/definitions/SubjectSelection"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "SumAggregation": {
+      "additionalProperties": false,
+      "description": "Calculates the sum of values of a given field.",
+      "properties": {
+        "sum": {
+          "$ref": "#/definitions/PerFieldMetricAggregationArguments"
+        }
+      },
+      "required": [
+        "sum"
+      ],
+      "type": "object"
+    },
+    "Via": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ViaEntry"
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/ViaEntry"
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "ViaEntry": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/EntityName"
+        },
+        {
+          "$ref": "#/definitions/RelationshipName"
+        }
+      ]
+    }
+  }
+}

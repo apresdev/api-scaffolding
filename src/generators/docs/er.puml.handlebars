@@ -1,0 +1,17 @@
+@startuml
+
+title {{ info.title }} Entity Relationships
+
+skinparam linetype ortho
+skinparam nodesep 75
+skinparam ranksep 75
+
+{{#each entities}}
+entity {{toPascalCase this}}
+{{/each}}
+
+{{#each relationships}}
+{{ toPascalCase left }} {{renderERCardinality this}} {{ toPascalCase right }}{{ edgeDescription this }}
+{{/each}}
+
+@enduml

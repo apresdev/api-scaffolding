@@ -1,0 +1,660 @@
+{
+  "$ref": "#/definitions/Queries",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Aggregation": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "sum": {
+              "$ref": "#/definitions/PerFieldMetricAggregationArguments"
+            }
+          },
+          "required": [
+            "sum"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "count": {
+              "additionalProperties": false,
+              "properties": {
+                "as": {
+                  "description": "The alias for the aggregate, (e.g. COUNT(*) as totalRecords)",
+                  "type": "string"
+                },
+                "distinct": {
+                  "description": "Flag indicating of only the distinct values should be counted.",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "count"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "min": {
+              "$ref": "#/definitions/PerFieldMetricAggregationArguments"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "min"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "max": {
+              "$ref": "#/definitions/PerFieldMetricAggregationArguments"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "max"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "mean": {
+              "$ref": "#/definitions/PerFieldMetricAggregationArguments"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "mean"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "percentile": {
+              "$ref": "#/definitions/PerFieldMetricAggregationArguments"
+            }
+          },
+          "required": [
+            "percentile"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "date_histogram": {
+              "additionalProperties": false,
+              "properties": {
+                "calculate": {
+                  "$ref": "#/definitions/MetricAggregation",
+                  "description": "The metric to calculate per bucket."
+                },
+                "interval": {
+                  "$ref": "#/definitions/Interval",
+                  "description": "The interval to use when generating buckets"
+                },
+                "last": {
+                  "description": "Specifies that only the most recent \"last\" buckets should be returned.",
+                  "type": "number"
+                }
+              },
+              "required": [
+                "calculate",
+                "interval"
+              ],
+              "type": "object"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "date_histogram"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "terms": {
+              "additionalProperties": false,
+              "properties": {
+                "calculate": {
+                  "$ref": "#/definitions/MetricAggregation",
+                  "description": "The metric to calculate per bucket."
+                },
+                "field": {
+                  "$ref": "#/definitions/FieldName",
+                  "description": "The name of the field where the distinct terms will be derived from."
+                },
+                "size": {
+                  "description": "Specifies that the query should return the top \"size\" buckets.",
+                  "type": "number"
+                }
+              },
+              "required": [
+                "calculate",
+                "field"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "terms"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "The top level Aggregation, includes all optional fields and is either a metric or bucket aggregation."
+    },
+    "CountAggregation": {
+      "additionalProperties": false,
+      "description": "Calculates the count  value of a given field.",
+      "properties": {
+        "count": {
+          "additionalProperties": false,
+          "properties": {
+            "as": {
+              "description": "The alias for the aggregate, (e.g. COUNT(*) as totalRecords)",
+              "type": "string"
+            },
+            "distinct": {
+              "description": "Flag indicating of only the distinct values should be counted.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "count"
+      ],
+      "type": "object"
+    },
+    "DistinctProjection": {
+      "additionalProperties": false,
+      "properties": {
+        "distinct": {
+          "$ref": "#/definitions/Projection"
+        }
+      },
+      "required": [
+        "distinct"
+      ],
+      "type": "object"
+    },
+    "EntityName": {
+      "type": "string"
+    },
+    "EntityProjection": {
+      "additionalProperties": {
+        "items": {
+          "$ref": "#/definitions/FieldName"
+        },
+        "type": "array"
+      },
+      "description": "A projection clause that lists which entity fields to include in the result set.",
+      "maxProperties": 1,
+      "minProperties": 1,
+      "type": "object"
+    },
+    "FieldName": {
+      "type": "string"
+    },
+    "FindType": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/JoinDirective"
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/JoinDirective"
+          },
+          "type": "array"
+        }
+      ],
+      "description": "The entity or entities to find in a query. Currently assumes that the last entity in the list is the \"source entity\" for a query."
+    },
+    "GroupBy": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/DistinctProjection"
+        },
+        {
+          "$ref": "#/definitions/Projection"
+        }
+      ]
+    },
+    "IncludeDirective": {
+      "additionalProperties": false,
+      "properties": {
+        "$include": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/IncludePath"
+            },
+            {
+              "$ref": "#/definitions/IncludePaths"
+            }
+          ]
+        }
+      },
+      "required": [
+        "$include"
+      ],
+      "type": "object"
+    },
+    "IncludePath": {
+      "type": "string"
+    },
+    "IncludePaths": {
+      "items": {
+        "$ref": "#/definitions/IncludePath"
+      },
+      "type": "array"
+    },
+    "Interval": {
+      "description": "A bucket aggregation that uses date math to generate histograms for time-series data",
+      "enum": [
+        "day",
+        "month",
+        "year",
+        "week",
+        "quarter"
+      ],
+      "type": "string"
+    },
+    "Join": {
+      "items": {
+        "$ref": "#/definitions/JoinDirective"
+      },
+      "type": "array"
+    },
+    "JoinDirective": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ViaEntry"
+        },
+        {
+          "$ref": "#/definitions/EntityProjection"
+        }
+      ]
+    },
+    "ListQuery": {
+      "additionalProperties": false,
+      "description": "A query operation that is expected to return a list of source entities.",
+      "properties": {
+        "description": {
+          "description": "A verbose explanation of the query behavior. CommonMark syntax MAY be used for rich text representation.",
+          "type": "string"
+        },
+        "filterBy": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/EntityName"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/EntityName"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The option entity or entities to filter the query by. Currently assumes that the entity and entity identifier are included in the path of the query."
+        },
+        "findAll": {
+          "$ref": "#/definitions/FindType",
+          "description": "The collection of entities to list."
+        },
+        "join": {
+          "$ref": "#/definitions/Join",
+          "description": "The collection of entity or entities to join in the result set. Currently assumes these are relationships to the source entity of the query."
+        },
+        "name": {
+          "description": "The name of the query.",
+          "type": "string"
+        },
+        "summary": {
+          "description": "A short summary of what the query does.",
+          "type": "string"
+        },
+        "tag": {
+          "description": "The optional operation tag.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "findAll"
+      ],
+      "type": "object"
+    },
+    "MaximumAggregation": {
+      "additionalProperties": false,
+      "description": "Calculates the maximum value of a given field.",
+      "properties": {
+        "max": {
+          "$ref": "#/definitions/PerFieldMetricAggregationArguments"
+        }
+      },
+      "required": [
+        "max"
+      ],
+      "type": "object"
+    },
+    "MeanAggregation": {
+      "additionalProperties": false,
+      "description": "Calculates the mean value of a given field.",
+      "properties": {
+        "mean": {
+          "$ref": "#/definitions/PerFieldMetricAggregationArguments"
+        }
+      },
+      "required": [
+        "mean"
+      ],
+      "type": "object"
+    },
+    "MetricAggregation": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SumAggregation"
+        },
+        {
+          "$ref": "#/definitions/CountAggregation"
+        },
+        {
+          "$ref": "#/definitions/MinimumAggregation"
+        },
+        {
+          "$ref": "#/definitions/MaximumAggregation"
+        },
+        {
+          "$ref": "#/definitions/MeanAggregation"
+        },
+        {
+          "$ref": "#/definitions/PercentileAggregation"
+        }
+      ],
+      "description": "The set of metric aggregations."
+    },
+    "MinimumAggregation": {
+      "additionalProperties": false,
+      "description": "Calculates the minimum value of a given field.",
+      "properties": {
+        "min": {
+          "$ref": "#/definitions/PerFieldMetricAggregationArguments"
+        }
+      },
+      "required": [
+        "min"
+      ],
+      "type": "object"
+    },
+    "PerFieldMetricAggregationArguments": {
+      "additionalProperties": false,
+      "description": "The base arguments for all metric aggregations.",
+      "properties": {
+        "as": {
+          "description": "The alias for the aggregate, (e.g. COUNT(*) as totalRecords)",
+          "type": "string"
+        },
+        "field": {
+          "$ref": "#/definitions/FieldName"
+        }
+      },
+      "required": [
+        "field"
+      ],
+      "type": "object"
+    },
+    "PercentileAggregation": {
+      "additionalProperties": false,
+      "description": "Calculates the percentile values of a given field.",
+      "properties": {
+        "percentile": {
+          "$ref": "#/definitions/PerFieldMetricAggregationArguments"
+        }
+      },
+      "required": [
+        "percentile"
+      ],
+      "type": "object"
+    },
+    "Projection": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ViaEntry"
+        },
+        {
+          "$ref": "#/definitions/EntityProjection"
+        }
+      ]
+    },
+    "Queries": {
+      "items": {
+        "$ref": "#/definitions/Query"
+      },
+      "type": "array"
+    },
+    "Query": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ListQuery"
+        },
+        {
+          "$ref": "#/definitions/RetrieveQuery"
+        },
+        {
+          "$ref": "#/definitions/SearchQuery"
+        },
+        {
+          "$ref": "#/definitions/SelectQuery"
+        },
+        {
+          "$ref": "#/definitions/IncludeDirective"
+        }
+      ]
+    },
+    "RelationshipName": {
+      "type": "string"
+    },
+    "RetrieveQuery": {
+      "additionalProperties": false,
+      "description": "A query operation that is expected to return a single source entity.",
+      "properties": {
+        "description": {
+          "description": "A verbose explanation of the query behavior. CommonMark syntax MAY be used for rich text representation.",
+          "type": "string"
+        },
+        "filterBy": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/EntityName"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/EntityName"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The option entity or entities to filter the query by. Currently assumes that the entity and entity identifier are included in the path of the query."
+        },
+        "findOne": {
+          "$ref": "#/definitions/FindType",
+          "description": "The entity to find."
+        },
+        "join": {
+          "$ref": "#/definitions/Join",
+          "description": "The collection of entity or entities to join in the result set. Currently assumes these are relationships to the source entity of the query."
+        },
+        "name": {
+          "description": "The name of the query.",
+          "type": "string"
+        },
+        "summary": {
+          "description": "A short summary of what the query does.",
+          "type": "string"
+        },
+        "tag": {
+          "description": "The optional operation tag.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "findOne"
+      ],
+      "type": "object"
+    },
+    "SearchQuery": {
+      "additionalProperties": false,
+      "description": "A query that is expected to execute a search against a specific entity.",
+      "properties": {
+        "description": {
+          "description": "A verbose explanation of the query behavior. CommonMark syntax MAY be used for rich text representation.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the query.",
+          "type": "string"
+        },
+        "search": {
+          "$ref": "#/definitions/EntityName",
+          "description": "The searchable entity."
+        },
+        "summary": {
+          "description": "A short summary of what the query does.",
+          "type": "string"
+        },
+        "tag": {
+          "description": "The optional operation tag.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "search"
+      ],
+      "type": "object"
+    },
+    "SelectQuery": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "description": "A verbose explanation of the query behavior. CommonMark syntax MAY be used for rich text representation.",
+          "type": "string"
+        },
+        "filterBy": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/EntityName"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/EntityName"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The option entity or entities to filter the query by. Currently assumes that the entity and entity identifier are included in the path of the query."
+        },
+        "from": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/EntityName"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/ViaEntry"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The collection of entity or entities to join in the result set. Currently assumes these are relationships to the source entity of the query."
+        },
+        "name": {
+          "description": "The name of the query.",
+          "type": "string"
+        },
+        "select": {
+          "description": "The values to project.",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/GroupBy"
+              },
+              {
+                "$ref": "#/definitions/Aggregation"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "summary": {
+          "description": "A short summary of what the query does.",
+          "type": "string"
+        },
+        "tag": {
+          "description": "The optional operation tag.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "select",
+        "from"
+      ],
+      "type": "object"
+    },
+    "SumAggregation": {
+      "additionalProperties": false,
+      "description": "Calculates the sum of values of a given field.",
+      "properties": {
+        "sum": {
+          "$ref": "#/definitions/PerFieldMetricAggregationArguments"
+        }
+      },
+      "required": [
+        "sum"
+      ],
+      "type": "object"
+    },
+    "ViaEntry": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/EntityName"
+        },
+        {
+          "$ref": "#/definitions/RelationshipName"
+        }
+      ]
+    }
+  }
+}
