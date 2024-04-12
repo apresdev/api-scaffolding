@@ -10,10 +10,10 @@ import { SearchQueryGenerator } from "./search-query";
 import { SelectQueryGenerator } from "./select-query";
 import { isListQuery, isRetrieveQuery, isSearchQuery, isSelectQuery } from "./util";
 
-import * as queriesSchema from "../../../../schemas/queries.json";
 import { FileErrors, SchemaValidator, SourceMaps } from "../../../common";
 import { FileProcessor, FileProcessorContext, PathError } from "../../../common/io";
 import { PathProcessor } from "../../../common/io/path-processor";
+import * as queriesSchema from "../../../schemas/queries.json";
 import { IncludeDirective, Queries, Query, isIncludeDirective } from "../../../specification";
 
 const queriesValidator = new SchemaValidator<Queries>(queriesSchema, new SourceMaps());

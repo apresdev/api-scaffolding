@@ -4,7 +4,7 @@ import { FileErrors, SchemaValidator, SourceLocation, SourceMaps } from "../comm
 
 import { ServiceSpecification } from "./specification";
 
-import * as specificationSchema from "../../schemas/service_description.json";
+import * as specificationSchema from "../schemas/service_description.json";
 
 const schemaValidator = new SchemaValidator<ServiceSpecification>(specificationSchema, new SourceMaps());
 

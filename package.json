@@ -1,7 +1,7 @@
 {
-  "name": "api-scaffolding",
+  "name": "@apresdev/api-scaffolding",
   "homepage": "https://github.com/apresdev/api-scaffolding",
-  "version": "0.0.1",
+  "version": "0.0.7",
   "description": "",
   "bin": {
     "apres-api": "dist/index.js"
@@ -11,7 +11,6 @@
   ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "private": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/apresdev/api-scaffolding"
@@ -21,23 +20,23 @@
     "lint": "eslint '**/*.{ts,tsx,js,jsx,json}' --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint '**/*.{ts,tsx,js,jsx,json}' --fix --report-unused-disable-directives --max-warnings 0",
     "format": "prettier --write './**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc.json",
+    "build": "tsc",
     "typecheck": "tsc --noEmit",
     "generate": "npm run generate.openapi",
     "generate.openapi": "npm run generate.openapi.spec && npm run generate.openapi.client",
     "generate.openapi.spec": "npx ts-node src/index.ts openapi",
     "generate.schema": "npm run generate.schema.service && npm run generate.schema.entities && npm run generate.schema.queries && npm run generate.schema.relationships && npm run generate.schema.policies",
-    "generate.schema.service": "npx ts-json-schema-generator -f ./tsconfig.json --path 'src/specification/specification.ts' --type 'ServiceSpecification' > schemas/service_description.json",
-    "generate.schema.entities": "npx ts-json-schema-generator -f ./tsconfig.json --path 'src/specification/entity.ts' --type 'EntitySchema' > schemas/model.json",
-    "generate.schema.any": "npx ts-json-schema-generator -f ./tsconfig.json --path 'src/specification/entity.ts' --type 'AnySchema' > schemas/any.json",
-    "generate.schema.queries": "npx ts-json-schema-generator -f ./tsconfig.json --path 'src/specification/specification.ts' --type 'Queries' > schemas/queries.json",
-    "generate.schema.relationships": "npx ts-json-schema-generator -f ./tsconfig.json --path 'src/specification/specification.ts' --type 'Relationships' > schemas/relationships.json",
-    "generate.schema.policies": "npx ts-json-schema-generator -f ./tsconfig.json --path 'src/specification/policies.ts' --type 'Policies' > schemas/policies.json"
+    "generate.schema.service": "npx ts-json-schema-generator -f ./tsconfig.json --path 'src/specification/specification.ts' --type 'ServiceSpecification' > src/schemas/service_description.json",
+    "generate.schema.entities": "npx ts-json-schema-generator -f ./tsconfig.json --path 'src/specification/entity.ts' --type 'EntitySchema' > src/schemas/model.json",
+    "generate.schema.any": "npx ts-json-schema-generator -f ./tsconfig.json --path 'src/specification/entity.ts' --type 'AnySchema' > src/schemas/any.json",
+    "generate.schema.queries": "npx ts-json-schema-generator -f ./tsconfig.json --path 'src/specification/specification.ts' --type 'Queries' > src/schemas/queries.json",
+    "generate.schema.relationships": "npx ts-json-schema-generator -f ./tsconfig.json --path 'src/specification/specification.ts' --type 'Relationships' > src/schemas/relationships.json",
+    "generate.schema.policies": "npx ts-json-schema-generator -f ./tsconfig.json --path 'src/specification/policies.ts' --type 'Policies' > src/schemas/policies.json"
   },
   "devDependencies": {
     "@babel/core": "^7.24.4",
     "@babel/preset-env": "^7.24.3",
     "@babel/preset-typescript": "^7.24.1",
-    "@stoplight/spectral-cli": "^6.11.0",
     "@tsconfig/node20": "^20.1.4",
     "@types/jest": "^29.5.12",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
@@ -54,11 +53,11 @@
     "prettier-plugin-organize-imports": "^3.2.4",
     "ts-json-schema-generator": "^1.5.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.2",
-    "yaml-import": "^2.0.0"
+    "typescript": "^5.4.2"
   },
   "dependencies": {
     "@stoplight/spectral-core": "^1.18.3",
+    "@stoplight/spectral-cli": "^6.11.0",
     "@types/ajv": "^1.0.0",
     "@types/ajv-keywords": "^3.5.0",
     "@types/handlebars": "^4.1.0",
@@ -75,6 +74,7 @@
     "js-yaml": "^4.1.0",
     "js-yaml-source-map": "^0.2.2",
     "openapi-types": "^12.1.3",
-    "underscore": "^1.13.6"
+    "underscore": "^1.13.6",
+    "yaml-import": "^2.0.0"
   }
 }

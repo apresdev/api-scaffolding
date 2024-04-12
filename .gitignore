@@ -4,3 +4,5 @@ client/**
 coverage/**
 docs/**
 node_modules
+dist/**
+tsconfig.tsbuildinfo
