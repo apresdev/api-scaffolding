@@ -35,6 +35,10 @@
       "additionalProperties": false,
       "description": "Arrays are used for ordered elements. In JSON, each element in an array may be of a different type.",
       "properties": {
+        "calculated": {
+          "description": "Flag the indicates that the schema contents are calculated (defaults false).",
+          "type": "boolean"
+        },
         "default": {
           "items": {},
           "type": "array"
@@ -44,6 +48,7 @@
           "type": "string"
         },
         "editable": {
+          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
           "type": "boolean"
         },
         "example": {
@@ -70,6 +75,7 @@
           "type": "number"
         },
         "readOnly": {
+          "description": "Flag the indicates that the schema contents are read-only (defaults false).",
           "type": "boolean"
         },
         "title": {
@@ -102,6 +108,10 @@
       "additionalProperties": false,
       "description": "The boolean type matches only two special values: `true` and `false`. Note that values that evaluate to true or false, such as 1 and 0, are not accepted by the schema.",
       "properties": {
+        "calculated": {
+          "description": "Flag the indicates that the schema contents are calculated (defaults false).",
+          "type": "boolean"
+        },
         "data-classification": {
           "$ref": "#/definitions/DataClassification"
         },
@@ -113,6 +123,7 @@
           "type": "string"
         },
         "editable": {
+          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
           "type": "boolean"
         },
         "enum": {
@@ -131,6 +142,7 @@
           "type": "array"
         },
         "readOnly": {
+          "description": "Flag the indicates that the schema contents are read-only (defaults false).",
           "type": "boolean"
         },
         "title": {
@@ -179,6 +191,10 @@
           "description": "The alias for the entity name.  Renames all references to the entity with the given alias.",
           "type": "string"
         },
+        "calculated": {
+          "description": "Flag the indicates that the schema contents are calculated (defaults false).",
+          "type": "boolean"
+        },
         "createable": {
           "type": "boolean"
         },
@@ -196,6 +212,7 @@
           "type": "string"
         },
         "editable": {
+          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
           "type": "boolean"
         },
         "example": {
@@ -227,6 +244,7 @@
           "type": "object"
         },
         "readOnly": {
+          "description": "Flag the indicates that the schema contents are read-only (defaults false).",
           "type": "boolean"
         },
         "required": {
@@ -319,14 +337,20 @@
       "additionalProperties": false,
       "description": "When a schema specifies a `type` of `null`, it has only one acceptable value: `null`.",
       "properties": {
+        "calculated": {
+          "description": "Flag the indicates that the schema contents are calculated (defaults false).",
+          "type": "boolean"
+        },
         "description": {
           "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
           "type": "string"
         },
         "editable": {
+          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
           "type": "boolean"
         },
         "readOnly": {
+          "description": "Flag the indicates that the schema contents are read-only (defaults false).",
           "type": "boolean"
         },
         "title": {
@@ -347,6 +371,10 @@
       "additionalProperties": false,
       "description": "There are two numeric types: `integer` and `number`. They share the same validation keywords.\n\nThe `integer` type is used for integral numbers. JSON does not have distinct types for integers and floating-point values. Therefore, the presence or absence of a decimal point is not enough to distinguish between integers and non-integers. For example, 1 and 1.0 are two ways to represent the same value in JSON. JSON Schema considers that value an integer no matter which representation was used.\n\nThe `number` type is used for any numeric type, either integers or floating point numbers.",
       "properties": {
+        "calculated": {
+          "description": "Flag the indicates that the schema contents are calculated (defaults false).",
+          "type": "boolean"
+        },
         "data-classification": {
           "$ref": "#/definitions/DataClassification"
         },
@@ -358,6 +386,7 @@
           "type": "string"
         },
         "editable": {
+          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
           "type": "boolean"
         },
         "enum": {
@@ -388,6 +417,7 @@
           "type": "number"
         },
         "readOnly": {
+          "description": "Flag the indicates that the schema contents are read-only (defaults false).",
           "type": "boolean"
         },
         "title": {
@@ -411,6 +441,10 @@
       "additionalProperties": false,
       "description": "Objects are the mapping type in JSON. They map \"keys\" to \"values\". In JSON, the \"keys\" must always be strings. Each of these pairs is conventionally referred to as a \"property\".",
       "properties": {
+        "calculated": {
+          "description": "Flag the indicates that the schema contents are calculated (defaults false).",
+          "type": "boolean"
+        },
         "default": {
           "type": "object"
         },
@@ -419,6 +453,7 @@
           "type": "string"
         },
         "editable": {
+          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
           "type": "boolean"
         },
         "example": {
@@ -438,6 +473,7 @@
           "type": "object"
         },
         "readOnly": {
+          "description": "Flag the indicates that the schema contents are read-only (defaults false).",
           "type": "boolean"
         },
         "required": {
@@ -489,11 +525,16 @@
       "additionalProperties": false,
       "description": "The relationship schema is used to create a relationship between two entities.  Moreover, it is intended to embed the related entities unique identifier as a named property in the current entities schema.\n\nThe entity for which this relation is defined acts as the left-hand-side of the relationship.\n\nFor example, in a chat application a chat-message may have to linked user's, the sending user and the recieving user.\n\nBy default the relationship is a \"..1\" relationship; however, if the relationship is contained inside an array schema, then the relationship is promoted to a \"..*\" relationship",
       "properties": {
+        "calculated": {
+          "description": "Flag the indicates that the schema contents are calculated (defaults false).",
+          "type": "boolean"
+        },
         "description": {
           "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
           "type": "string"
         },
         "editable": {
+          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
           "type": "boolean"
         },
         "fromOne": {
@@ -501,6 +542,7 @@
           "type": "boolean"
         },
         "readOnly": {
+          "description": "Flag the indicates that the schema contents are read-only (defaults false).",
           "type": "boolean"
         },
         "rel": {
@@ -538,6 +580,10 @@
       "additionalProperties": false,
       "description": "The `string` type is used for strings of text. It may contain Unicode characters.",
       "properties": {
+        "calculated": {
+          "description": "Flag the indicates that the schema contents are calculated (defaults false).",
+          "type": "boolean"
+        },
         "data-classification": {
           "$ref": "#/definitions/DataClassification"
         },
@@ -549,6 +595,7 @@
           "type": "string"
         },
         "editable": {
+          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
           "type": "boolean"
         },
         "enum": {
@@ -583,6 +630,7 @@
           "type": "string"
         },
         "readOnly": {
+          "description": "Flag the indicates that the schema contents are read-only (defaults false).",
           "type": "boolean"
         },
         "title": {

@@ -61,7 +61,7 @@ export function asSchemaObject(schema: AnySchema): OpenAPIV3.SchemaObject {
 /**
  * The collection of property keyword extensions to be removed from the output schema.
  */
-const propertyKeywordExtensions = ["data-classification"];
+const propertyKeywordExtensions = ["calculated", "data-classification"];
 
 /**
  * The collection of entity keyword extensions to be removed from the output schema.
