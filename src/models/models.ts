@@ -701,11 +701,12 @@ function extractInternalReference($ref: string, model: AnySchema, models: Schema
   const referencedModelName = $ref.substring(INTERNAL_REFERENCE_PREFIX.length);
   const referencedModel = (model["definitions"] as Definitions)[referencedModelName];
 
+  preProcessModel(referencedModel, model, models, results);
+
   if (!models.has(referencedModelName)) {
     models.set(referencedModelName, referencedModel as EntitySchema);
   }
 
-  preProcessModel(referencedModel, model, models, results);
   return "#/components/schemas/" + toPascalCase(referencedModelName);
 }
 
@@ -715,10 +716,11 @@ function extractExternalReference($ref: string, model: AnySchema, models: Schema
   const dirname = directoryName(url);
   const referencedModel = loadModel(dirname + "/" + referencedModelName, models, results);
 
+  preProcessModel(referencedModel, model, models, results);
+
   if (!models.has(referencedModelName)) {
     models.set(referencedModelName, referencedModel as EntitySchema);
   }
 
-  preProcessModel(referencedModel, model, models, results);
   return "#/components/schemas/" + toPascalCase(referencedModelName);
 }

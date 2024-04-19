@@ -65,8 +65,20 @@ export interface BaseSchema {
    */
   description?: string;
 
+  /**
+   * Flag the indicates that the schema contents are read-only (defaults false).
+   */
   readOnly?: boolean;
+
+  /**
+   * Flag the indicates that the schema contents are editable after creation (defaults true).
+   */
   editable?: boolean;
+
+  /**
+   * Flag the indicates that the schema contents are calculated (defaults false).
+   */
+  calculated?: boolean;
 }
 
 export interface BaseSchemaWithExample<T> extends BaseSchema {
