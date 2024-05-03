@@ -5,22 +5,7 @@
     "AnySchema": {
       "anyOf": [
         {
-          "$ref": "#/definitions/ObjectSchema"
-        },
-        {
-          "$ref": "#/definitions/ArraySchema"
-        },
-        {
-          "$ref": "#/definitions/StringSchema"
-        },
-        {
-          "$ref": "#/definitions/NumberSchema"
-        },
-        {
-          "$ref": "#/definitions/BooleanSchema"
-        },
-        {
-          "$ref": "#/definitions/NullSchema"
+          "$ref": "#/definitions/ValueSchema"
         },
         {
           "$ref": "#/definitions/ReferenceSchema"
@@ -42,6 +27,9 @@
         "default": {
           "items": {},
           "type": "array"
+        },
+        "definitions": {
+          "$ref": "#/definitions/Definitions"
         },
         "description": {
           "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
@@ -117,6 +105,9 @@
         },
         "default": {
           "type": "boolean"
+        },
+        "definitions": {
+          "$ref": "#/definitions/Definitions"
         },
         "description": {
           "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
@@ -341,6 +332,9 @@
           "description": "Flag the indicates that the schema contents are calculated (defaults false).",
           "type": "boolean"
         },
+        "definitions": {
+          "$ref": "#/definitions/Definitions"
+        },
         "description": {
           "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
           "type": "string"
@@ -380,6 +374,9 @@
         },
         "default": {
           "type": "number"
+        },
+        "definitions": {
+          "$ref": "#/definitions/Definitions"
         },
         "description": {
           "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
@@ -447,6 +444,9 @@
         },
         "default": {
           "type": "object"
+        },
+        "definitions": {
+          "$ref": "#/definitions/Definitions"
         },
         "description": {
           "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
@@ -529,6 +529,9 @@
           "description": "Flag the indicates that the schema contents are calculated (defaults false).",
           "type": "boolean"
         },
+        "definitions": {
+          "$ref": "#/definitions/Definitions"
+        },
         "description": {
           "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
           "type": "string"
@@ -590,6 +593,9 @@
         "default": {
           "type": "string"
         },
+        "definitions": {
+          "$ref": "#/definitions/Definitions"
+        },
         "description": {
           "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
           "type": "string"
@@ -646,6 +652,28 @@
         "type"
       ],
       "type": "object"
+    },
+    "ValueSchema": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ObjectSchema"
+        },
+        {
+          "$ref": "#/definitions/ArraySchema"
+        },
+        {
+          "$ref": "#/definitions/StringSchema"
+        },
+        {
+          "$ref": "#/definitions/NumberSchema"
+        },
+        {
+          "$ref": "#/definitions/BooleanSchema"
+        },
+        {
+          "$ref": "#/definitions/NullSchema"
+        }
+      ]
     }
   }
 }

@@ -1,6 +1,6 @@
 import { OpenAPIV3 } from "openapi-types";
 
-import { Query } from "../../../specification";
+import { BaseQuery } from "../../../specification";
 import { DeepReadonly } from "../../../util";
 
 export const Metadata: OpenAPIV3.ReferenceObject = {
@@ -21,20 +21,24 @@ export const Search: OpenAPIV3.ReferenceObject = {
  * @param query   The query operation.
  * @returns true if and only if the query includes a "findAll" operation.
  */
-export function isListQuery(query: DeepReadonly<Query>): boolean {
+export function isListQuery(query: DeepReadonly<BaseQuery>): boolean {
   return "findAll" in query;
 }
 
-export function isRetrieveQuery(query: DeepReadonly<Query>): boolean {
+export function isRetrieveQuery(query: DeepReadonly<BaseQuery>): boolean {
   return "findOne" in query;
 }
 
-export function isSearchQuery(query: DeepReadonly<Query>): boolean {
+export function isSearchQuery(query: DeepReadonly<BaseQuery>): boolean {
   return "search" in query;
 }
 
-export function isSelectQuery(query: DeepReadonly<Query>): boolean {
+export function isSelectQuery(query: DeepReadonly<BaseQuery>): boolean {
   return "select" in query;
+}
+
+export function isNamedQuery(query: DeepReadonly<BaseQuery>): boolean {
+  return "query" in query;
 }
 
 export function forEachItem<T, K extends keyof T, V>(obj: T, key: K, path: string, handler: (item: V, path: string) => void) {
@@ -57,4 +61,10 @@ export function forEachItem<T, K extends keyof T, V>(obj: T, key: K, path: strin
   }
 
   handler(value as V, itemsPath.join("."));
+}
+
+export class IllegalState extends Error {
+  constructor() {
+    super("illegal state");
+  }
 }

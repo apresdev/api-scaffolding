@@ -8,15 +8,13 @@ import {
   renderBucketAggregationSchema,
   renderMetricAggregationSchema,
 } from "../aggregations";
-import { OpenAPIBuilder, Url, UrlBuilder } from "../builder";
-import { PaginationParameters } from "../parameters";
+import { Url, UrlBuilder } from "../builder";
 import { arraySchema, asArray, toSummaryCase } from "../util";
 
 import { UnknownEdgeError } from "./errors";
-import { QueryGenerator, QueryProcessorContext } from "./query-generator";
-import { Metadata } from "./util";
+import { QueryProcessorContext } from "./query-generator";
 
-import { JsonPath, checkNotEmpty, checkNotNull, oxfordJoin, pluralize, toKebabCase, toPascalCase, toTitleCase } from "../../../common";
+import { JsonPath, oxfordJoin, pluralize, toKebabCase, toPascalCase, toTitleCase } from "../../../common";
 import { PathError } from "../../../common/io";
 import { asSchemaObject } from "../../../entities";
 import {
@@ -40,6 +38,17 @@ import {
   isViaEntry,
 } from "../../../specification";
 import { EntityProjections, Joins } from "../../../specification/joins";
+import { BaseQueryGenerator } from "./base-query-generator";
+
+interface SelectQueryProcessorContext extends QueryProcessorContext {
+  filterBy: Array<string>;
+  groupBy: Array<GroupBy>;
+  sourceEntity: string;
+  aggregations: Array<Aggregation>;
+  reportName: string;
+}
+
+export const UnknownEntity = "unknown";
 
 /**
  * Used to render a select-style query.
@@ -69,7 +78,7 @@ import { EntityProjections, Joins } from "../../../specification/joins";
  *          field: amount
  * ```
  */
-export class SelectQueryGenerator implements QueryGenerator<SelectQuery> {
+export class SelectQueryGenerator extends BaseQueryGenerator<SelectQuery> {
   /**
    * Renders a SelectQuery as an OpenAPI operation.
    *
@@ -79,32 +88,76 @@ export class SelectQueryGenerator implements QueryGenerator<SelectQuery> {
    * @param graph          The dependency graph, used to walk the query joins.
    */
   public render(query: SelectQuery, context: QueryProcessorContext): void {
-    const from = asArray(query.from);
-    const filterBy = asArray(query.filterBy);
-
-    checkNotNull(query, "query must be specified.");
-    checkNotNull(context, "context must be specified.");
-
-    checkNotEmpty(from, "query must have at least one from field defined.");
-
-    const aggregations = this.getAggregations(query);
+    const filterBy = asArray(query.given);
     const groupBy = this.getGroupBy(query);
     const sourceEntity = this.determineSourceEntity(query, groupBy, context.graph);
-    const operationId = this.renderOperationId(sourceEntity, aggregations, groupBy);
-    const summary = this.renderSummary(sourceEntity, aggregations, asArray(query.filterBy), groupBy);
-    const url = this.renderUrl(query, operationId);
-    const tag = this.renderTag(query, sourceEntity);
-    const responseSchema = this.renderResponseSchema(query, groupBy, aggregations, sourceEntity, context);
+    const aggregations = this.getAggregations(query);
+    const reportName = this.renderOperationId(sourceEntity, aggregations, query.name, groupBy);
 
-    OpenAPIBuilder.newBuilder(context.openAPI, context.schemaRegistry)
-      .path(url.path)
-      .get()
-      .withOperationId("list" + filterBy.map(toPascalCase) + "Report" + toPascalCase(operationId))
-      .withSummary(summary)
-      .withParameters([...url.parameters, ...PaginationParameters])
-      .withTag(tag)
-      .withSuccessResponse(200, summary, arraySchema(responseSchema), Metadata)
-      .build();
+    const selectContext: SelectQueryProcessorContext = {
+      filterBy,
+      groupBy,
+      sourceEntity,
+      aggregations,
+      reportName,
+      ...context,
+    };
+
+    return super.render(query, selectContext);
+
+    // const from = asArray(query.from);
+    // const filterBy = asArray(query.filterBy);
+
+    // checkNotNull(query, "query must be specified.");
+    // checkNotNull(context, "context must be specified.");
+
+    // checkNotEmpty(from, "query must have at least one from field defined.");
+
+    // const aggregations = this.getAggregations(query);
+    // const groupBy = this.getGroupBy(query);
+    // const sourceEntity = this.determineSourceEntity(query, groupBy, context.graph);
+    // const operationId = this.renderOperationId(sourceEntity, aggregations, groupBy);
+    // const summary = this.renderSummary(sourceEntity, aggregations, asArray(query.filterBy), groupBy);
+    // const url = this.renderUrl(query, operationId);
+    // const tag = this.renderTag(query, sourceEntity);
+    // const responseSchema = this.renderResponseSchema(query, groupBy, aggregations, sourceEntity, context);
+
+    // OpenAPIBuilder.newBuilder(context.openAPI, context.schemaRegistry)
+    //   .path(url.path)
+    //   .get()
+    //   .withOperationId("list" + filterBy.map(toPascalCase) + "Report" + toPascalCase(operationId))
+    //   .withSummary(summary)
+    //   .withParameters([...url.parameters, ...PaginationParameters])
+    //   .withTag(tag)
+    //   .withSuccessResponse(200, summary, arraySchema(responseSchema), Metadata)
+    //   .build();
+  }
+
+  protected buildUrl(query: SelectQuery, context: QueryProcessorContext): Url {
+    const selectContext: SelectQueryProcessorContext = context as SelectQueryProcessorContext;
+    return this.renderUrl(query, selectContext.reportName);
+  }
+
+  protected buildOperationId(query: SelectQuery, context: QueryProcessorContext): string {
+    const selectContext: SelectQueryProcessorContext = context as SelectQueryProcessorContext;
+
+    return "list" + selectContext.filterBy.map(toPascalCase).join("") + "Report" + toPascalCase(selectContext.reportName);
+  }
+  protected buildSummary(query: SelectQuery, context: QueryProcessorContext): string {
+    const selectContext: SelectQueryProcessorContext = context as SelectQueryProcessorContext;
+    return this.renderSummary(selectContext.sourceEntity, selectContext.aggregations, asArray(query.given), selectContext.groupBy);
+  }
+  protected buildTag(query: SelectQuery, context: QueryProcessorContext): string {
+    const selectContext: SelectQueryProcessorContext = context as SelectQueryProcessorContext;
+    return this.renderTag(query, selectContext.sourceEntity);
+  }
+  protected buildResponse(query: SelectQuery, context: QueryProcessorContext): OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject {
+    const selectContext: SelectQueryProcessorContext = context as SelectQueryProcessorContext;
+    return this.renderResponseSchema(query, selectContext.groupBy, selectContext.aggregations, selectContext.sourceEntity, context);
+  }
+  protected getSourceEntity(query: SelectQuery, context: QueryProcessorContext): string {
+    const selectContext: SelectQueryProcessorContext = context as SelectQueryProcessorContext;
+    return this.determineSourceEntity(query, selectContext.groupBy, context.graph);
   }
 
   /**
@@ -120,7 +173,7 @@ export class SelectQueryGenerator implements QueryGenerator<SelectQuery> {
   private renderUrl(query: SelectQuery, operationId: string): Url {
     const urlBuilder = UrlBuilder.newBuilder();
 
-    asArray(query.filterBy).forEach((filteredEntity) => {
+    asArray(query.given).forEach((filteredEntity) => {
       urlBuilder.path().withNoun(filteredEntity, true).withIdentifier(filteredEntity);
     });
 
@@ -129,7 +182,16 @@ export class SelectQueryGenerator implements QueryGenerator<SelectQuery> {
     return urlBuilder.build();
   }
 
-  private renderOperationId(sourceEntity: string, aggregations: Array<Aggregation>, groupBy: Array<GroupBy>): string {
+  private renderOperationId(
+    sourceEntity: string,
+    aggregations: Array<Aggregation>,
+    name: string | undefined,
+    groupBy: Array<GroupBy>,
+  ): string {
+    if (name) {
+      return toPascalCase(name);
+    }
+
     const aggregationNames = _.chain(aggregations).map(getAggregationMetric).uniq().value();
     let result: string = "";
 
@@ -190,7 +252,7 @@ export class SelectQueryGenerator implements QueryGenerator<SelectQuery> {
     const entities = this.getJoinedEntities(query, graph);
 
     // Remove all entities that are in the filterBy or groupBy.
-    const filterBy = asArray(query.filterBy).map((entity) => entity.toLowerCase());
+    const filterBy = asArray(query.given).map((entity) => entity.toLowerCase());
     const groupBy = this.getGroupByEntities(groupBys).map((entity) => entity.toLowerCase());
 
     const candidates = entities.filter((entity: string): boolean => {
@@ -207,7 +269,7 @@ export class SelectQueryGenerator implements QueryGenerator<SelectQuery> {
       return candidates[candidates.length - 1];
     }
 
-    return "unknown";
+    return UnknownEntity;
   }
 
   private getJoinedEntities(query: SelectQuery, graph: DependencyGraph): Array<string> {
@@ -298,7 +360,7 @@ export class SelectQueryGenerator implements QueryGenerator<SelectQuery> {
    * @returns The Open API tag for the query.
    */
   private renderTag(query: SelectQuery, sourceEntity: string): string {
-    const filterBy = asArray(query.filterBy);
+    const filterBy = asArray(query.given);
 
     if (query.tag) {
       return query.tag;
@@ -362,7 +424,11 @@ export class SelectQueryGenerator implements QueryGenerator<SelectQuery> {
       aggregations.properties[name] = schema;
     });
 
-    return result;
+    if (groupBy.length > 0) {
+      return arraySchema(result);
+    } else {
+      return result;
+    }
   }
 
   private projectGroupBy(
@@ -380,35 +446,50 @@ export class SelectQueryGenerator implements QueryGenerator<SelectQuery> {
 
     if (isEntityProjection(projection)) {
       const entity = Joins.viaFrom(projection as EntityProjection);
-      const node = context.graph.get(sourceEntity);
-      if (!node) {
-        throw new PathError(
-          `detected unresolvable edge ${entity}`,
-          JsonPath.resolve(context.jsonPath || "", "select", String(index)),
-          "select",
+      if (UnknownEntity === sourceEntity) {
+        const projectedSchema = EntityProjections.projectionSchema(
+          projection as EntityProjection,
+          entity,
+          JsonPath.resolve(context.jsonPath || "", "select", String(index), entity),
+          context,
         );
-      }
-      const edge = Nodes.findEdge(node, entity);
-      if (!edge) {
-        throw new PathError(
-          `detected unresolvable edge ${entity}`,
-          JsonPath.resolve(context.jsonPath || "", "select", String(index)),
-          "select",
+
+        const schemaObj = asSchemaObject(projectedSchema);
+
+        result.properties = result.properties || {};
+        result.properties[entity] = schemaObj;
+      } else {
+        const node = context.graph.get(sourceEntity);
+        if (!node) {
+          throw new PathError(
+            `detected unresolvable edge ${entity}`,
+            JsonPath.resolve(context.jsonPath || "", "select", String(index)),
+            "select",
+          );
+        }
+        const edge = Nodes.findEdge(node, entity);
+        if (!edge) {
+          throw new PathError(
+            `detected unresolvable edge ${entity}`,
+            JsonPath.resolve(context.jsonPath || "", "select", String(index)),
+            "select",
+          );
+        }
+        // const entitySchema: EntitySchema = context.schemaRegistry.get(edge?.node.name);
+
+        // const entitySchema: EntitySchema = context.schemaRegistry.get(entity);
+        const projectedSchema = EntityProjections.projectionSchema(
+          projection as EntityProjection,
+          edge?.node.name,
+          JsonPath.resolve(context.jsonPath || "", "select", String(index), entity),
+          context,
         );
+
+        const schemaObj = asSchemaObject(projectedSchema);
+
+        result.properties = result.properties || {};
+        result.properties[entity] = !distinct && Cardinality.isToMany(edge.cardinality) ? arraySchema(schemaObj) : schemaObj;
       }
-      const entitySchema: EntitySchema = context.schemaRegistry.get(edge?.node.name);
-
-      // const entitySchema: EntitySchema = context.schemaRegistry.get(entity);
-      const projectedSchema = EntityProjections.projectionSchema(
-        projection as EntityProjection,
-        entitySchema,
-        JsonPath.resolve(context.jsonPath || "", "select", String(index), entity),
-      );
-
-      const schemaObj = asSchemaObject(projectedSchema);
-
-      result.properties = result.properties || {};
-      result.properties[entity] = !distinct && Cardinality.isToMany(edge.cardinality) ? arraySchema(schemaObj) : schemaObj;
     } else if (isViaEntry(projection)) {
       const viaEntry = projection as ViaEntry;
       const node = context.graph.get(sourceEntity);

@@ -2,25 +2,90 @@ import { OpenAPIV3 } from "openapi-types";
 
 import { asArray, toSummaryCase } from "../util";
 
-import { FindQueryGenerator } from "./find-query";
+import { FindQueryGenerator, FindQueryProcessorContext } from "./find-query";
 import { QueryProcessorContext } from "./query-generator";
 
-import { aOrAn, toPascalCase } from "../../../common";
-import { RetrieveQuery } from "../../../specification";
+import { JsonPath, aOrAn, toPascalCase } from "../../../common";
+import { PathError } from "../../../common/io";
+import { JoinDirective, RetrieveQuery } from "../../../specification";
 import { Joins } from "../../../specification/joins";
+import { Url, UrlBuilder } from "../builder";
 
 export class FindOneQueryGenerator extends FindQueryGenerator<RetrieveQuery> {
   protected getFindKeyword(): keyof RetrieveQuery {
     return "findOne";
   }
 
-  protected buildOperationId(query: RetrieveQuery): string {
+  /**
+   * Runs all pre-check validations on the query.
+   *
+   * @param query   The query to render.
+   * @param context The execution context.
+   */
+  protected beforeRender(query: RetrieveQuery, context: FindQueryProcessorContext): void {
+    super.beforeRender(query, context);
+
+    const givenDirectives = context.givenDirectives;
+    const findDirective = context.findDirective;
+    if (!givenDirectives || !findDirective) {
+      throw new Error("illegal state");
+    }
+
+    if (givenDirectives.length > 0) {
+      const lastGiven = givenDirectives[givenDirectives.length - 1];
+      if (lastGiven.entity() !== findDirective.entity()) {
+        throw new PathError(
+          `final given entity should match "findOne" entity, looking for [${lastGiven.entity()}] but found [${findDirective.entity()}]`,
+          JsonPath.resolve(context.jsonPath || "", "findOne"),
+          "findOne",
+        );
+      }
+    }
+  }
+
+  protected buildOperationId(query: RetrieveQuery, context: FindQueryProcessorContext): string {
     if (query.name) {
       return query.name;
     }
 
-    const entities = asArray(query.findOne);
-    return "retrieve" + entities.map((entity) => toPascalCase(Joins.viaFrom(entity))).join("");
+    const givenDirectives = context.givenDirectives;
+    const findDirective = context.findDirective;
+    if (!givenDirectives || !findDirective) {
+      throw new Error("illegal state");
+    }
+
+    if (query.filterableBy || query.sortableBy) {
+      return "retrieve" + toPascalCase(findDirective.path());
+    }
+
+    return "retrieve" + givenDirectives.map((directive) => toPascalCase(directive.path())).join("");
+  }
+
+  protected buildUrl(query: RetrieveQuery, context: FindQueryProcessorContext): Url {
+    const givenDirectives = context.givenDirectives;
+    const findDirective = context.findDirective;
+    if (!givenDirectives || !findDirective) {
+      throw new Error("illegal state");
+    }
+
+    const urlBuilder = UrlBuilder.newBuilder();
+    const pathBuilder = urlBuilder.path();
+
+    if (query.filterableBy || query.sortableBy) {
+      pathBuilder.withNoun("retrieve", false);
+      pathBuilder.withNoun(findDirective.asIdentifier(context), false);
+    }
+
+    givenDirectives.forEach((directive) => {
+      if (directive.isSingleton(context)) {
+        pathBuilder.withNoun(directive.path(), false);
+      } else {
+        pathBuilder.withNoun(directive.path(), true);
+        pathBuilder.withIdentifier(directive.path());
+      }
+    });
+
+    return urlBuilder.build();
   }
 
   protected buildSummary(query: RetrieveQuery): string {
@@ -28,7 +93,7 @@ export class FindOneQueryGenerator extends FindQueryGenerator<RetrieveQuery> {
       return query.summary;
     }
 
-    const entities = asArray(query.findOne);
+    const entities = asArray<JoinDirective>(query.findOne);
     const sourceDirective = entities.pop();
 
     if (!sourceDirective) {

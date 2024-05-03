@@ -3,11 +3,36 @@ info:
   title: "TODO: Insert title"
   version: 0.0.0
 
-tags: []
+tags:
+  - name: Query
+    description: Query operations.
 
 servers: []
 
-paths: {}
+paths:
+  "/queries/{queryId}":
+    post:
+      operationId: executeQuery
+      description: >
+        Executes a named query.
+      tags:
+        - Query
+      parameters:
+        - $ref: "#/components/parameters/QueryIdParameter"
+      requestBody:
+        $ref: "#/components/requestBodies/ExecuteQueryRequest"
+      responses:
+        200:
+          $ref: "#/components/responses/ExecuteQueryResponse"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        403:
+          $ref: "#/components/responses/Forbidden"
+        404:
+          $ref: "#/components/responses/NotFound"
+      x-apres-known-queries: {}
 
 components:
   parameters:
@@ -28,8 +53,7 @@ components:
         For example please list the "limit" records after the given optional "offset" position.
       required: false
       schema:
-        type: number
-        minimum: 0
+        $ref: "#/components/schemas/Limit"
 
     OffsetParameter:
       in: query
@@ -41,10 +65,23 @@ components:
         For example please list the "limit" records after the given optional "offset" position.
       required: false
       schema:
-        type: number
-        minimum: 0
+        $ref: "#/components/schemas/Offset"
 
-  requestBodies: {}
+    QueryIdParameter:
+      in: path
+      name: queryId
+      required: true
+      schema:
+        $ref: "#/components/schemas/QueryIdentifier"
+      example: territory.contacts.trend
+
+  requestBodies:
+    ExecuteQueryRequest:
+      content:
+        "application/json":
+          schema:
+            $ref: "#/components/schemas/ExecuteQueryRequest"
+
   responses:
     # ##################################################################################################################
     # Common Success Modes
@@ -52,6 +89,14 @@ components:
     NoContent:
       description: >
         The request completed successfully.  No response body will be sent.
+
+    ExecuteQueryResponse:
+      description: A response containing the results of the query
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ExecuteQueryResponse"
+          examples: {}
 
     # ##################################################################################################################
     # Failure Modes
@@ -71,21 +116,6 @@ components:
                 - message: bad_request
                   description: The supplied value was invalid.
                   path: request
-
-    # 404 Not Found
-    NotFound:
-      description: >
-        An error occurred.  The client requested a resource that does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/APIError"
-          example:
-            status: failure
-            data:
-              errors:
-                - message: not_found
-                  description: Could not find to requested resource.
 
     # 401 Unauthorized
     Unauthorized:
@@ -116,6 +146,21 @@ components:
               errors:
                 - message: forbidden
                   description: The client does not have the access right for the content.
+
+    # 404 Not Found
+    NotFound:
+      description: >
+        An error occurred.  The client requested a resource that does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/APIError"
+          example:
+            status: failure
+            data:
+              errors:
+                - message: not_found
+                  description: Could not find to requested resource.
 
     # 409 Conflict
     Conflict:
@@ -206,9 +251,28 @@ components:
       type: string
       minLength: 1
 
-    EntityIdentifier:
+    QueryIdentifier:
       type: string
-      format: uuid
+
+    ExecuteQueryRequest:
+      type: object
+      properties:
+        filterBy:
+          type: object
+          additionalProperties: {}
+        orderBy:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              direction:
+                $ref: "#/components/schemas/SortDirection"
+        limit:
+          $ref: "#/components/schemas/Limit"
+        offset:
+          $ref: "#/components/schemas/Offset"
 
     Metadata:
       type: object
@@ -223,7 +287,129 @@ components:
       type: object
       properties:
         query:
-          type: string          
+          type: string
+
+    SortDirection:
+      type: string
+      enum: ["asc", "desc"]
+
+    Limit:
+      type: integer
+      minimum: 0
+
+    Offset:
+      type: integer
+      minimum: 0
+
+    ValueType:
+      description: The data type of the values
+      type: object
+      required:
+        - "type"
+      properties:
+        type:
+          type: string
+          enum:
+            - string
+            - integer
+            - number
+            - boolean
+            - object
+            - array
+        format:
+          type: string
+        items:
+          $ref: "#/components/schemas/ValueType"
+        properties:
+          additionalProperties:
+            $ref: "#/components/schemas/ValueType"
+
+    ColumnType:
+      description: >
+        The role of the column in the results
+          * attribute: column from a simple projection
+          * dimension: column from an aggregation query used in the 'group by' clause
+          * measure: column aggregated in an aggregation query
+          * constant: a constant value
+          * document: column with the full JSON payload of the record
+      type: string
+      enum:
+        - attribute
+        - dimension
+        - measure
+        - constant
+        - document
+    QueryResponseColumn:
+      type: object
+      properties:
+        name:
+          description: The name of the column
+          type: string
+          example: client.ip
+        columnType:
+          $ref: "#/components/schemas/ColumnType"
+        dataType:
+          $ref: "#/components/schemas/ValueType"
+        sortable:
+          description: Whether the column is sortable
+          type: boolean
+      required:
+        - name
+        - columnType
+        - dataType
+        - sortable
+    QueryResponseInterval:
+      description: The time interval used to query the backend database
+      type: object
+      properties:
+        start:
+          description: The start of the time interval (inclusive)
+          type: string
+          format: date-time
+        end:
+          description: The end of the time interval (exclusive)
+          type: string
+          format: date-time
+      example:
+        start: 2021-01-01T12:34:56
+        end: 2021-01-01T18:34:56
+    QueryMetadata:
+      type: object
+      required:
+        - columns
+        - offset
+      properties:
+        total:
+          description: Total number of records in the results
+          type: integer
+          format: int64
+          minimum: 0
+          example: 123456
+        offset:
+          description: Offset to use to get the next page of results
+          type: integer
+          format: int32
+          minimum: -1
+          example: 100
+        columns:
+          description: Metadata about the columns in the response
+          type: array
+          items:
+            $ref: "#/components/schemas/QueryResponseColumn"
+
+    ExecuteQueryResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        metadata:
+          $ref: "#/components/schemas/QueryMetadata"
+        data:
+          description: Results as an array of rows, each with an array of values
+          type: array
+          items:
+            type: array
+            items: {}
 
     # ##################################################################################################################
     # Failure Mode Domain Objects

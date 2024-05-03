@@ -3,7 +3,7 @@ import { AnySchema } from "../specification";
 
 import { SchemaRegistry } from "./schema_registry";
 
-export const EntityIdentifier = {
+export const EntityIdentifierRef = {
   $ref: "#/components/schemas/EntityIdentifier",
 };
 
