@@ -1,13 +1,12 @@
 import { pluralize } from "../common";
 import { SchemaRegistry } from "../models";
-import { DeepReadonly } from "../util";
 
 import { getOrSet } from "./util";
 
-import { Cardinality, RelationshipType, ServiceSpecification } from ".";
+import { Cardinality, EntityName, RelationshipType, ServiceSpecification } from ".";
 
 export interface Node {
-  name: string;
+  name: EntityName;
   parent?: Edge;
   children: Set<Edge>;
   aggregations: Set<Edge>;
@@ -65,7 +64,7 @@ export interface Ancestor {
 }
 export type Ancestry = Array<Ancestor>;
 
-export function buildGraph(service: DeepReadonly<ServiceSpecification>, schemaRegistry: SchemaRegistry): DependencyGraph {
+export function buildGraph(service: ServiceSpecification, schemaRegistry: SchemaRegistry): DependencyGraph {
   const nodes: Map<string, Node> = new Map<string, Node>();
 
   for (const relationship of service.relationships || []) {

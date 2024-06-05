@@ -12,6 +12,7 @@ import { asSchemaObject } from "../../entities/entities";
 import { SchemaRegistry, enforcePropertyCase } from "../../models";
 import {
   EntitySchema,
+  Fragments,
   Mutation,
   Queries,
   ServiceSpecification,
@@ -19,7 +20,8 @@ import {
   getServicePath,
   getServiceSourceMap,
 } from "../../specification";
-import { DeepReadonly, dumpJson } from "../../util";
+import { dumpJson, sortKeys } from "../../util";
+import { FragmentsProcessor } from "./fragment-processor";
 import { lintSpecification } from "./lint";
 
 export class OpenAPIGenerator implements CodeGenerator {
@@ -30,7 +32,7 @@ export class OpenAPIGenerator implements CodeGenerator {
     this.outfile = outfile;
   }
   public async generate(
-    serviceSpecification: DeepReadonly<ServiceSpecification>,
+    serviceSpecification: ServiceSpecification,
     schemaRegistry: SchemaRegistry,
     openAPISpecification: OpenAPISpecification,
     results: FileErrors,
@@ -42,7 +44,7 @@ export class OpenAPIGenerator implements CodeGenerator {
     this.writeSpecification(openAPISpecification);
   }
 
-  private generateinfo(serviceSpecification: DeepReadonly<ServiceSpecification>, openAPISpecification: OpenAPISpecification) {
+  private generateinfo(serviceSpecification: ServiceSpecification, openAPISpecification: OpenAPISpecification) {
     openAPISpecification.info = {
       title: serviceSpecification.info.title,
       version: serviceSpecification.info.version,
@@ -70,7 +72,7 @@ export class OpenAPIGenerator implements CodeGenerator {
    * @param openAPISpecification The OpenAPI specification.
    */
   private generateOperations(
-    serviceSpecification: DeepReadonly<ServiceSpecification>,
+    serviceSpecification: ServiceSpecification,
     schemaRegistry: SchemaRegistry,
     openAPISpecification: OpenAPISpecification,
     results: FileErrors,
@@ -78,8 +80,20 @@ export class OpenAPIGenerator implements CodeGenerator {
     // Build the dependency graph.
     const graph = buildGraph(serviceSpecification, schemaRegistry);
 
-    const queriesProcessor = new QueriesProcessor(results);
+    if (serviceSpecification.operations.fragments) {
+      const fragmentProcessor = new FragmentsProcessor(results);
+      fragmentProcessor.processModel(serviceSpecification.operations.fragments as Fragments, {
+        path: getServicePath(),
+        sourceMap: getServiceSourceMap(),
+        schemaRegistry,
+        openAPI: openAPISpecification,
+        graph,
+        jsonPath: "operations.fragments",
+        specification: serviceSpecification as ServiceSpecification,
+      });
+    }
 
+    const queriesProcessor = new QueriesProcessor(results);
     queriesProcessor.processModel(serviceSpecification.operations.queries as Queries, {
       path: getServicePath(),
       sourceMap: getServiceSourceMap(),
@@ -114,6 +128,12 @@ export class OpenAPIGenerator implements CodeGenerator {
   }
 
   private writeSpecification(openAPISpecification: OpenAPISpecification) {
+    // Order tags by name alphabetically
+    openAPISpecification.tags = (openAPISpecification.tags || []).sort((a, b) => a.name.localeCompare(b.name));
+
+    // Order paths by path URL alphabetically
+    openAPISpecification.paths = sortKeys(openAPISpecification.paths);
+
     dumpJson(openAPISpecification, this.outfile);
   }
 

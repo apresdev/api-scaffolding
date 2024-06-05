@@ -2,10 +2,11 @@ import _ = require("underscore");
 
 import { Predicates } from "../common";
 
-import { Aggregation, FieldName } from "./aggregations";
+import { Aggregation } from "./aggregations";
 import { Policies } from "./policies";
 
 import { IncludeDirective } from ".";
+import { NamedQuery } from "./named-query";
 
 export type EntityName = string;
 export type RelationshipName = string;
@@ -213,6 +214,12 @@ export interface Operations {
    * A declaration of all mutations provided by the service.
    */
   mutations: Mutations;
+
+  /**
+   * A collection of projection fragments. Used when multiple APIs return similar data.
+   */
+  fragments?: Fragments;
+
   /**
    * A declaration of all queries provided by the service.
    */
@@ -240,9 +247,16 @@ export interface Mutation {
 }
 
 export type Queries = Array<Query>;
-export type Query = ListQuery | RetrieveQuery | SearchQuery | SelectQuery | IncludeDirective;
+export type Query = ListQuery | RetrieveQuery | SearchQuery | SelectQuery | IncludeDirective | NamedQuery;
 export type JoinDirective = ViaEntry | EntityProjection;
 export type Join = Array<JoinDirective>;
+export type FragmentName = string;
+
+export interface Fragment {
+  name: FragmentName;
+  on: EntityProjection;
+}
+export type Fragments = Array<Fragment | IncludeDirective>;
 
 export interface BaseQuery {
   /**
@@ -264,14 +278,28 @@ export interface BaseQuery {
    * The optional operation tag.
    */
   tag?: string;
+
+  /**
+   * The collection of fields that may be used for server side filtering.
+   *
+   * Note, this affects
+   */
+  filterableBy?: Array<EntityProjection>;
+
+  /**
+   * The collection of fields that may be used for server side sorting.
+   */
+  sortableBy?: Array<EntityProjection>;
 }
 
 export interface FindQuery extends BaseQuery {
   /**
    * The option entity or entities to filter the query by.
    * Currently assumes that the entity and entity identifier are included in the path of the query.
+   *
+   * Note, this affects path parameters in the operation URL.
    */
-  filterBy?: EntityName | Array<EntityName>;
+  given?: EntityName | Array<EntityName>;
 
   /**
    * The collection of entity or entities to join in the result set.
@@ -284,7 +312,7 @@ export interface FindQuery extends BaseQuery {
  * The entity or entities to find in a query.
  * Currently assumes that the last entity in the list is the "source entity" for a query.
  */
-export type FindType = JoinDirective | Array<JoinDirective>;
+export type FindType = JoinDirective; // | Array<JoinDirective>;
 
 /**
  * A query operation that is expected to return a list of source entities.
@@ -322,15 +350,15 @@ export interface SearchQuery extends BaseQuery {
  * @minProperties 1
  * @maxProperties 1
  */
-export type EntityProjection = Record<ViaEntry, Array<FieldName>>;
+export type EntityProjection = Record<ViaEntry, Array<JoinDirective>>;
 
-const isNotArrayOfStrings = Predicates.not(Predicates.eachArrayItem(Predicates.isString()));
+const isProjectedColumn = Predicates.not(Predicates.eachArrayItem(Predicates.or(Predicates.isString(), isEntityProjection)));
 
 /**
  * Determines if a value is an entity project.
  *
  * @param value The entity project or aggregation to check.
- * @returns true if and only if the the value is an object where every propert is an array of strings.
+ * @returns true if and only if the the value is an object where every property is an array of strings.
  */
 export function isEntityProjection(value: GroupBy | Aggregation): boolean {
   if (typeof value !== "object") {
@@ -339,7 +367,7 @@ export function isEntityProjection(value: GroupBy | Aggregation): boolean {
 
   const record = value as Record<string, unknown>;
   const exceptions = _.chain(Object.keys(value as Record<string, unknown>))
-    .filter((key: string) => isNotArrayOfStrings(record[key] as never))
+    .filter((key: string) => isProjectedColumn(record[key] as never))
     .value();
 
   return exceptions.length === 0;
@@ -379,22 +407,7 @@ export type Projection = ViaEntry | EntityProjection;
 export type GroupBy = DistinctProjection | Projection;
 
 // TODO: Make this extend base query.  For now I want the freedom to change things.
-export interface SelectQuery {
-  /**
-   * The name of the query.
-   */
-  name?: string;
-
-  /**
-   * A short summary of what the query does.
-   */
-  summary?: string;
-
-  /**
-   * A verbose explanation of the query behavior. CommonMark syntax MAY be used for rich text representation.
-   */
-  description?: string;
-
+export interface SelectQuery extends BaseQuery {
   /**
    * The values to project.
    */
@@ -410,12 +423,7 @@ export interface SelectQuery {
    * The option entity or entities to filter the query by.
    * Currently assumes that the entity and entity identifier are included in the path of the query.
    */
-  filterBy?: EntityName | Array<EntityName>;
-
-  /**
-   * The optional operation tag.
-   */
-  tag?: string;
+  given?: EntityName | Array<EntityName>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-namespace

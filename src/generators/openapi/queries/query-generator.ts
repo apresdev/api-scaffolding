@@ -1,7 +1,7 @@
 import { OpenAPISpecification } from "../types";
 
 import { SchemaRegistry } from "../../../models";
-import { DependencyGraph, Query, ServiceSpecification } from "../../../specification";
+import { BaseQuery, DependencyGraph, ServiceSpecification } from "../../../specification";
 
 /**
  * The query processing execution context.
@@ -33,7 +33,7 @@ export interface QueryProcessorContext {
  * The base interface for a query generator.
  */
 
-export interface QueryGenerator<T extends Query> {
+export interface QueryGenerator<T extends BaseQuery> {
   /**
    * Renders a Query as an OpenAPI operation.
    *

@@ -1,0 +1,104 @@
+{
+  "$ref": "#/definitions/Fragments",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "EntityName": {
+      "type": "string"
+    },
+    "EntityProjection": {
+      "additionalProperties": {
+        "items": {
+          "$ref": "#/definitions/JoinDirective"
+        },
+        "type": "array"
+      },
+      "description": "A projection clause that lists which entity fields to include in the result set.",
+      "maxProperties": 1,
+      "minProperties": 1,
+      "type": "object"
+    },
+    "Fragment": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/definitions/FragmentName"
+        },
+        "on": {
+          "$ref": "#/definitions/EntityProjection"
+        }
+      },
+      "required": [
+        "name",
+        "on"
+      ],
+      "type": "object"
+    },
+    "FragmentName": {
+      "type": "string"
+    },
+    "Fragments": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/Fragment"
+          },
+          {
+            "$ref": "#/definitions/IncludeDirective"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "IncludeDirective": {
+      "additionalProperties": false,
+      "properties": {
+        "$include": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/IncludePath"
+            },
+            {
+              "$ref": "#/definitions/IncludePaths"
+            }
+          ]
+        }
+      },
+      "required": [
+        "$include"
+      ],
+      "type": "object"
+    },
+    "IncludePath": {
+      "type": "string"
+    },
+    "IncludePaths": {
+      "items": {
+        "$ref": "#/definitions/IncludePath"
+      },
+      "type": "array"
+    },
+    "JoinDirective": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ViaEntry"
+        },
+        {
+          "$ref": "#/definitions/EntityProjection"
+        }
+      ]
+    },
+    "RelationshipName": {
+      "type": "string"
+    },
+    "ViaEntry": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/EntityName"
+        },
+        {
+          "$ref": "#/definitions/RelationshipName"
+        }
+      ]
+    }
+  }
+}

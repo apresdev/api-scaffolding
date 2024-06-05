@@ -5,6 +5,8 @@ import { ContainerParams, OpenAPISpecification } from "./types";
 import { toCamelCase, toKebabCase, toPascalCase, toTitleCase } from "../../common";
 import { EntitySchema } from "../../specification";
 
+export const CONTENT_TYPE_JSON = "application/json";
+
 export function pathParameterName(param: string): string {
   return `${toPascalCase(param)}IdParameter`;
 }

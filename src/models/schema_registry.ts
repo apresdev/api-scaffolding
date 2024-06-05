@@ -1,5 +1,5 @@
 import { toPascalCase } from "../common";
-import { AnySchema, EntitySchema } from "../specification";
+import { AnySchema, EntitySchema, Fragment } from "../specification";
 
 /**
  * The schema registry stores all known schemas in the system.
@@ -10,6 +10,7 @@ export class SchemaRegistry {
    */
   private schemas: Map<string, EntitySchema>;
   private aliases: Map<string, string>;
+  private fragments: Map<string, Fragment>;
   private naturalIdenfiers: Set<string>;
 
   /**
@@ -18,6 +19,7 @@ export class SchemaRegistry {
   constructor() {
     this.schemas = new Map<string, EntitySchema>();
     this.aliases = new Map<string, string>();
+    this.fragments = new Map<string, Fragment>();
     this.naturalIdenfiers = new Set<string>();
   }
 
@@ -102,5 +104,13 @@ export class SchemaRegistry {
    */
   public forEach(callbackFn: (value: EntitySchema, key: string) => void) {
     this.schemas.forEach(callbackFn);
+  }
+
+  public registerFragment(fragment: Fragment): void {
+    this.fragments.set(fragment.name, fragment);
+  }
+
+  public getFragment(name: string): Fragment | undefined {
+    return this.fragments.get(name);
   }
 }

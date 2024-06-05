@@ -8,26 +8,28 @@ import { FindOneQueryGenerator } from "./find-one-query";
 import { QueryGenerator, QueryProcessorContext } from "./query-generator";
 import { SearchQueryGenerator } from "./search-query";
 import { SelectQueryGenerator } from "./select-query";
-import { isListQuery, isRetrieveQuery, isSearchQuery, isSelectQuery } from "./util";
+import { isListQuery, isNamedQuery, isRetrieveQuery, isSearchQuery, isSelectQuery } from "./util";
 
 import { FileErrors, SchemaValidator, SourceMaps } from "../../../common";
 import { FileProcessor, FileProcessorContext, PathError } from "../../../common/io";
 import { PathProcessor } from "../../../common/io/path-processor";
 import * as queriesSchema from "../../../schemas/queries.json";
-import { IncludeDirective, Queries, Query, isIncludeDirective } from "../../../specification";
+import { BaseQuery, IncludeDirective, Queries, Query, isIncludeDirective } from "../../../specification";
+import { NamedQueryGenerator } from "./named-query";
 
 const queriesValidator = new SchemaValidator<Queries>(queriesSchema, new SourceMaps());
 
-interface QueryGeneratorEntry<T extends Query> {
-  predicate: (query: Query) => boolean;
+interface QueryGeneratorEntry<T extends BaseQuery> {
+  predicate: (query: BaseQuery) => boolean;
   generator: QueryGenerator<T>;
 }
 
-const queryGenerators: Array<QueryGeneratorEntry<Query>> = [
+const queryGenerators: Array<QueryGeneratorEntry<BaseQuery>> = [
   { predicate: isSelectQuery, generator: new SelectQueryGenerator() },
   { predicate: isSearchQuery, generator: new SearchQueryGenerator() },
   { predicate: isListQuery, generator: new FindAllQueryGenerator() },
   { predicate: isRetrieveQuery, generator: new FindOneQueryGenerator() },
+  { predicate: isNamedQuery, generator: new NamedQueryGenerator() },
 ];
 
 /**
@@ -63,7 +65,7 @@ export class QueriesProcessor extends FileProcessor<Queries, QueryProcessorConte
           });
         } else {
           // ... otherise, render the query.
-          this.processQuery(query, { ...context, jsonPath: String(index) });
+          this.processQuery(query as BaseQuery, { ...context, jsonPath: String(index) });
         }
       } catch (err) {
         if (typeof err === "string") {
@@ -104,7 +106,7 @@ export class QueriesProcessor extends FileProcessor<Queries, QueryProcessorConte
    * @param query   The $include directive.
    * @param context The execution context.
    */
-  private processQuery<T extends Query>(query: T, context: QueryProcessorContext): void {
+  private processQuery<T extends BaseQuery>(query: T, context: QueryProcessorContext): void {
     const entry: QueryGeneratorEntry<T> | undefined = queryGenerators.find((entry) => entry.predicate(query));
 
     if (!entry) {

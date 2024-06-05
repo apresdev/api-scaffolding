@@ -16,7 +16,13 @@ export function dumpYaml<T>(data: T, path: string) {
   );
 }
 
-export function dumpJson<T>(data: T, path: string) {
+export function sortKeys<T extends object>(data: T): T {
+  return Object.entries(data)
+    .sort()
+    .reduce((r, [k, v]) => ({ ...r, [k]: v }), {}) as T;
+}
+
+export function dumpJson<T extends object>(data: T, path: string) {
   fs.writeFileSync(path, JSON.stringify(data, null, 2), "utf8");
 }
 

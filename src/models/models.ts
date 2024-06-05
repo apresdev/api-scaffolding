@@ -18,12 +18,13 @@ import {
   RelationshipSchema,
   RelationshipType,
   ServiceSpecification,
+  StringSchema,
   getServicePath,
 } from "../specification";
 import { directoryName, fileNameWithoutExtension } from "../util";
 
 import { SchemaRegistry } from "./schema_registry";
-import { EntityIdentifier, defineIdentifier } from "./util";
+import { EntityIdentifierRef, defineIdentifier } from "./util";
 
 import * as dataTypeScema from "../schemas/any.json";
 import * as entitySchema from "../schemas/model.json";
@@ -33,8 +34,15 @@ const sourceMaps = new SourceMaps();
 const entityValidator = new SchemaValidator<EntitySchema>(entitySchema, sourceMaps);
 const referenceValidator = new SchemaValidator<AnySchema>(dataTypeScema, sourceMaps);
 
+const EntityIdentifier: StringSchema = {
+  type: "string",
+  format: "uuid",
+};
+
 export function loadEntities(service: ServiceSpecification, results: FileErrors): SchemaRegistry {
   const schemaRegistry: SchemaRegistry = new SchemaRegistry();
+
+  schemaRegistry.set("EntityIdentifier", EntityIdentifier);
   const modelProcessor = new ModelProcessor(service, schemaRegistry, results);
 
   for (const entity of service.entities) {
@@ -88,7 +96,7 @@ class ModelProcessor extends FileProcessor<EntitySchema, ModelProcessorContext> 
     // If the model is expected to be mutable, create an Input model, this includes all of user defined properties, but excludes all system
     // defined properties, like id, version, created_at, etc.
     if (isMutable(inputModel)) {
-      postProcessInputModel(inputModel);
+      postProcessInputModel(inputModel, this.schemaRegistry);
       removeLinkProperties(inputModel);
       this.schemaRegistry.set(toPascalCase(context.entity) + "Input", inputModel as EntitySchema);
     }
@@ -166,7 +174,7 @@ class ModelProcessor extends FileProcessor<EntitySchema, ModelProcessorContext> 
       idenfierSchema = model.properties["id"];
       delete model.properties["id"];
     } else {
-      idenfierSchema = EntityIdentifier;
+      idenfierSchema = EntityIdentifierRef;
     }
     defineIdentifier(context.entity, this.schemaRegistry, idenfierSchema);
   }
@@ -270,10 +278,10 @@ function embedParentId(relationship: Relationship, schemaRegistry: SchemaRegistr
 
   // Insert the parent identifier in the schema.
   const entitySchema: EntitySchema = schemaRegistry.get(relationship.right);
+  const parentId = toCamelCase(relationship.left) + "Id";
+  entitySchema.required = [...(entitySchema.required || []), parentId];
   entitySchema.properties = entitySchema.properties || {};
-  entitySchema.properties[toCamelCase(relationship.left) + "Id"] = entitySchemaRef(
-    toPascalCase(relationship.left) + "Identifier",
-  ) as ReferenceSchema;
+  entitySchema.properties[parentId] = entitySchemaRef(toPascalCase(relationship.left) + "Identifier") as ReferenceSchema;
   schemaRegistry.set(relationship.right, entitySchema);
 }
 
@@ -546,18 +554,18 @@ function ensureEntityExists(sourceEntity: string, linkedEntity: string, path: st
 //   }
 // }
 
-function postProcessInputModel(model: EntitySchema) {
-  removeReadOnlyFields(model);
+function postProcessInputModel(model: EntitySchema, schemaRegistry: SchemaRegistry) {
+  removeReadOnlyFields(model, schemaRegistry);
 }
 
-function removeReadOnlyFields(model: EntitySchema) {
+function removeReadOnlyFields(model: EntitySchema, schemaRegistry: SchemaRegistry) {
   // Remove all properties that are flagged as readOnly
   visitSchema(model, (schema) => {
     if ("properties" in schema) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const properties = schema.properties as any;
       Object.keys(properties).forEach((property) => {
-        if (properties[property].readOnly) {
+        if (isReadOnly(properties[property], schemaRegistry)) {
           delete properties[property];
         }
       });
@@ -580,13 +588,26 @@ function removeReadOnlyFields(model: EntitySchema) {
   }
 }
 
+function isReadOnly(schema: AnySchema, schemaRegistry: SchemaRegistry): boolean {
+  if ("readOnly" in schema) {
+    return schema["readOnly"] === true;
+  }
+
+  if ("$ref" in schema) {
+    const parts = schema.$ref.split("/");
+    return isReadOnly(schemaRegistry.get(parts[parts.length - 1]), schemaRegistry);
+  }
+
+  return false;
+}
+
 function processModelIdentifier(entity: string, model: EntitySchema, schemaRegistry: SchemaRegistry) {
   let idenfierSchema;
   if (model.properties && "id" in model.properties) {
     idenfierSchema = model.properties["id"];
     delete model.properties["id"];
   } else {
-    idenfierSchema = EntityIdentifier;
+    idenfierSchema = EntityIdentifierRef;
   }
   defineIdentifier(entity, schemaRegistry, idenfierSchema);
 }
@@ -673,10 +694,16 @@ function preProcessReferences(schema: AnySchema, model: AnySchema, models: Schem
 }
 
 const INTERNAL_REFERENCE_PREFIX = "#/definitions/";
+const OPENAPI_REFERENCE_PREFIX = "#/components/schemas/";
 
 function resolveReference($ref: string | undefined, model: AnySchema, models: SchemaRegistry, results: FileErrors): string {
   if (!$ref) {
     throw new Error("Detected null or missing $ref value");
+  }
+
+  if ($ref.startsWith(OPENAPI_REFERENCE_PREFIX)) {
+    // This has already been resolved.
+    return $ref;
   }
 
   if ($ref.startsWith(INTERNAL_REFERENCE_PREFIX)) {

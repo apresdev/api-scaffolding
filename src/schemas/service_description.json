@@ -189,6 +189,154 @@
       ],
       "description": "The top level Aggregation, includes all optional fields and is either a metric or bucket aggregation."
     },
+    "AnySchema": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ValueSchema"
+        },
+        {
+          "$ref": "#/definitions/ReferenceSchema"
+        },
+        {
+          "$ref": "#/definitions/RelationshipSchema"
+        }
+      ],
+      "description": "References any valid sub-schema."
+    },
+    "ArraySchema": {
+      "additionalProperties": false,
+      "description": "Arrays are used for ordered elements. In JSON, each element in an array may be of a different type.",
+      "properties": {
+        "calculated": {
+          "description": "Flag the indicates that the schema contents are calculated (defaults false).",
+          "type": "boolean"
+        },
+        "default": {
+          "items": {},
+          "type": "array"
+        },
+        "definitions": {
+          "$ref": "#/definitions/Definitions"
+        },
+        "description": {
+          "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "editable": {
+          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "type": "boolean"
+        },
+        "example": {
+          "items": {},
+          "type": "array"
+        },
+        "examples": {
+          "items": {
+            "items": {},
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "items": {
+          "$ref": "#/definitions/AnySchema",
+          "description": "List validation is useful for arrays of arbitrary length where each item matches the same schema. For this kind of array, set the `items` keyword to a single schema that will be used to validate all of the items in the array."
+        },
+        "maxItems": {
+          "description": "The maximum length of the array can be specified using the `maxItems` keywords. The value of each keyword must be a non-negative number.",
+          "type": "number"
+        },
+        "minItems": {
+          "description": "The minimum length of the array can be specified using the `minItems` keywords. The value of each keyword must be a non-negative number.",
+          "type": "number"
+        },
+        "readOnly": {
+          "description": "Flag the indicates that the schema contents are read-only (defaults false).",
+          "type": "boolean"
+        },
+        "title": {
+          "description": "The `title` keyword must be a string. A \"title\" will preferably be short explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "type": {
+          "const": "array",
+          "type": "string"
+        },
+        "uniqueItemProperties": {
+          "description": "The keyword allows to check that some properties in array items are unique.\n\nThis keyword applies only to arrays. If the data is not an array, the validation succeeds.\n\nThe value of this keyword must be an array of strings - property names that should have unique values across all items.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "uniqueItems": {
+          "description": "A schema can ensure that each of the items in an array is unique. Simply set the uniqueItems keyword to true.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "items"
+      ],
+      "type": "object"
+    },
+    "BooleanSchema": {
+      "additionalProperties": false,
+      "description": "The boolean type matches only two special values: `true` and `false`. Note that values that evaluate to true or false, such as 1 and 0, are not accepted by the schema.",
+      "properties": {
+        "calculated": {
+          "description": "Flag the indicates that the schema contents are calculated (defaults false).",
+          "type": "boolean"
+        },
+        "data-classification": {
+          "$ref": "#/definitions/DataClassification"
+        },
+        "default": {
+          "type": "boolean"
+        },
+        "definitions": {
+          "$ref": "#/definitions/Definitions"
+        },
+        "description": {
+          "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "editable": {
+          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "type": "boolean"
+        },
+        "enum": {
+          "items": {
+            "type": "boolean"
+          },
+          "type": "array"
+        },
+        "example": {
+          "type": "boolean"
+        },
+        "examples": {
+          "items": {
+            "type": "boolean"
+          },
+          "type": "array"
+        },
+        "readOnly": {
+          "description": "Flag the indicates that the schema contents are read-only (defaults false).",
+          "type": "boolean"
+        },
+        "title": {
+          "description": "The `title` keyword must be a string. A \"title\" will preferably be short explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "type": {
+          "const": "boolean",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
     "Cardinality": {
       "enum": [
         "*..*",
@@ -196,6 +344,420 @@
         "1..*",
         "1..1"
       ],
+      "type": "string"
+    },
+    "ColumnDescriptor": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "calculated": {
+              "description": "Flag the indicates that the schema contents are calculated (defaults false).",
+              "type": "boolean"
+            },
+            "default": {
+              "type": "object"
+            },
+            "definitions": {
+              "$ref": "#/definitions/Definitions"
+            },
+            "description": {
+              "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
+              "type": "string"
+            },
+            "editable": {
+              "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+              "type": "boolean"
+            },
+            "example": {
+              "type": "object"
+            },
+            "examples": {
+              "items": {
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "name": {
+              "$ref": "#/definitions/ColumnName",
+              "description": "The name of the column."
+            },
+            "properties": {
+              "additionalProperties": {
+                "$ref": "#/definitions/AnySchema"
+              },
+              "description": "The properties (key-value pairs) on an object are defined using the `properties` keyword. The value of `properties` is an object, where each key is the name of a property and each value is a schema used to validate that property. Any property that doesn't match any of the property names in the properties keyword is ignored by this keyword.",
+              "type": "object"
+            },
+            "readOnly": {
+              "description": "Flag the indicates that the schema contents are read-only (defaults false).",
+              "type": "boolean"
+            },
+            "required": {
+              "description": "By default, the properties defined by the `properties` keyword are not required. However, one can provide a list of required properties using the `required` keyword.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": {
+              "description": "The `title` keyword must be a string. A \"title\" will preferably be short explanation about the purpose of the data described by the schema.",
+              "type": "string"
+            },
+            "type": {
+              "const": "object",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "calculated": {
+              "description": "Flag the indicates that the schema contents are calculated (defaults false).",
+              "type": "boolean"
+            },
+            "default": {
+              "items": {},
+              "type": "array"
+            },
+            "definitions": {
+              "$ref": "#/definitions/Definitions"
+            },
+            "description": {
+              "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
+              "type": "string"
+            },
+            "editable": {
+              "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+              "type": "boolean"
+            },
+            "example": {
+              "items": {},
+              "type": "array"
+            },
+            "examples": {
+              "items": {
+                "items": {},
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "items": {
+              "$ref": "#/definitions/AnySchema",
+              "description": "List validation is useful for arrays of arbitrary length where each item matches the same schema. For this kind of array, set the `items` keyword to a single schema that will be used to validate all of the items in the array."
+            },
+            "maxItems": {
+              "description": "The maximum length of the array can be specified using the `maxItems` keywords. The value of each keyword must be a non-negative number.",
+              "type": "number"
+            },
+            "minItems": {
+              "description": "The minimum length of the array can be specified using the `minItems` keywords. The value of each keyword must be a non-negative number.",
+              "type": "number"
+            },
+            "name": {
+              "$ref": "#/definitions/ColumnName",
+              "description": "The name of the column."
+            },
+            "readOnly": {
+              "description": "Flag the indicates that the schema contents are read-only (defaults false).",
+              "type": "boolean"
+            },
+            "title": {
+              "description": "The `title` keyword must be a string. A \"title\" will preferably be short explanation about the purpose of the data described by the schema.",
+              "type": "string"
+            },
+            "type": {
+              "const": "array",
+              "type": "string"
+            },
+            "uniqueItemProperties": {
+              "description": "The keyword allows to check that some properties in array items are unique.\n\nThis keyword applies only to arrays. If the data is not an array, the validation succeeds.\n\nThe value of this keyword must be an array of strings - property names that should have unique values across all items.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "uniqueItems": {
+              "description": "A schema can ensure that each of the items in an array is unique. Simply set the uniqueItems keyword to true.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "items",
+            "name",
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "calculated": {
+              "description": "Flag the indicates that the schema contents are calculated (defaults false).",
+              "type": "boolean"
+            },
+            "data-classification": {
+              "$ref": "#/definitions/DataClassification"
+            },
+            "default": {
+              "type": "string"
+            },
+            "definitions": {
+              "$ref": "#/definitions/Definitions"
+            },
+            "description": {
+              "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
+              "type": "string"
+            },
+            "editable": {
+              "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+              "type": "boolean"
+            },
+            "enum": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "example": {
+              "type": "string"
+            },
+            "examples": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "format": {
+              "description": "The format keyword allows for basic semantic identification of certain kinds of string values that are commonly used. For example, because JSON doesn't have a \"DateTime\" type, dates need to be encoded as strings. format allows the schema author to indicate that the string value should be interpreted as a date. By default, format is just an annotation and does not effect validation.",
+              "type": "string"
+            },
+            "maxLength": {
+              "description": "The length of a string can be constrained to a maximum length using the `maxLength`. For both keywords, the value must be a non-negative number.",
+              "type": "number"
+            },
+            "minLength": {
+              "description": "The length of a string can be constrained to a minimum length using the `minLength`. For both keywords, the value must be a non-negative number.",
+              "type": "number"
+            },
+            "name": {
+              "$ref": "#/definitions/ColumnName",
+              "description": "The name of the column."
+            },
+            "pattern": {
+              "description": "The pattern keyword is used to restrict a string to a particular regular expression. The regular expression syntax is the one defined in JavaScript ([ECMA 262](https://www.ecma-international.org/publications-and-standards/standards/ecma-262/) specifically) with Unicode support. See [Regular Expressions](https://json-schema.org/understanding-json-schema/reference/regular_expressions) for more information.",
+              "type": "string"
+            },
+            "readOnly": {
+              "description": "Flag the indicates that the schema contents are read-only (defaults false).",
+              "type": "boolean"
+            },
+            "title": {
+              "description": "The `title` keyword must be a string. A \"title\" will preferably be short explanation about the purpose of the data described by the schema.",
+              "type": "string"
+            },
+            "type": {
+              "const": "string",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "calculated": {
+              "description": "Flag the indicates that the schema contents are calculated (defaults false).",
+              "type": "boolean"
+            },
+            "data-classification": {
+              "$ref": "#/definitions/DataClassification"
+            },
+            "default": {
+              "type": "number"
+            },
+            "definitions": {
+              "$ref": "#/definitions/Definitions"
+            },
+            "description": {
+              "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
+              "type": "string"
+            },
+            "editable": {
+              "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+              "type": "boolean"
+            },
+            "enum": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "example": {
+              "type": "number"
+            },
+            "examples": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "maximum": {
+              "description": "Numbers can be restricted to a maximum value, using the `maximum` keyword. It may be set to any non-negative number.\n\nminimum 0",
+              "type": "number"
+            },
+            "minimum": {
+              "description": "Numbers can be restricted to a minimum value, using the `minimum` keyword. It may be set to any non-negative number.\n\nminimum 0",
+              "type": "number"
+            },
+            "multipleOf": {
+              "description": "Numbers can be restricted to a multiple of a given number, using the `multipleOf` keyword. It may be set to any positive number.\n\nminimum 1",
+              "type": "number"
+            },
+            "name": {
+              "$ref": "#/definitions/ColumnName",
+              "description": "The name of the column."
+            },
+            "readOnly": {
+              "description": "Flag the indicates that the schema contents are read-only (defaults false).",
+              "type": "boolean"
+            },
+            "title": {
+              "description": "The `title` keyword must be a string. A \"title\" will preferably be short explanation about the purpose of the data described by the schema.",
+              "type": "string"
+            },
+            "type": {
+              "enum": [
+                "number",
+                "integer"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "calculated": {
+              "description": "Flag the indicates that the schema contents are calculated (defaults false).",
+              "type": "boolean"
+            },
+            "data-classification": {
+              "$ref": "#/definitions/DataClassification"
+            },
+            "default": {
+              "type": "boolean"
+            },
+            "definitions": {
+              "$ref": "#/definitions/Definitions"
+            },
+            "description": {
+              "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
+              "type": "string"
+            },
+            "editable": {
+              "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+              "type": "boolean"
+            },
+            "enum": {
+              "items": {
+                "type": "boolean"
+              },
+              "type": "array"
+            },
+            "example": {
+              "type": "boolean"
+            },
+            "examples": {
+              "items": {
+                "type": "boolean"
+              },
+              "type": "array"
+            },
+            "name": {
+              "$ref": "#/definitions/ColumnName",
+              "description": "The name of the column."
+            },
+            "readOnly": {
+              "description": "Flag the indicates that the schema contents are read-only (defaults false).",
+              "type": "boolean"
+            },
+            "title": {
+              "description": "The `title` keyword must be a string. A \"title\" will preferably be short explanation about the purpose of the data described by the schema.",
+              "type": "string"
+            },
+            "type": {
+              "const": "boolean",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "calculated": {
+              "description": "Flag the indicates that the schema contents are calculated (defaults false).",
+              "type": "boolean"
+            },
+            "definitions": {
+              "$ref": "#/definitions/Definitions"
+            },
+            "description": {
+              "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
+              "type": "string"
+            },
+            "editable": {
+              "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+              "type": "boolean"
+            },
+            "name": {
+              "$ref": "#/definitions/ColumnName",
+              "description": "The name of the column."
+            },
+            "readOnly": {
+              "description": "Flag the indicates that the schema contents are read-only (defaults false).",
+              "type": "boolean"
+            },
+            "title": {
+              "description": "The `title` keyword must be a string. A \"title\" will preferably be short explanation about the purpose of the data described by the schema.",
+              "type": "string"
+            },
+            "type": {
+              "const": "null",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "type"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "Defines the shape of a column."
+    },
+    "ColumnName": {
+      "description": "A column name.",
       "type": "string"
     },
     "Condition": {
@@ -257,6 +819,30 @@
       ],
       "type": "object"
     },
+    "DataClassification": {
+      "enum": [
+        "sensitive",
+        "public"
+      ],
+      "type": "string"
+    },
+    "Definitions": {
+      "additionalProperties": {
+        "$ref": "#/definitions/AnySchema"
+      },
+      "type": "object"
+    },
+    "Dimension": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ProjectionDimension"
+        },
+        {
+          "$ref": "#/definitions/ColumnDescriptor"
+        }
+      ],
+      "description": "A description of a dimension, either an entity projection or a column description."
+    },
     "DistinctProjection": {
       "additionalProperties": false,
       "properties": {
@@ -283,7 +869,7 @@
     "EntityProjection": {
       "additionalProperties": {
         "items": {
-          "$ref": "#/definitions/FieldName"
+          "$ref": "#/definitions/JoinDirective"
         },
         "type": "array"
       },
@@ -296,18 +882,40 @@
       "type": "string"
     },
     "FindType": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/JoinDirective"
-        },
-        {
-          "items": {
-            "$ref": "#/definitions/JoinDirective"
-          },
-          "type": "array"
-        }
-      ],
+      "$ref": "#/definitions/JoinDirective",
       "description": "The entity or entities to find in a query. Currently assumes that the last entity in the list is the \"source entity\" for a query."
+    },
+    "Fragment": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/definitions/FragmentName"
+        },
+        "on": {
+          "$ref": "#/definitions/EntityProjection"
+        }
+      },
+      "required": [
+        "name",
+        "on"
+      ],
+      "type": "object"
+    },
+    "FragmentName": {
+      "type": "string"
+    },
+    "Fragments": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/Fragment"
+          },
+          {
+            "$ref": "#/definitions/IncludeDirective"
+          }
+        ]
+      },
+      "type": "array"
     },
     "GroupBy": {
       "anyOf": [
@@ -427,7 +1035,18 @@
           "description": "A verbose explanation of the query behavior. CommonMark syntax MAY be used for rich text representation.",
           "type": "string"
         },
-        "filterBy": {
+        "filterableBy": {
+          "description": "The collection of fields that may be used for server side filtering.\n\nNote, this affects",
+          "items": {
+            "$ref": "#/definitions/EntityProjection"
+          },
+          "type": "array"
+        },
+        "findAll": {
+          "$ref": "#/definitions/FindType",
+          "description": "The collection of entities to list."
+        },
+        "given": {
           "anyOf": [
             {
               "$ref": "#/definitions/EntityName"
@@ -439,11 +1058,7 @@
               "type": "array"
             }
           ],
-          "description": "The option entity or entities to filter the query by. Currently assumes that the entity and entity identifier are included in the path of the query."
-        },
-        "findAll": {
-          "$ref": "#/definitions/FindType",
-          "description": "The collection of entities to list."
+          "description": "The option entity or entities to filter the query by. Currently assumes that the entity and entity identifier are included in the path of the query.\n\nNote, this affects path parameters in the operation URL."
         },
         "join": {
           "$ref": "#/definitions/Join",
@@ -452,6 +1067,13 @@
         "name": {
           "description": "The name of the query.",
           "type": "string"
+        },
+        "sortableBy": {
+          "description": "The collection of fields that may be used for server side sorting.",
+          "items": {
+            "$ref": "#/definitions/EntityProjection"
+          },
+          "type": "array"
         },
         "summary": {
           "description": "A short summary of what the query does.",
@@ -492,6 +1114,10 @@
         "mean"
       ],
       "type": "object"
+    },
+    "Measure": {
+      "$ref": "#/definitions/ColumnDescriptor",
+      "description": "A description of a measure."
     },
     "MetricAggregation": {
       "anyOf": [
@@ -554,10 +1180,217 @@
       },
       "type": "array"
     },
+    "NamedQuery": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "description": "A human-readable description of the query.",
+          "type": "string"
+        },
+        "example": {
+          "description": "An example of the query response data.",
+          "items": {
+            "items": {},
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "name": {
+          "description": "The name of the query.",
+          "type": "string"
+        },
+        "query": {
+          "$ref": "#/definitions/QueryDefinition",
+          "description": "The dimensions and measures for the query."
+        }
+      },
+      "required": [
+        "name",
+        "query"
+      ],
+      "type": "object"
+    },
+    "NullSchema": {
+      "additionalProperties": false,
+      "description": "When a schema specifies a `type` of `null`, it has only one acceptable value: `null`.",
+      "properties": {
+        "calculated": {
+          "description": "Flag the indicates that the schema contents are calculated (defaults false).",
+          "type": "boolean"
+        },
+        "definitions": {
+          "$ref": "#/definitions/Definitions"
+        },
+        "description": {
+          "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "editable": {
+          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "type": "boolean"
+        },
+        "readOnly": {
+          "description": "Flag the indicates that the schema contents are read-only (defaults false).",
+          "type": "boolean"
+        },
+        "title": {
+          "description": "The `title` keyword must be a string. A \"title\" will preferably be short explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "type": {
+          "const": "null",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "NumberSchema": {
+      "additionalProperties": false,
+      "description": "There are two numeric types: `integer` and `number`. They share the same validation keywords.\n\nThe `integer` type is used for integral numbers. JSON does not have distinct types for integers and floating-point values. Therefore, the presence or absence of a decimal point is not enough to distinguish between integers and non-integers. For example, 1 and 1.0 are two ways to represent the same value in JSON. JSON Schema considers that value an integer no matter which representation was used.\n\nThe `number` type is used for any numeric type, either integers or floating point numbers.",
+      "properties": {
+        "calculated": {
+          "description": "Flag the indicates that the schema contents are calculated (defaults false).",
+          "type": "boolean"
+        },
+        "data-classification": {
+          "$ref": "#/definitions/DataClassification"
+        },
+        "default": {
+          "type": "number"
+        },
+        "definitions": {
+          "$ref": "#/definitions/Definitions"
+        },
+        "description": {
+          "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "editable": {
+          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "type": "boolean"
+        },
+        "enum": {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        "example": {
+          "type": "number"
+        },
+        "examples": {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        "maximum": {
+          "description": "Numbers can be restricted to a maximum value, using the `maximum` keyword. It may be set to any non-negative number.\n\nminimum 0",
+          "type": "number"
+        },
+        "minimum": {
+          "description": "Numbers can be restricted to a minimum value, using the `minimum` keyword. It may be set to any non-negative number.\n\nminimum 0",
+          "type": "number"
+        },
+        "multipleOf": {
+          "description": "Numbers can be restricted to a multiple of a given number, using the `multipleOf` keyword. It may be set to any positive number.\n\nminimum 1",
+          "type": "number"
+        },
+        "readOnly": {
+          "description": "Flag the indicates that the schema contents are read-only (defaults false).",
+          "type": "boolean"
+        },
+        "title": {
+          "description": "The `title` keyword must be a string. A \"title\" will preferably be short explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "number",
+            "integer"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "ObjectSchema": {
+      "additionalProperties": false,
+      "description": "Objects are the mapping type in JSON. They map \"keys\" to \"values\". In JSON, the \"keys\" must always be strings. Each of these pairs is conventionally referred to as a \"property\".",
+      "properties": {
+        "calculated": {
+          "description": "Flag the indicates that the schema contents are calculated (defaults false).",
+          "type": "boolean"
+        },
+        "default": {
+          "type": "object"
+        },
+        "definitions": {
+          "$ref": "#/definitions/Definitions"
+        },
+        "description": {
+          "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "editable": {
+          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "type": "boolean"
+        },
+        "example": {
+          "type": "object"
+        },
+        "examples": {
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "properties": {
+          "additionalProperties": {
+            "$ref": "#/definitions/AnySchema"
+          },
+          "description": "The properties (key-value pairs) on an object are defined using the `properties` keyword. The value of `properties` is an object, where each key is the name of a property and each value is a schema used to validate that property. Any property that doesn't match any of the property names in the properties keyword is ignored by this keyword.",
+          "type": "object"
+        },
+        "readOnly": {
+          "description": "Flag the indicates that the schema contents are read-only (defaults false).",
+          "type": "boolean"
+        },
+        "required": {
+          "description": "By default, the properties defined by the `properties` keyword are not required. However, one can provide a list of required properties using the `required` keyword.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "title": {
+          "description": "The `title` keyword must be a string. A \"title\" will preferably be short explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "type": {
+          "const": "object",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
     "Operations": {
       "additionalProperties": false,
       "description": "The mutation and query operations provided by the service.",
       "properties": {
+        "fragments": {
+          "$ref": "#/definitions/Fragments",
+          "description": "A collection of projection fragments. Used when multiple APIs return similar data."
+        },
         "mutations": {
           "$ref": "#/definitions/Mutations",
           "description": "A declaration of all mutations provided by the service."
@@ -697,6 +1530,20 @@
         }
       ]
     },
+    "ProjectionDimension": {
+      "additionalProperties": false,
+      "description": "A dimension based on an entity projection.",
+      "properties": {
+        "projection": {
+          "$ref": "#/definitions/EntityProjection",
+          "description": "The entity projection."
+        }
+      },
+      "required": [
+        "projection"
+      ],
+      "type": "object"
+    },
     "Queries": {
       "items": {
         "$ref": "#/definitions/Query"
@@ -719,8 +1566,65 @@
         },
         {
           "$ref": "#/definitions/IncludeDirective"
+        },
+        {
+          "$ref": "#/definitions/NamedQuery"
         }
       ]
+    },
+    "QueryDefinition": {
+      "additionalProperties": false,
+      "properties": {
+        "dimensions": {
+          "description": "Fields that contain qualitative information are dimensions.\n\nThese are descriptive attributes, like a product category, customer address, or country. Dimensions can contain numeric characters (like an alphanumeric customer ID), but are not numeric values (It wouldn’t make sense to add up all the ID numbers in a column, for example).",
+          "items": {
+            "$ref": "#/definitions/Dimension"
+          },
+          "type": "array"
+        },
+        "filterableBy": {
+          "description": "The collection of fields that may be used for server side filtering.\n\nNote, this affects",
+          "items": {
+            "$ref": "#/definitions/EntityProjection"
+          },
+          "type": "array"
+        },
+        "measures": {
+          "description": "Measures are quantifications — fields like order subtotal, quantity of items purchased, or duration spent on a specific page.\n\nMeasures are therefore computable. Say you have a measure, quantity of items purchased: you can do things like calculate the average quantity ordered, sort by descending quantities, sum all quantities, and so on.",
+          "items": {
+            "$ref": "#/definitions/Measure"
+          },
+          "type": "array"
+        },
+        "sortableBy": {
+          "description": "The collection of fields that may be used for server side sorting.",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/EntityProjection"
+              },
+              {
+                "$ref": "#/definitions/ColumnName"
+              }
+            ]
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "ReferenceSchema": {
+      "additionalProperties": false,
+      "description": "Used to reference another schema",
+      "properties": {
+        "$ref": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "$ref"
+      ],
+      "type": "object"
     },
     "Relationship": {
       "additionalProperties": false,
@@ -778,6 +1682,56 @@
     "RelationshipName": {
       "type": "string"
     },
+    "RelationshipSchema": {
+      "additionalProperties": false,
+      "description": "The relationship schema is used to create a relationship between two entities.  Moreover, it is intended to embed the related entities unique identifier as a named property in the current entities schema.\n\nThe entity for which this relation is defined acts as the left-hand-side of the relationship.\n\nFor example, in a chat application a chat-message may have to linked user's, the sending user and the recieving user.\n\nBy default the relationship is a \"..1\" relationship; however, if the relationship is contained inside an array schema, then the relationship is promoted to a \"..*\" relationship",
+      "properties": {
+        "calculated": {
+          "description": "Flag the indicates that the schema contents are calculated (defaults false).",
+          "type": "boolean"
+        },
+        "definitions": {
+          "$ref": "#/definitions/Definitions"
+        },
+        "description": {
+          "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "editable": {
+          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "type": "boolean"
+        },
+        "fromOne": {
+          "description": "By default all embeded relationships are from-many relationships.  The `fromOne` flag forces the relationship to act as a \"1..\" relationship.",
+          "type": "boolean"
+        },
+        "readOnly": {
+          "description": "Flag the indicates that the schema contents are read-only (defaults false).",
+          "type": "boolean"
+        },
+        "rel": {
+          "$ref": "#/definitions/EntityName",
+          "description": "The name of the entity that serves as the left-right-hand side of the relationship."
+        },
+        "summary": {
+          "type": "string"
+        },
+        "title": {
+          "description": "The `title` keyword must be a string. A \"title\" will preferably be short explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/RelationshipType"
+        },
+        "via": {
+          "$ref": "#/definitions/RelationshipName"
+        }
+      },
+      "required": [
+        "rel"
+      ],
+      "type": "object"
+    },
     "RelationshipType": {
       "enum": [
         "association",
@@ -813,7 +1767,18 @@
           "description": "A verbose explanation of the query behavior. CommonMark syntax MAY be used for rich text representation.",
           "type": "string"
         },
-        "filterBy": {
+        "filterableBy": {
+          "description": "The collection of fields that may be used for server side filtering.\n\nNote, this affects",
+          "items": {
+            "$ref": "#/definitions/EntityProjection"
+          },
+          "type": "array"
+        },
+        "findOne": {
+          "$ref": "#/definitions/FindType",
+          "description": "The entity to find."
+        },
+        "given": {
           "anyOf": [
             {
               "$ref": "#/definitions/EntityName"
@@ -825,11 +1790,7 @@
               "type": "array"
             }
           ],
-          "description": "The option entity or entities to filter the query by. Currently assumes that the entity and entity identifier are included in the path of the query."
-        },
-        "findOne": {
-          "$ref": "#/definitions/FindType",
-          "description": "The entity to find."
+          "description": "The option entity or entities to filter the query by. Currently assumes that the entity and entity identifier are included in the path of the query.\n\nNote, this affects path parameters in the operation URL."
         },
         "join": {
           "$ref": "#/definitions/Join",
@@ -838,6 +1799,13 @@
         "name": {
           "description": "The name of the query.",
           "type": "string"
+        },
+        "sortableBy": {
+          "description": "The collection of fields that may be used for server side sorting.",
+          "items": {
+            "$ref": "#/definitions/EntityProjection"
+          },
+          "type": "array"
         },
         "summary": {
           "description": "A short summary of what the query does.",
@@ -873,6 +1841,13 @@
           "description": "A verbose explanation of the query behavior. CommonMark syntax MAY be used for rich text representation.",
           "type": "string"
         },
+        "filterableBy": {
+          "description": "The collection of fields that may be used for server side filtering.\n\nNote, this affects",
+          "items": {
+            "$ref": "#/definitions/EntityProjection"
+          },
+          "type": "array"
+        },
         "name": {
           "description": "The name of the query.",
           "type": "string"
@@ -880,6 +1855,13 @@
         "search": {
           "$ref": "#/definitions/EntityName",
           "description": "The searchable entity."
+        },
+        "sortableBy": {
+          "description": "The collection of fields that may be used for server side sorting.",
+          "items": {
+            "$ref": "#/definitions/EntityProjection"
+          },
+          "type": "array"
         },
         "summary": {
           "description": "A short summary of what the query does.",
@@ -902,19 +1884,12 @@
           "description": "A verbose explanation of the query behavior. CommonMark syntax MAY be used for rich text representation.",
           "type": "string"
         },
-        "filterBy": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/EntityName"
-            },
-            {
-              "items": {
-                "$ref": "#/definitions/EntityName"
-              },
-              "type": "array"
-            }
-          ],
-          "description": "The option entity or entities to filter the query by. Currently assumes that the entity and entity identifier are included in the path of the query."
+        "filterableBy": {
+          "description": "The collection of fields that may be used for server side filtering.\n\nNote, this affects",
+          "items": {
+            "$ref": "#/definitions/EntityProjection"
+          },
+          "type": "array"
         },
         "from": {
           "anyOf": [
@@ -929,6 +1904,20 @@
             }
           ],
           "description": "The collection of entity or entities to join in the result set. Currently assumes these are relationships to the source entity of the query."
+        },
+        "given": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/EntityName"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/EntityName"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The option entity or entities to filter the query by. Currently assumes that the entity and entity identifier are included in the path of the query."
         },
         "name": {
           "description": "The name of the query.",
@@ -945,6 +1934,13 @@
                 "$ref": "#/definitions/Aggregation"
               }
             ]
+          },
+          "type": "array"
+        },
+        "sortableBy": {
+          "description": "The collection of fields that may be used for server side sorting.",
+          "items": {
+            "$ref": "#/definitions/EntityProjection"
           },
           "type": "array"
         },
@@ -1008,6 +2004,80 @@
       ],
       "type": "object"
     },
+    "StringSchema": {
+      "additionalProperties": false,
+      "description": "The `string` type is used for strings of text. It may contain Unicode characters.",
+      "properties": {
+        "calculated": {
+          "description": "Flag the indicates that the schema contents are calculated (defaults false).",
+          "type": "boolean"
+        },
+        "data-classification": {
+          "$ref": "#/definitions/DataClassification"
+        },
+        "default": {
+          "type": "string"
+        },
+        "definitions": {
+          "$ref": "#/definitions/Definitions"
+        },
+        "description": {
+          "description": "The `description` keywords must be a string. A \"description\" will provide a more lengthy explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "editable": {
+          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "type": "boolean"
+        },
+        "enum": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "example": {
+          "type": "string"
+        },
+        "examples": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "format": {
+          "description": "The format keyword allows for basic semantic identification of certain kinds of string values that are commonly used. For example, because JSON doesn't have a \"DateTime\" type, dates need to be encoded as strings. format allows the schema author to indicate that the string value should be interpreted as a date. By default, format is just an annotation and does not effect validation.",
+          "type": "string"
+        },
+        "maxLength": {
+          "description": "The length of a string can be constrained to a maximum length using the `maxLength`. For both keywords, the value must be a non-negative number.",
+          "type": "number"
+        },
+        "minLength": {
+          "description": "The length of a string can be constrained to a minimum length using the `minLength`. For both keywords, the value must be a non-negative number.",
+          "type": "number"
+        },
+        "pattern": {
+          "description": "The pattern keyword is used to restrict a string to a particular regular expression. The regular expression syntax is the one defined in JavaScript ([ECMA 262](https://www.ecma-international.org/publications-and-standards/standards/ecma-262/) specifically) with Unicode support. See [Regular Expressions](https://json-schema.org/understanding-json-schema/reference/regular_expressions) for more information.",
+          "type": "string"
+        },
+        "readOnly": {
+          "description": "Flag the indicates that the schema contents are read-only (defaults false).",
+          "type": "boolean"
+        },
+        "title": {
+          "description": "The `title` keyword must be a string. A \"title\" will preferably be short explanation about the purpose of the data described by the schema.",
+          "type": "string"
+        },
+        "type": {
+          "const": "string",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
     "SubjectCondition": {
       "additionalProperties": false,
       "description": "A condition based on the subject attempting to perform the action on the given resource.",
@@ -1066,6 +2136,28 @@
         "sum"
       ],
       "type": "object"
+    },
+    "ValueSchema": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ObjectSchema"
+        },
+        {
+          "$ref": "#/definitions/ArraySchema"
+        },
+        {
+          "$ref": "#/definitions/StringSchema"
+        },
+        {
+          "$ref": "#/definitions/NumberSchema"
+        },
+        {
+          "$ref": "#/definitions/BooleanSchema"
+        },
+        {
+          "$ref": "#/definitions/NullSchema"
+        }
+      ]
     },
     "Via": {
       "anyOf": [

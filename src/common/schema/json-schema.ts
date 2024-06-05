@@ -6,7 +6,7 @@ import ajvKeywords from "ajv-keywords";
 import SourceMap from "js-yaml-source-map";
 import { read } from "yaml-import";
 
-const ajv = new Ajv();
+export const ajv = new Ajv();
 addFormats(ajv);
 ajvKeywords(ajv);
 

@@ -14,7 +14,6 @@ export interface EntitySchema extends ObjectSchema {
   alias?: string;
   createable?: boolean;
   deleteable?: boolean;
-  definitions?: Definitions;
   linkProperties?: Record<string, LinkProperty>;
 }
 
@@ -23,7 +22,9 @@ export type ObjectSelector = ObjectSchema;
 /**
  * References any valid sub-schema.
  */
-export type AnySchema =
+export type AnySchema = ValueSchema | ReferenceSchema | RelationshipSchema;
+
+export type ValueSchema =
   /**
    * @if {"type" : "object"}
    * @then { $ref: "#/definitions/ObjectSchema"}
@@ -48,9 +49,7 @@ export type AnySchema =
   /**
    * @if {"type" : "null"}
    */
-  | NullSchema
-  | ReferenceSchema
-  | RelationshipSchema;
+  | NullSchema;
 
 export interface BaseSchema {
   /**
@@ -79,6 +78,7 @@ export interface BaseSchema {
    * Flag the indicates that the schema contents are calculated (defaults false).
    */
   calculated?: boolean;
+  definitions?: Definitions;
 }
 
 export interface BaseSchemaWithExample<T> extends BaseSchema {

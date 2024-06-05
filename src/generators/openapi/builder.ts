@@ -41,19 +41,23 @@ export class OpenAPIPathBuilder {
   }
 
   public get(): OpenAPIOperationBuilder {
-    return new OpenAPIOperationBuilder(this.path, this.openAPI, OpenAPIV3.HttpMethods.GET, this.schemaRegistry);
+    return this.method(OpenAPIV3.HttpMethods.GET);
   }
   public post(): OpenAPIOperationBuilder {
-    return new OpenAPIOperationBuilder(this.path, this.openAPI, OpenAPIV3.HttpMethods.POST, this.schemaRegistry);
+    return this.method(OpenAPIV3.HttpMethods.POST);
   }
   public put(): OpenAPIOperationBuilder {
-    return new OpenAPIOperationBuilder(this.path, this.openAPI, OpenAPIV3.HttpMethods.PUT, this.schemaRegistry);
+    return this.method(OpenAPIV3.HttpMethods.PUT);
   }
   public patch(): OpenAPIOperationBuilder {
-    return new OpenAPIOperationBuilder(this.path, this.openAPI, OpenAPIV3.HttpMethods.PATCH, this.schemaRegistry);
+    return this.method(OpenAPIV3.HttpMethods.PATCH);
   }
   public delete(): OpenAPIOperationBuilder {
-    return new OpenAPIOperationBuilder(this.path, this.openAPI, OpenAPIV3.HttpMethods.DELETE, this.schemaRegistry);
+    return this.method(OpenAPIV3.HttpMethods.DELETE);
+  }
+
+  public method(method: OpenAPIV3.HttpMethods): OpenAPIOperationBuilder {
+    return new OpenAPIOperationBuilder(this.path, this.openAPI, method, this.schemaRegistry);
   }
 }
 
@@ -105,7 +109,8 @@ export class OpenAPIOperationBuilder {
   /**
    * The request body for the operation (i.e. PUT / POST request bodies.)
    */
-  private requestBody?: OpenAPIV3.RequestBodyObject | OpenAPIV3.ReferenceObject;
+  private requestBody?: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject;
+  private requestBodyDescription?: string;
 
   /**
    * The set of response errors.
@@ -169,14 +174,8 @@ export class OpenAPIOperationBuilder {
   }
 
   public withRequestBody(schema: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject, description?: string): OpenAPIOperationBuilder {
-    this.requestBody = {
-      description: description || "On success",
-      content: {
-        "application/json": {
-          schema: schema,
-        },
-      },
-    };
+    this.requestBody = schema;
+    this.requestBodyDescription = description;
     return this.withBadRequest();
   }
 
@@ -247,6 +246,7 @@ export class OpenAPIOperationBuilder {
    * @returns The newly built operation object.
    */
   public build(): void {
+    const requestBody = this.buildRequestBody();
     // Build the success response object, if one was specified.
     const successResponse = this.buildSuccessResponse();
     const parameters = this.buildParameters();
@@ -268,7 +268,7 @@ export class OpenAPIOperationBuilder {
       tags: this.buildTag(),
       parameters: parameters,
       description: this.description || this.summary || this.operationId,
-      requestBody: this.requestBody,
+      requestBody: requestBody,
       responses: {
         ...successResponse,
         ...this.errors,
@@ -335,6 +335,44 @@ export class OpenAPIOperationBuilder {
       };
     }
     return successResponse;
+  }
+
+  private buildRequestBody() {
+    if (!this.requestBody) {
+      return undefined;
+    }
+
+    const requestBodyName = toPascalCase(`${this.operationId}Request`);
+
+    let schemaRef;
+
+    if (isSchemaRef(this.requestBody)) {
+      schemaRef = this.requestBody as OpenAPIV3.ReferenceObject;
+    } else {
+      this.openAPI.components = this.openAPI.components || {};
+      this.openAPI.components.schemas = this.openAPI.components.schemas || {};
+      this.openAPI.components.schemas[requestBodyName] = this.requestBody;
+
+      schemaRef = {
+        $ref: `#/components/schemas/${requestBodyName}`,
+      };
+    }
+
+    this.openAPI.components = this.openAPI.components || {};
+    this.openAPI.components.requestBodies = this.openAPI.components.requestBodies || {};
+    this.openAPI.components.requestBodies[requestBodyName] = {
+      description: this.requestBodyDescription || "On success",
+      required: true,
+      content: {
+        "application/json": {
+          schema: schemaRef,
+        },
+      },
+    };
+
+    return {
+      $ref: `#/components/requestBodies/${requestBodyName}`,
+    };
   }
 
   private buildParameters(): Array<OpenAPIV3.ReferenceObject> | undefined {
@@ -472,4 +510,8 @@ export class RequestHeadersBuilder {
   public build(): Iterable<OpenAPIV3.ParameterObject> {
     return [...this.headers];
   }
+}
+
+function isSchemaRef(schema: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject): boolean {
+  return "$ref" in schema;
 }

@@ -5,7 +5,6 @@ import Handlebars = require("handlebars");
 import { CodeGenerator } from "./code_generator";
 
 import { ServiceSpecification } from "../../specification";
-import { DeepReadonly } from "../../util";
 
 export abstract class HandlebarsGenerator implements CodeGenerator {
   private readonly paths: Array<string>;
@@ -14,7 +13,7 @@ export abstract class HandlebarsGenerator implements CodeGenerator {
     this.paths = paths;
   }
 
-  public generate(service: DeepReadonly<ServiceSpecification>) {
+  public generate(service: ServiceSpecification) {
     this.paths.forEach((path) => {
       const template = Handlebars.compile(fs.readFileSync(`src/generators/${path}.handlebars`).toString());
       const contents = template(service);

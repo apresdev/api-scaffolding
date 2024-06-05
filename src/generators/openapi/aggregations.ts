@@ -25,6 +25,7 @@ import {
   isBucketAggregation,
   metricAggregationName,
 } from "../../specification";
+import { UnknownEntity } from "./queries/select-query";
 
 export function getAggregationMetric(aggregation: Aggregation): string {
   if (isBucketAggregation(aggregation)) {
@@ -146,6 +147,10 @@ const metricAggregationSchemas: {
 function checkEntityExists(field: string | undefined, sourceEntity: string, context: QueryProcessorContext) {
   if (!field) {
     return;
+  }
+
+  if (UnknownEntity === sourceEntity) {
+    return context.schemaRegistry.has(field);
   }
 
   const schema: EntitySchema = context.schemaRegistry.get(sourceEntity);
