@@ -18,11 +18,13 @@ import {
   ServiceSpecification,
   buildGraph,
   getServicePath,
-  getServiceSourceMap,
+  getServiceSourceMap
 } from "../../specification";
 import { dumpJson, sortKeys } from "../../util";
 import { FragmentsProcessor } from "./fragment-processor";
 import { lintSpecification } from "./lint";
+import { OpenAPIV3 } from "openapi-types";
+import ResponseObject = OpenAPIV3.ResponseObject;
 
 export class OpenAPIGenerator implements CodeGenerator {
   private readonly basePath: string;
@@ -70,6 +72,7 @@ export class OpenAPIGenerator implements CodeGenerator {
    * @param serviceSpecification The service specification.
    * @param schemaRegistry The schema registry.
    * @param openAPISpecification The OpenAPI specification.
+   * @param results The collector of file processing errors.
    */
   private generateOperations(
     serviceSpecification: ServiceSpecification,
@@ -137,12 +140,30 @@ export class OpenAPIGenerator implements CodeGenerator {
     dumpJson(openAPISpecification, this.outfile);
   }
 
+  private hasNamedQuery(openapi: OpenAPISpecification): boolean {
+    const xqr = openapi.components?.responses?.ExecuteQueryResponse as ResponseObject
+    if (!xqr || !xqr.content) {
+      return false
+    }
+    const examples = xqr.content["application/json"]?.examples as object
+    if (!examples) {
+      return false
+    }
+    return Object.keys(examples).length > 0
+  }
+
   /**
-   * Runs post-processing methods to cleanup the generated schema.  For example, removing all unreferenced components.
+   * Runs post-processing methods to clean up the generated schema.  For example, removing all unreferenced components.
    *
    * @param openapi The OpenAPI specification.
    */
   private async postProcess(openapi: OpenAPISpecification): Promise<boolean> {
+    if (!this.hasNamedQuery(openapi)) {
+      delete openapi.paths["/queries/{queryId}"]
+      if (openapi.tags !== undefined) {
+        openapi.tags = openapi.tags.filter((tag) => tag.name !== "Query")
+      }
+    }
     do {
       // Keep tree shaking unused components until no unused components are found.
       // Note, we need to keep doing this in a loop because there could be components that are only referenced by other components that do

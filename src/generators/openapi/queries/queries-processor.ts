@@ -39,7 +39,6 @@ export class QueriesProcessor extends FileProcessor<Queries, QueryProcessorConte
   /**
    * Creates an instance of a QueriesProcessor.
    *
-   * @param basePath    The base path when resolving relative path references.
    * @param fileErrors  The collector of file processing errors.
    */
   public constructor(fileErrors: FileErrors) {
@@ -64,7 +63,7 @@ export class QueriesProcessor extends FileProcessor<Queries, QueryProcessorConte
             jsonPath: String(index),
           });
         } else {
-          // ... otherise, render the query.
+          // ... otherwise, render the query.
           this.processQuery(query as BaseQuery, { ...context, jsonPath: String(index) });
         }
       } catch (err) {
