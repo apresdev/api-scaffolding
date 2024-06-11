@@ -57,7 +57,7 @@ function initializeSpectral(): Spectral {
  * Lints the OpenAPI specification against the given spectral instance.
  *
  * @param spectral  The spectral instance.
- * @param spec      The OpenAPI specficiation.
+ * @param spec      The OpenAPI specification.
  * @param outfile   The output file location.
  * @returns the linting results.
  */
