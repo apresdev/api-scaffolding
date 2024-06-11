@@ -5,7 +5,7 @@ import { CodeGenerator } from "../base";
 import { renderMutations } from "./mutation-generator";
 import { QueriesProcessor } from "./queries";
 import { OpenAPISpecification } from "./types";
-import { trimTrailingSlash } from "./util";
+import { CONTENT_TYPE_JSON, trimTrailingSlash } from "./util";
 
 import { FileErrors } from "../../common";
 import { asSchemaObject } from "../../entities/entities";
@@ -18,11 +18,13 @@ import {
   ServiceSpecification,
   buildGraph,
   getServicePath,
-  getServiceSourceMap,
+  getServiceSourceMap
 } from "../../specification";
 import { dumpJson, sortKeys } from "../../util";
 import { FragmentsProcessor } from "./fragment-processor";
 import { lintSpecification } from "./lint";
+import { OpenAPIV3 } from "openapi-types";
+import ResponseObject = OpenAPIV3.ResponseObject;
 
 export class OpenAPIGenerator implements CodeGenerator {
   private readonly basePath: string;
@@ -37,14 +39,14 @@ export class OpenAPIGenerator implements CodeGenerator {
     openAPISpecification: OpenAPISpecification,
     results: FileErrors,
   ) {
-    this.generateinfo(serviceSpecification, openAPISpecification);
+    this.generateInfo(serviceSpecification, openAPISpecification);
     this.generateOperations(serviceSpecification, schemaRegistry, openAPISpecification, results);
     this.generateSchemas(schemaRegistry, openAPISpecification);
     await this.postProcess(openAPISpecification);
     this.writeSpecification(openAPISpecification);
   }
 
-  private generateinfo(serviceSpecification: ServiceSpecification, openAPISpecification: OpenAPISpecification) {
+  private generateInfo(serviceSpecification: ServiceSpecification, openAPISpecification: OpenAPISpecification) {
     openAPISpecification.info = {
       title: serviceSpecification.info.title,
       version: serviceSpecification.info.version,
@@ -70,6 +72,7 @@ export class OpenAPIGenerator implements CodeGenerator {
    * @param serviceSpecification The service specification.
    * @param schemaRegistry The schema registry.
    * @param openAPISpecification The OpenAPI specification.
+   * @param results The collector of file processing errors.
    */
   private generateOperations(
     serviceSpecification: ServiceSpecification,
@@ -137,12 +140,72 @@ export class OpenAPIGenerator implements CodeGenerator {
     dumpJson(openAPISpecification, this.outfile);
   }
 
+  private hasNamedQuery(openapi: OpenAPISpecification): boolean {
+    const xqr = openapi.components?.responses?.ExecuteQueryResponse as ResponseObject
+    if (!xqr || !xqr.content) {
+      return false
+    }
+    const examples = xqr.content[CONTENT_TYPE_JSON]?.examples as object
+    if (!examples) {
+      return false
+    }
+    return Object.keys(examples).length > 0
+  }
+
   /**
-   * Runs post-processing methods to cleanup the generated schema.  For example, removing all unreferenced components.
+   * This removes the query endpoint if there are no named queries in the specification.
+   *
+   * @param openapi The OpenAPI specification.
+   * @private
+   */
+  private removeUnusedQueryEndpoint(openapi: OpenAPISpecification): void {
+    if (!this.hasNamedQuery(openapi)) {
+      delete openapi.paths["/queries/{queryId}"]
+    }
+  }
+
+  /**
+   * Removes all operations that are not used in the specification.
+   *
+   * @param openapi The OpenAPI specification.
+   * @private
+   */
+  private removeUnusedOperations(openapi: OpenAPISpecification): void {
+    this.removeUnusedQueryEndpoint(openapi)
+  }
+
+  /**
+   * Removes all tags that are not used in the specification.
+   *
+   * @param openapi The OpenAPI specification.
+   * @private
+   */
+  private removeUnusedTags(openapi: OpenAPISpecification): void {
+    interface StringToBoolMap {
+      [key: string]: boolean;
+    }
+    const allReferencedTags : StringToBoolMap = {}
+    for (const path in openapi.paths) {
+      const pathItem = openapi.paths[path]
+      for (const m in pathItem) {
+        const method = m as OpenAPIV3.HttpMethods
+        const pi = pathItem[method]
+        pi?.tags?.forEach((tag) => {
+          allReferencedTags[tag] = true
+        })
+      }
+    }
+    openapi.tags = openapi.tags?.filter((tag) => allReferencedTags[tag.name])
+  }
+
+  /**
+   * Runs post-processing methods to clean up the generated schema.  For example, removing all unreferenced components.
    *
    * @param openapi The OpenAPI specification.
    */
   private async postProcess(openapi: OpenAPISpecification): Promise<boolean> {
+    this.removeUnusedOperations(openapi)
+    this.removeUnusedTags(openapi)
     do {
       // Keep tree shaking unused components until no unused components are found.
       // Note, we need to keep doing this in a loop because there could be components that are only referenced by other components that do
