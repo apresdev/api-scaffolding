@@ -11,12 +11,13 @@ import { SchemaRegistry } from "../../models";
 import { Ancestor, DependencyGraph, EntitySchema, Mutation } from "../../specification";
 
 /**
- * Adds the standard CRUD operations to an OpenAPI specication.  This includes two operations at the container path: list (GET) and create
+ * Adds the standard CRUD operations to an OpenAPI specification.  This includes two operations at the container path: list (GET) and create
  * (POST), and three operations at the item path: retrieve (GET), update (PUT), and delete (DELETE).
  *
- * @param mutation  The mutation operation.
- * @param service   The service specification, used to determine ancestry.
- * @param openAPI   The OpenAPI specification.
+ * @param mutation       The mutation operation.
+ * @param openAPI        The OpenAPI specification.
+ * @param graph          The entity-relationship dependency graph.
+ * @param schemaRegistry The schema registry.
  */
 export function renderMutations(mutation: Mutation, openAPI: OpenAPISpecification, graph: DependencyGraph, schemaRegistry: SchemaRegistry) {
   const entityModel: EntitySchema = schemaRegistry.get(mutation.entity);
@@ -30,12 +31,14 @@ export function renderMutations(mutation: Mutation, openAPI: OpenAPISpecificatio
 }
 
 /**
- * Adds the standard CRUD operations to an OpenAPI specication.  This includes two operations at the container path: list (GET) and create
+ * Adds the standard CRUD operations to an OpenAPI specification.  This includes two operations at the container path: list (GET) and create
  * (POST), and three operations at the item path: retrieve (GET), update (PUT), and delete (DELETE).
  *
- * @param entity The name of the entity that requires CRUD operations.
- * @param service The service specification, used to determine ancestry.
+ * @param mutation The mutation operation.
  * @param openAPI The OpenAPI specification.
+ * @param graph   The entity-relationship dependency graph.
+ * @param schemaRegistry The schema registry.
+ * @param versioned Whether the entity is versioned.
  */
 function renderCrudOperations(
   mutation: Mutation,
@@ -70,6 +73,9 @@ function renderCrudOperations(
 
   if (isEditable(schema)) {
     generateUpdateOp(mutation, itemUrl, openAPI, schemaRegistry, versioned);
+    if (mutation.patch) {
+      generatePatchOp(mutation, itemUrl, openAPI, schemaRegistry, versioned);
+    }
   }
 
   if (isDeleteable(schema)) {
@@ -82,7 +88,7 @@ function renderCrudOperations(
 }
 
 /**
- * Adds the standard CRUD operations to an OpenAPI specication.  This includes two operations at the container path: list (GET) and create
+ * Adds the standard CRUD operations to an OpenAPI specification.  This includes two operations at the container path: list (GET) and create
  * (POST), and three operations at the item path: retrieve (GET), update (PUT), and delete (DELETE).
  *
  * @param entity  The name of the entity that requires CRUD operations.
@@ -155,10 +161,12 @@ function generateCreateOp(
 /**
  * Generates the standard "Update" operation
  *
- * @param entity  The name of the entity that requires CRUD operations.
- * @param url     The URL descriptor for the operation.
- * @param openAPI The OpenAPI specification.
-
+ * @param mutation         The mutation operation.
+ * @param url              The URL descriptor for the operation.
+ * @param openAPI          The OpenAPI specification.
+ * @param schemaRegistry   The schema registry.
+ * @param versioned        Whether the entity is versioned.
+ * @param additionalErrors Additional error responses to include in the operation.
  */
 function generateUpdateOp(
   mutation: Mutation,
@@ -192,12 +200,48 @@ function generateUpdateOp(
 }
 
 /**
+ * Generates the standard "Patch" operation
+ */
+function generatePatchOp(
+  mutation: Mutation,
+  url: Url,
+  openAPI: OpenAPISpecification,
+  schemaRegistry: SchemaRegistry,
+  versioned: boolean,
+  additionalErrors: OpenAPIV3.ResponsesObject = {},
+) {
+  const entity = mutation.entity;
+  const requestHeaders = RequestHeadersBuilder.newBuilder();
+
+  if (versioned) {
+    requestHeaders.withIfMatch().withCommitMessage();
+  }
+
+  OpenAPIBuilder.newBuilder(openAPI, schemaRegistry)
+    .path(url.path)
+    .patch()
+    .withOperationId(`patch${toPascalCase(entity)}`)
+    .withSummary(`Patches a ${toSummaryCase(entity)}.`)
+    .withTag(mutation.tag || toPascalCase(pluralize(schemaRegistry.getAlias(entity))))
+    .withParameters([...url.parameters, ...requestHeaders.build()])
+    .withRequestBody(entitySchemaRef(entity + "Input"), `The new ${toSummaryCase(entity)}`)
+    .withSuccessResponse(200, `The current server side state of the updated ${toTitleCase(entity)}.`, entitySchemaRef(entity))
+    .withResponse({
+      ...(versioned ? PreConditionsFailedError : {}),
+      ...additionalErrors,
+    })
+    .build();
+}
+
+/**
  * Generates the standard "Delete" operation
  *
- * @param entity  The name of the entity that requires CRUD operations.
- * @param url     The URL descriptor for the operation.
- * @param openAPI The OpenAPI specification.
-
+ * @param mutation         The mutation operation.
+ * @param url              The URL descriptor for the operation.
+ * @param openAPI          The OpenAPI specification.
+ * @param schemaRegistry   The schema registry.
+ * @param versioned        Whether the entity is versioned.
+ * @param additionalErrors Additional error responses to include in the operation.
  */
 function generateDeleteOp(
   mutation: Mutation,

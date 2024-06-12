@@ -1163,6 +1163,10 @@
           "$ref": "#/definitions/EntityName",
           "description": "The name of the entity to mutate."
         },
+        "patch": {
+          "description": "Whether the mutation should include PATCH semantics.",
+          "type": "boolean"
+        },
         "tag": {
           "description": "The optional operation tag.",
           "type": "string"

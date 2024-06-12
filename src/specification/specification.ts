@@ -244,6 +244,11 @@ export interface Mutation {
    * The optional operation tag.
    */
   tag?: string;
+
+  /**
+   * Whether the mutation should include PATCH semantics.
+   */
+  patch?: boolean;
 }
 
 export type Queries = Array<Query>;
@@ -358,7 +363,7 @@ const isProjectedColumn = Predicates.not(Predicates.eachArrayItem(Predicates.or(
  * Determines if a value is an entity project.
  *
  * @param value The entity project or aggregation to check.
- * @returns true if and only if the the value is an object where every property is an array of strings.
+ * @returns true if and only if the value is an object where every property is an array of strings.
  */
 export function isEntityProjection(value: GroupBy | Aggregation): boolean {
   if (typeof value !== "object") {
@@ -377,7 +382,7 @@ export function isViaEntry(value: GroupBy | Aggregation): boolean {
   return typeof value === "string";
 }
 
-export function isProjectection(value: GroupBy | Aggregation): boolean {
+export function isProjection(value: GroupBy | Aggregation): boolean {
   return isViaEntry(value) || isEntityProjection(value);
 }
 
@@ -392,11 +397,11 @@ export function isDistinctProjection(value: GroupBy | Aggregation): boolean {
     return false;
   }
 
-  return keys[0] === "distinct" && isProjectection(values[0]);
+  return keys[0] === "distinct" && isProjection(values[0]);
 }
 
 export function isGroupBy(value: GroupBy | Aggregation): boolean {
-  return isProjectection(value) || isDistinctProjection(value);
+  return isProjection(value) || isDistinctProjection(value);
 }
 
 export interface DistinctProjection {
