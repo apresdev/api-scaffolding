@@ -7,8 +7,10 @@ import { arraySchema, entitySchemaRef, toSummaryCase } from "../util";
 import { QueryGenerator, QueryProcessorContext } from "./query-generator";
 import { Metadata, Search } from "./util";
 
-import { checkNotNull, pluralize, toCamelCase, toPascalCase } from "../../../common";
-import { SearchQuery } from "../../../specification";
+import { JsonPath, checkNotNull, pluralize, toCamelCase, toPascalCase } from "../../../common";
+import { asSchemaObject } from "../../../entities";
+import { EntityName, EntityProjection, SearchQuery, isEntityProjection } from "../../../specification";
+import { EntityProjections, Joins } from "../../../specification/joins";
 
 /**
  * The SearchQueryGenerator renders a SearchQuery as an OpenAPI operation.
@@ -29,7 +31,7 @@ export class SearchQueryGenerator implements QueryGenerator<SearchQuery> {
     const summary = this.buildSummary(query);
     const additionalParams = this.buildParameters();
     const tag = this.buildTag(query);
-    const response = this.buildResponse(query);
+    const response = this.buildResponse(query, context);
     const metaData = this.buildMetaData();
 
     OpenAPIBuilder.newBuilder(context.openAPI, context.schemaRegistry)
@@ -52,7 +54,7 @@ export class SearchQueryGenerator implements QueryGenerator<SearchQuery> {
    * @returns the operation tag.
    */
   protected buildTag(query: SearchQuery): string {
-    return query.tag || toPascalCase(pluralize(query.search));
+    return query.tag || toPascalCase(pluralize(Joins.viaFrom(query.search)));
   }
 
   /**
@@ -63,7 +65,7 @@ export class SearchQueryGenerator implements QueryGenerator<SearchQuery> {
    * @returns the operation URL.
    */
   protected buildUrl(query: SearchQuery): Url {
-    return UrlBuilder.newBuilder().path().withNoun("search", false).withNoun(query.search, true).end().build();
+    return UrlBuilder.newBuilder().path().withNoun("search", false).withNoun(Joins.viaFrom(query.search), true).end().build();
   }
 
   /**
@@ -78,7 +80,7 @@ export class SearchQueryGenerator implements QueryGenerator<SearchQuery> {
       return query.name;
     }
 
-    return "search" + toPascalCase(pluralize(query.search));
+    return "search" + toPascalCase(pluralize(Joins.viaFrom(query.search)));
   }
 
   /**
@@ -93,7 +95,7 @@ export class SearchQueryGenerator implements QueryGenerator<SearchQuery> {
       return query.summary;
     }
 
-    return "Searches for " + toSummaryCase(pluralize(query.search)) + ".";
+    return "Searches for " + toSummaryCase(pluralize(Joins.viaFrom(query.search))) + ".";
   }
 
   /**
@@ -102,8 +104,23 @@ export class SearchQueryGenerator implements QueryGenerator<SearchQuery> {
    * @param query   The query to render.
    * @returns the response data schema.
    */
-  protected buildResponse(query: SearchQuery): OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject {
-    return arraySchema(entitySchemaRef(toPascalCase(query.search)));
+  protected buildResponse(query: SearchQuery, context: QueryProcessorContext): OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject {
+    if (isEntityProjection(query.search)) {
+      const entityProjection: EntityProjection = query.search as EntityProjection;
+
+      return arraySchema(
+        asSchemaObject(
+          EntityProjections.projectionSchema(
+            entityProjection,
+            EntityProjections.viaFrom(entityProjection),
+            JsonPath.resolve(context.jsonPath || "", "search"),
+            context,
+          ),
+        ),
+      );
+    }
+
+    return arraySchema(entitySchemaRef(toPascalCase(query.search as EntityName)));
   }
 
   /**

@@ -341,7 +341,7 @@ export interface SearchQuery extends BaseQuery {
   /**
    * The searchable entity.
    */
-  search: EntityName;
+  search: EntityName | EntityProjection;
 }
 
 /**

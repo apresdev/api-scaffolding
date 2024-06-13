@@ -1853,7 +1853,14 @@
           "type": "string"
         },
         "search": {
-          "$ref": "#/definitions/EntityName",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/EntityName"
+            },
+            {
+              "$ref": "#/definitions/EntityProjection"
+            }
+          ],
           "description": "The searchable entity."
         },
         "sortableBy": {
