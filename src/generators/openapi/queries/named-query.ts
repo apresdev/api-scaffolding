@@ -1,6 +1,7 @@
 import { OpenAPIV3 } from "openapi-types";
 import { JsonPath, ajv, toCamelCase, toKebabCase } from "../../../common";
 import { PathError } from "../../../common/io";
+import { resolveFully } from "../../../models/util";
 import { AnySchema, Cardinality, EntityName, EntityProjection, Nodes, isEntityProjection } from "../../../specification";
 import { Joins } from "../../../specification/joins";
 import { ColumnDescriptor, Dimension, Measure, NamedQuery } from "../../../specification/named-query";
@@ -179,10 +180,12 @@ export class NamedQueryGenerator implements QueryGenerator<NamedQuery> {
 
     const type = "type" in propSchemaOrRef ? propSchemaOrRef.type || "undefined" : "unknown";
     const format = "format" in propSchemaOrRef ? propSchemaOrRef.format : undefined;
+    const items = "items" in propSchemaOrRef ? (resolveFully(propSchemaOrRef.items, context.schemaRegistry) as ValueType) : undefined;
 
     return {
       type,
       format,
+      items,
     };
   }
 
