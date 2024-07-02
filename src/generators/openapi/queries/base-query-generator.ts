@@ -154,7 +154,7 @@ export abstract class BaseQueryGenerator<T extends BaseQuery> implements QueryGe
       requestBody.properties["filterBy"] = filterBy;
     }
 
-    const orderBy = this.buildSort(query);
+    const orderBy = this.buildSort(query, context);
     if (orderBy) {
       requestBody.properties["orderBy"] = orderBy;
     }
@@ -229,10 +229,12 @@ export abstract class BaseQueryGenerator<T extends BaseQuery> implements QueryGe
 
   protected abstract getSourceEntity(query: T, context: QueryProcessorContext): EntityName;
 
-  private buildSort(query: T): OpenAPIV3.SchemaObject | undefined {
+  private buildSort(query: T, context: QueryProcessorContext): OpenAPIV3.SchemaObject | undefined {
     if (!query.sortableBy) {
       return;
     }
+
+    const sourceEntity = this.getSourceEntity(query, context);
 
     const fieldNames: OpenAPIV3.SchemaObject = {
       type: "string",
@@ -241,7 +243,13 @@ export abstract class BaseQueryGenerator<T extends BaseQuery> implements QueryGe
 
     fieldNames.enum = query.sortableBy.flatMap((projection) => {
       const entityName = EntityProjections.viaFrom(projection);
-      return asArray(projection[entityName]).map((property) => `${toCamelCase(entityName)}.${toCamelCase(Joins.viaFrom(property))}`);
+
+      return asArray(projection[entityName]).map((property) => {
+        if (entityName === sourceEntity) {
+          return toCamelCase(Joins.viaFrom(property));
+        }
+        return `${toCamelCase(entityName)}.${toCamelCase(Joins.viaFrom(property))}`;
+      });
     });
 
     return arraySchema({
