@@ -276,12 +276,19 @@ function embedParentId(relationship: Relationship, schemaRegistry: SchemaRegistr
     return;
   }
 
-  // Insert the parent identifier in the schema.
   const entitySchema: EntitySchema = schemaRegistry.get(relationship.right);
-  const parentId = toCamelCase(relationship.left) + "Id";
-  entitySchema.required = [...(entitySchema.required || []), parentId];
   entitySchema.properties = entitySchema.properties || {};
-  entitySchema.properties[parentId] = entitySchemaRef(toPascalCase(relationship.left) + "Identifier") as ReferenceSchema;
+
+  // Check if this is a one-to-one relationship based on COMPOSITION.
+  if (Cardinality.isToOne(relationship.cardinality)) {
+    // if it is, then assign the parent identifier as the child identifier
+    entitySchema.properties["id"] = entitySchemaRef(toPascalCase(relationship.left) + "Identifier") as ReferenceSchema;
+  } else {
+    // Otherwise, insert the parent identifier in the schema.
+    const parentId = toCamelCase(relationship.left) + "Id";
+    entitySchema.required = [...(entitySchema.required || []), parentId];
+    entitySchema.properties[parentId] = entitySchemaRef(toPascalCase(relationship.left) + "Identifier") as ReferenceSchema;
+  }
   schemaRegistry.set(relationship.right, entitySchema);
 }
 
