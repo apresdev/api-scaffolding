@@ -1,4 +1,6 @@
+import { OpenAPIV3 } from "openapi-types";
 import { toPascalCase } from "../common";
+import { asSchemaObject } from "../entities";
 import { AnySchema, EntitySchema, Fragment } from "../specification";
 
 /**
@@ -112,5 +114,15 @@ export class SchemaRegistry {
 
   public getFragment(name: string): Fragment | undefined {
     return this.fragments.get(name);
+  }
+
+  public resolve(schema: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject): OpenAPIV3.SchemaObject {
+    if ("$ref" in schema) {
+      const entity = schema.$ref.split("/").pop() as string;
+      const resolvedSchema = this.get(entity);
+      return this.resolve(asSchemaObject(resolvedSchema));
+    }
+
+    return schema;
   }
 }
