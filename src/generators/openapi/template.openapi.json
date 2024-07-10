@@ -367,6 +367,95 @@
         "type": "integer",
         "minimum": 0
       },
+      "DateTimeFilter": {
+        "type": "object",
+        "description": "A filter used to filter results based on a given `date-time` field.\nSpecific filters allow the client to search between a starting and ending date-time range, before a given date-time, at a specific date-time, and after a given date-time.\nRelative filters allow the client to search the past X chrono units (e.g. past 30 days), the next X chrono units (e.g. the next 7 days), or within the current chrono unit (e.g. in the current month or year).\n",
+        "properties": {
+          "between": {
+            "$ref": "#/components/schemas/DateTimeRange"
+          },
+          "before": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "after": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "past": {
+            "$ref": "#/components/schemas/RelativeRange"
+          },
+          "next": {
+            "$ref": "#/components/schemas/RelativeRange"
+          },
+          "current": {
+            "$ref": "#/components/schemas/ChronoUnit"
+          }
+        },
+        "minProperties": 1,
+        "maxProperties": 1,
+        "additionalProperties": false,
+        "example": {
+          "next": {
+            "duration": 1,
+            "unit": "week"
+          }
+        }
+      },
+      "DateTimeRange": {
+        "type": "object",
+        "description": "A fixed date-time range, represented by a start date-time and an end date-time.\n",
+        "required": [
+          "start",
+          "end"
+        ],
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RelativeRange": {
+        "type": "object",
+        "description": "A relative range.  Used to represent a range of date/time values relative to the current date and time.\n",
+        "required": [
+          "duration",
+          "unit"
+        ],
+        "properties": {
+          "duration": {
+            "type": "integer",
+            "description": "The number of chronological units to include in the range.  For example the next 30 days would have `duration: 30` and `unit: day`\n"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/ChronoUnit"
+          },
+          "inclusive": {
+            "type": "boolean",
+            "default": true,
+            "description": "A flag to indicate if the relative range should commmence relative to the current date-time, or if it should start on the next logical chronological boundary. For example, next month, could be the next 30-ish days starting from now (inclusive: true) or it could be the full range of days in the next month, starting on the first of the month\n"
+          }
+        }
+      },
+      "ChronoUnit": {
+        "type": "string",
+        "description": "A standard set of date periods units. This set of units provide unit-based access to manipulate a date, time or date-time.\n",
+        "enum": [
+          "day",
+          "week",
+          "month",
+          "year"
+        ]
+      },
       "ValueType": {
         "description": "The data type of the values",
         "type": "object",

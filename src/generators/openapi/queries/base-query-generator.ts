@@ -4,12 +4,13 @@ import { OpenAPIBuilder, Url } from "../builder";
 
 import { QueryGenerator, QueryProcessorContext } from "./query-generator";
 
-import { checkNotNull, toCamelCase } from "../../../common";
+import { checkNotNull, JsonPath, toCamelCase } from "../../../common";
 import { PathError } from "../../../common/io";
 import { asSchemaObject } from "../../../entities";
 import { BaseQuery, EntityName, EntityProjection, EntitySchema, JoinDirective, Nodes } from "../../../specification";
 import { EntityProjections, Joins } from "../../../specification/joins";
 import { arraySchema, asArray } from "../util";
+import { filterOn } from "./filters";
 import { forEachItem } from "./util";
 
 /**
@@ -202,22 +203,17 @@ export abstract class BaseQueryGenerator<T extends BaseQuery> implements QueryGe
         }
       }
 
-      const projectionSchema = asSchemaObject(EntityProjections.projectionSchema(join as EntityProjection, entityName, path, context));
-      projectionSchema.properties = projectionSchema.properties || {};
+      const projectionSchema = asSchemaObject(
+        EntityProjections.projectionSchema(join as EntityProjection, entityName, JsonPath.resolve(path, entity), context),
+      );
 
-      Object.keys(projectionSchema.properties).forEach((property) => {
+      Object.keys(projectionSchema.properties || {}).forEach((property: string, index: number) => {
+        // Convert the field schema into a field filter schema.
         projectionSchema.properties = projectionSchema.properties || {};
-        const schema = Object.assign({}, projectionSchema.properties[property]);
-
-        if ("readOnly" in schema) {
-          delete schema.readOnly;
-        }
-
-        if ("type" in schema && schema.type === "array") {
-          projectionSchema.properties[property] = schema;
-        } else {
-          projectionSchema.properties[property] = arraySchema(schema);
-        }
+        projectionSchema.properties[property] = filterOn(
+          context.schemaRegistry.resolve(projectionSchema.properties[property]),
+          JsonPath.resolve(path, entity, index.toString()),
+        );
       });
 
       filters.properties = filters.properties || {};
