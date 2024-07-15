@@ -71,7 +71,7 @@
     "ajv-formats-draft2019": "^1.6.1",
     "ajv-keywords": "^5.1.0",
     "cliui": "^8.0.1",
-    "commander": "^12.0.0",
+    "commander": "^12.1.0",
     "handlebars": "^4.7.8",
     "js-yaml": "^4.1.0",
     "js-yaml-source-map": "^0.2.2",
