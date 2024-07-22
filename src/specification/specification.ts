@@ -342,6 +342,13 @@ export interface SearchQuery extends BaseQuery {
    * The searchable entity.
    */
   search: EntityName | EntityProjection;
+
+  /**
+   * The collection of fields that may be used for server side filtering.
+   *
+   * Note, this affects
+   */
+  filterableBy?: Array<EntityProjection>;
 }
 
 /**

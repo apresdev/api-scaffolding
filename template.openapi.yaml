@@ -283,12 +283,6 @@ components:
             Returned in a paginated result set.  Indicates the total number of records in the given result set.
           example: 1
 
-    Search:
-      type: object
-      properties:
-        query:
-          type: string
-
     SortDirection:
       type: string
       enum: ["asc", "desc"]

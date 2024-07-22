@@ -1,7 +1,11 @@
 import { OpenAPIV3 } from "openapi-types";
-import { JsonPath } from "../../../common";
+import { JsonPath, toCamelCase } from "../../../common";
 import { PathError } from "../../../common/io";
+import { asSchemaObject } from "../../../entities";
+import { EntityName, EntityProjection, EntitySchema, JoinDirective, Nodes } from "../../../specification";
+import { EntityProjections, Joins } from "../../../specification/joins";
 import { arraySchema } from "../util";
+import { QueryProcessorContext } from "./query-generator";
 
 /**
  * A specialized filter used for date-time fields.
@@ -86,4 +90,65 @@ function clearReadOnly(schema: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObjec
   }
 
   return schema;
+}
+
+export function filterableBy(
+  filterableBy: Array<EntityProjection>,
+  sourceEntity: EntityName,
+  context: QueryProcessorContext,
+): OpenAPIV3.SchemaObject | undefined {
+  const filters: OpenAPIV3.SchemaObject = {
+    type: "object",
+    properties: {},
+  };
+
+  const sourceNode = context.graph.has(sourceEntity) ? context.graph.get(sourceEntity) : undefined;
+
+  filterableBy.forEach((join: JoinDirective, index: number) => {
+    const path = JsonPath.resolve(context.jsonPath || "", index + "");
+
+    const entity = Joins.viaFrom(join);
+    let entityName = entity;
+    if (!sourceNode) {
+      throw new PathError(`cannot join on [${sourceEntity}] as it has zero relationships`, path, "filterableBy");
+    }
+
+    let edgeSchema: EntitySchema | undefined;
+    if (entity !== sourceEntity) {
+      const edge = Nodes.findEdge(sourceNode, entity);
+      if (!edge) {
+        throw new PathError("could not determine filterable edge for name " + entity + " from " + sourceEntity, path, "filterableBy");
+      }
+
+      entityName = edge.node.name;
+      edgeSchema = context.schemaRegistry.get(edge.node.name) as EntitySchema;
+      if (!edgeSchema) {
+        throw new PathError("could not find schema for filterable entity " + edge.name, path, "filterableBy");
+      }
+    } else {
+      entityName = sourceEntity;
+      edgeSchema = context.schemaRegistry.get(sourceEntity) as EntitySchema;
+      if (!edgeSchema) {
+        throw new PathError("could not find schema for filterable entity " + sourceEntity, path, "filterableBy");
+      }
+    }
+
+    const projectionSchema = asSchemaObject(
+      EntityProjections.projectionSchema(join as EntityProjection, entityName, JsonPath.resolve(path, entity), context),
+    );
+
+    Object.keys(projectionSchema.properties || {}).forEach((property: string, index: number) => {
+      // Convert the field schema into a field filter schema.
+      projectionSchema.properties = projectionSchema.properties || {};
+      projectionSchema.properties[property] = filterOn(
+        context.schemaRegistry.resolve(projectionSchema.properties[property]),
+        JsonPath.resolve(path, entity, index.toString()),
+      );
+    });
+
+    filters.properties = filters.properties || {};
+    filters.properties[toCamelCase(entity)] = projectionSchema;
+  });
+
+  return filters;
 }

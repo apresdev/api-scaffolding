@@ -344,14 +344,6 @@
           }
         }
       },
-      "Search": {
-        "type": "object",
-        "properties": {
-          "query": {
-            "type": "string"
-          }
-        }
-      },
       "SortDirection": {
         "type": "string",
         "enum": [
