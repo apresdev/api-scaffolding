@@ -5,13 +5,10 @@ import { OpenAPIBuilder, Url } from "../builder";
 import { QueryGenerator, QueryProcessorContext } from "./query-generator";
 
 import { checkNotNull, JsonPath, toCamelCase } from "../../../common";
-import { PathError } from "../../../common/io";
-import { asSchemaObject } from "../../../entities";
-import { BaseQuery, EntityName, EntityProjection, EntitySchema, JoinDirective, Nodes } from "../../../specification";
+import { BaseQuery, EntityName } from "../../../specification";
 import { EntityProjections, Joins } from "../../../specification/joins";
 import { arraySchema, asArray } from "../util";
-import { filterOn } from "./filters";
-import { forEachItem } from "./util";
+import { filterableBy } from "./filters";
 
 /**
  * Provides a base implementation of a QueryGenerator that splits the building into the constituent OpenAPI parts.
@@ -168,59 +165,10 @@ export abstract class BaseQueryGenerator<T extends BaseQuery> implements QueryGe
       return;
     }
 
-    const filters: OpenAPIV3.SchemaObject = {
-      type: "object",
-      properties: {},
-    };
-
-    const sourceEntity = this.getSourceEntity(query, context);
-    const sourceNode = context.graph.has(sourceEntity) ? context.graph.get(sourceEntity) : undefined;
-
-    forEachItem(query, "filterableBy", context.jsonPath || "", (join: JoinDirective, path: string) => {
-      const entity = Joins.viaFrom(join);
-      let entityName = entity;
-      if (!sourceNode) {
-        throw new PathError(`cannot join on [${sourceEntity}] as it has zero relationships`, path, "filterableBy");
-      }
-
-      let edgeSchema: EntitySchema | undefined;
-      if (entity !== sourceEntity) {
-        const edge = Nodes.findEdge(sourceNode, entity);
-        if (!edge) {
-          throw new PathError("could not determine filterable edge for name " + entity + " from " + sourceEntity, path, "filterableBy");
-        }
-
-        entityName = edge.node.name;
-        edgeSchema = context.schemaRegistry.get(edge.node.name) as EntitySchema;
-        if (!edgeSchema) {
-          throw new PathError("could not find schema for filterable entity " + edge.name, path, "filterableBy");
-        }
-      } else {
-        entityName = sourceEntity;
-        edgeSchema = context.schemaRegistry.get(sourceEntity) as EntitySchema;
-        if (!edgeSchema) {
-          throw new PathError("could not find schema for filterable entity " + sourceEntity, path, "filterableBy");
-        }
-      }
-
-      const projectionSchema = asSchemaObject(
-        EntityProjections.projectionSchema(join as EntityProjection, entityName, JsonPath.resolve(path, entity), context),
-      );
-
-      Object.keys(projectionSchema.properties || {}).forEach((property: string, index: number) => {
-        // Convert the field schema into a field filter schema.
-        projectionSchema.properties = projectionSchema.properties || {};
-        projectionSchema.properties[property] = filterOn(
-          context.schemaRegistry.resolve(projectionSchema.properties[property]),
-          JsonPath.resolve(path, entity, index.toString()),
-        );
-      });
-
-      filters.properties = filters.properties || {};
-      filters.properties[toCamelCase(entity)] = projectionSchema;
+    return filterableBy(query.filterableBy, this.getSourceEntity(query, context), {
+      ...context,
+      jsonPath: JsonPath.resolve(context.jsonPath || "", "filterableBy"),
     });
-
-    return filters;
   }
 
   protected abstract getSourceEntity(query: T, context: QueryProcessorContext): EntityName;

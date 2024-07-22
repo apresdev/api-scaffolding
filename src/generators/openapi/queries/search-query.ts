@@ -5,12 +5,13 @@ import { PaginationParameters } from "../parameters";
 import { arraySchema, entitySchemaRef, toSummaryCase } from "../util";
 
 import { QueryGenerator, QueryProcessorContext } from "./query-generator";
-import { Metadata, Search } from "./util";
+import { Metadata } from "./util";
 
 import { JsonPath, checkNotNull, pluralize, toCamelCase, toPascalCase } from "../../../common";
 import { asSchemaObject } from "../../../entities";
 import { EntityName, EntityProjection, SearchQuery, isEntityProjection } from "../../../specification";
 import { EntityProjections, Joins } from "../../../specification/joins";
+import { filterableBy } from "./filters";
 
 /**
  * The SearchQueryGenerator renders a SearchQuery as an OpenAPI operation.
@@ -31,6 +32,7 @@ export class SearchQueryGenerator implements QueryGenerator<SearchQuery> {
     const summary = this.buildSummary(query);
     const additionalParams = this.buildParameters();
     const tag = this.buildTag(query);
+    const requestBody = this.buildRequestBody(query, context);
     const response = this.buildResponse(query, context);
     const metaData = this.buildMetaData();
 
@@ -41,7 +43,7 @@ export class SearchQueryGenerator implements QueryGenerator<SearchQuery> {
       .withSummary(summary)
       .withParameters([...url.parameters, ...additionalParams])
       .withTag(tag)
-      .withRequestBody(Search)
+      .withRequestBody(requestBody)
       .withSuccessResponse(200, summary, response, metaData)
       .build();
   }
@@ -55,6 +57,33 @@ export class SearchQueryGenerator implements QueryGenerator<SearchQuery> {
    */
   protected buildTag(query: SearchQuery): string {
     return query.tag || toPascalCase(pluralize(Joins.viaFrom(query.search)));
+  }
+  /**
+   * Builds the operation tag.
+   *
+   * @param query   The query to render.
+   *
+   * @returns the operation tag.
+   */
+  protected buildRequestBody(query: SearchQuery, context: QueryProcessorContext): OpenAPIV3.SchemaObject {
+    const requestBody: OpenAPIV3.SchemaObject = {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+        },
+      },
+    };
+
+    if (query.filterableBy) {
+      requestBody.properties = requestBody.properties || {};
+      requestBody.properties["filterBy"] = filterableBy(query.filterableBy, Joins.viaFrom(query.search), {
+        ...context,
+        jsonPath: JsonPath.resolve(context.jsonPath || "", "filterableBy"),
+      }) as OpenAPIV3.SchemaObject;
+    }
+
+    return requestBody;
   }
 
   /**
