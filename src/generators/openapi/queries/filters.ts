@@ -1,4 +1,5 @@
 import { OpenAPIV3 } from "openapi-types";
+import { JsonPath } from "../../../common";
 import { PathError } from "../../../common/io";
 import { arraySchema } from "../util";
 
@@ -41,12 +42,26 @@ export function filterOn(schema: OpenAPIV3.SchemaObject, path: string): OpenAPIV
       case "array":
         // Array values allow multiple values, by re-using the array schema we treat it as an "in" operator.
         if ("items" in result) {
+          if ("type" in result.items) {
+            // Double check that we are only filtering on an array of scalars (i.e. use the default "in" operatior)
+            switch (result.items.type) {
+              case "array":
+              case "object":
+                throw new PathError("array filters are currently only permitted on scalar data types", path, "filterableBy");
+            }
+          }
           result.items = clearReadOnly(result.items);
         }
         return result;
       case "object":
-        // We should not allow filtering directly on an object.
-        throw new PathError("filtering on objects is not currently supported", path, "filterableBy");
+        if ("properties" in result && result.properties) {
+          Object.keys(result.properties).forEach((property: string) => {
+            result.properties = result.properties || {};
+            result.properties[property] = filterOn(result.properties[property] as OpenAPIV3.SchemaObject, JsonPath.resolve(path, property));
+          });
+        }
+
+        return result;
     }
   }
 
