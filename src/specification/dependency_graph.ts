@@ -1,4 +1,4 @@
-import { pluralize } from "../common";
+import { pluralize, toCamelCase } from "../common";
 import { SchemaRegistry } from "../models";
 
 import { getOrSet } from "./util";
@@ -42,7 +42,7 @@ export class Nodes {
     }
 
     return edges.find((edge: Edge): boolean => {
-      return edge.node.name === name || edge.name === name;
+      return toCamelCase(edge.node.name) === toCamelCase(name) || toCamelCase(edge.name) === toCamelCase(name);
     });
   }
 }
