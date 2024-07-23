@@ -2,7 +2,8 @@ import { OpenAPIV3 } from "openapi-types";
 import { JsonPath, ajv, toCamelCase, toKebabCase } from "../../../common";
 import { PathError } from "../../../common/io";
 import { resolveFully } from "../../../models/util";
-import { AnySchema, Cardinality, EntityName, EntityProjection, Nodes, isEntityProjection } from "../../../specification";
+import { AnySchema, ObjectSchema, Cardinality, EntityName, EntityProjection, Nodes, isEntityProjection } from "../../../specification";
+import { SchemaRegistry } from "../../../models/schema_registry";
 import { Joins } from "../../../specification/joins";
 import { ColumnDescriptor, Dimension, Measure, NamedQuery } from "../../../specification/named-query";
 import { CONTENT_TYPE_JSON } from "../util";
@@ -181,12 +182,24 @@ export class NamedQueryGenerator implements QueryGenerator<NamedQuery> {
     const type = "type" in propSchemaOrRef ? propSchemaOrRef.type || "undefined" : "unknown";
     const format = "format" in propSchemaOrRef ? propSchemaOrRef.format : undefined;
     const items = "items" in propSchemaOrRef ? (resolveFully(propSchemaOrRef.items, context.schemaRegistry) as ValueType) : undefined;
+    const properties = "properties" in propSchemaOrRef
+      ? this.resolveProperties(propSchemaOrRef.properties as Record<string, AnySchema>, context.schemaRegistry)
+      : undefined;
 
     return {
       type,
       format,
       items,
+      properties
     };
+  }
+
+  private resolveProperties(properties: Record<string, AnySchema>, schemaRegistry: SchemaRegistry): Record<string, ValueType> {
+    const resolved: Record<string, ValueType> = {};
+    Object.keys(properties || {}).forEach((property) => {
+      resolved[property] = (resolveFully(properties[property], schemaRegistry) as ValueType)
+    });
+    return resolved;
   }
 
   private generateColumnDescriptorColumns(descriptor: ColumnDescriptor, query: NamedQuery): Array<QueryResponseColumn> {
