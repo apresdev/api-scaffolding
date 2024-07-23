@@ -201,10 +201,6 @@ export class NamedQueryGenerator implements QueryGenerator<NamedQuery> {
    * @returns the JSON schema as a ValueType
    */
   private toValueType(schema: AnySchema, context: QueryProcessorContext): ValueType {
-    if (!schema) {
-      console.log("WTF");
-    }
-
     const resolved = resolveFully(schema, context.schemaRegistry);
 
     const type = "type" in resolved ? resolved.type || "undefined" : "unknown";
