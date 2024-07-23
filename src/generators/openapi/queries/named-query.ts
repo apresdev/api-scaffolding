@@ -131,15 +131,27 @@ export class NamedQueryGenerator implements QueryGenerator<NamedQuery> {
         const subProjection = joinDirective as EntityProjection;
         const projectedEntity = Joins.viaFrom(subProjection);
         const node = context.graph.get(entity);
+
+        let subSchema: AnySchema;
+        let name: string;
+        let autoWrapArray: boolean = false;
+
         const edge = Nodes.findEdge(node, projectedEntity);
-        if (!edge) {
+        if (edge) {
+          subSchema = context.schemaRegistry.get(edge?.node.name);
+          name = edge?.node.name;
+          autoWrapArray = Cardinality.isToMany(edge.cardinality);
+        } else if ("properties" in schema && schema.properties && schema.properties[projectedEntity]) {
+          subSchema = schema.properties[projectedEntity];
+          name = projectedEntity;
+        } else {
           throw new Error("could not resolve edge " + projectedEntity);
         }
-        const subSchema = context.schemaRegistry.get(edge?.node.name);
-        const columns = this.generateEntityPojectionColumns(subProjection, query, edge?.node.name, subSchema, context);
+
+        const columns = this.generateEntityPojectionColumns(subProjection, query, name, subSchema, context);
         columns.forEach((column) => {
           column.name = `${toCamelCase(parentProjectedEntity)}.${column.name}`;
-          if (Cardinality.isToMany(edge.cardinality)) {
+          if (autoWrapArray) {
             column.dataType = {
               type: "array",
               items: column.dataType,
@@ -163,6 +175,8 @@ export class NamedQueryGenerator implements QueryGenerator<NamedQuery> {
   }
 
   private getDataType(entity: string, column: string, schema: AnySchema, context: QueryProcessorContext): ValueType {
+    schema = resolveFully(schema, context.schemaRegistry);
+
     if (!("properties" in schema)) {
       throw new Error("detected non-object projection");
     }
@@ -171,21 +185,47 @@ export class NamedQueryGenerator implements QueryGenerator<NamedQuery> {
       throw new Error("detected undefined properties");
     }
 
-    let propSchemaOrRef = schema.properties[column];
+    const propSchemaOrRef = schema.properties[column];
     if (!propSchemaOrRef) {
       throw new Error(`invalid property name "${column}" on entity "${entity}"`);
     }
 
-    propSchemaOrRef = resolveSchema(propSchemaOrRef, context);
+    return this.toValueType(propSchemaOrRef, context);
+  }
 
-    const type = "type" in propSchemaOrRef ? propSchemaOrRef.type || "undefined" : "unknown";
-    const format = "format" in propSchemaOrRef ? propSchemaOrRef.format : undefined;
-    const items = "items" in propSchemaOrRef ? (resolveFully(propSchemaOrRef.items, context.schemaRegistry) as ValueType) : undefined;
+  /**
+   * Converts a JSON schema into a simplified ValueType.
+   *
+   * @param schema the JSON schema to convert
+   * @param context the query execution context.
+   * @returns the JSON schema as a ValueType
+   */
+  private toValueType(schema: AnySchema, context: QueryProcessorContext): ValueType {
+    if (!schema) {
+      console.log("WTF");
+    }
+
+    const resolved = resolveFully(schema, context.schemaRegistry);
+
+    const type = "type" in resolved ? resolved.type || "undefined" : "unknown";
+    const format = "format" in resolved ? resolved.format : undefined;
+    const items = "items" in resolved ? this.toValueType(resolved.items, context) : undefined;
+
+    let properties: Record<string, ValueType> | undefined = undefined;
+    if ("properties" in resolved && resolved.properties) {
+      properties = {};
+      Object.keys(resolved.properties).forEach((property) => {
+        properties = properties || {};
+        resolved.properties = resolved.properties || {};
+        properties[property] = this.toValueType(resolved.properties[property], context);
+      });
+    }
 
     return {
       type,
       format,
       items,
+      properties,
     };
   }
 
@@ -258,15 +298,4 @@ interface QueryResponseColumn {
   columnType: "dimension" | "measure";
   dataType: ValueType;
   sortable: boolean;
-}
-
-function resolveSchema(schema: AnySchema, context: QueryProcessorContext): AnySchema {
-  if (!("$ref" in schema)) {
-    return schema;
-  }
-
-  const refParts = schema.$ref.split("/");
-  const referencedEntity = refParts[refParts.length - 1];
-  const refSchema = context.schemaRegistry.get(referencedEntity);
-  return resolveSchema(refSchema, context);
 }
