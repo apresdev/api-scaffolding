@@ -299,14 +299,3 @@ interface QueryResponseColumn {
   dataType: ValueType;
   sortable: boolean;
 }
-
-function resolveSchema(schema: AnySchema, context: QueryProcessorContext): AnySchema {
-  if (!("$ref" in schema)) {
-    return schema;
-  }
-
-  const refParts = schema.$ref.split("/");
-  const referencedEntity = refParts[refParts.length - 1];
-  const refSchema = context.schemaRegistry.get(referencedEntity);
-  return resolveSchema(refSchema, context);
-}
