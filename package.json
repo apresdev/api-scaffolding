@@ -64,7 +64,7 @@
     "@types/ajv-keywords": "^3.5.0",
     "@types/handlebars": "^4.1.0",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^20.14.11",
+    "@types/node": "^22.0.0",
     "@types/underscore": "^1.11.15",
     "ajv": "^8.16.0",
     "ajv-formats": "^3.0.1",
