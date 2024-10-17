@@ -54,7 +54,7 @@ export class FindOneQueryGenerator extends FindQueryGenerator<RetrieveQuery> {
       throw new Error("illegal state");
     }
 
-    if (query.filterableBy || query.sortableBy) {
+    if (query.filterableBy || query.sortableBy || givenDirectives.length == 0) {
       return "retrieve" + toPascalCase(findDirective.path());
     }
 
@@ -76,7 +76,8 @@ export class FindOneQueryGenerator extends FindQueryGenerator<RetrieveQuery> {
       pathBuilder.withNoun(findDirective.asIdentifier(context), false);
     }
 
-    givenDirectives.forEach((directive) => {
+    // Use either the given directives or the find directive to build the path.
+    (givenDirectives.length > 0 ? givenDirectives : [findDirective]).forEach((directive) => {
       if (directive.isSingleton(context)) {
         pathBuilder.withNoun(directive.path(), false);
       } else {
