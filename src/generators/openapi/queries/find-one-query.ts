@@ -74,17 +74,17 @@ export class FindOneQueryGenerator extends FindQueryGenerator<RetrieveQuery> {
     if (query.filterableBy || query.sortableBy) {
       pathBuilder.withNoun("retrieve", false);
       pathBuilder.withNoun(findDirective.asIdentifier(context), false);
+    } else {
+      // Use either the given directives or the find directive to build the path.
+      (givenDirectives.length > 0 ? givenDirectives : [findDirective]).forEach((directive) => {
+        if (directive.isSingleton(context)) {
+          pathBuilder.withNoun(directive.path(), false);
+        } else {
+          pathBuilder.withNoun(directive.path(), true);
+          pathBuilder.withIdentifier(directive.path());
+        }
+      });
     }
-
-    // Use either the given directives or the find directive to build the path.
-    (givenDirectives.length > 0 ? givenDirectives : [findDirective]).forEach((directive) => {
-      if (directive.isSingleton(context)) {
-        pathBuilder.withNoun(directive.path(), false);
-      } else {
-        pathBuilder.withNoun(directive.path(), true);
-        pathBuilder.withIdentifier(directive.path());
-      }
-    });
 
     return urlBuilder.build();
   }
