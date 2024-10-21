@@ -59,7 +59,7 @@
   },
   "dependencies": {
     "@stoplight/spectral-core": "^1.18.3",
-    "@stoplight/spectral-cli": "^6.11.1",
+    "@stoplight/spectral-cli": "^6.13.1",
     "@types/ajv": "^1.0.0",
     "@types/ajv-keywords": "^3.5.0",
     "@types/handlebars": "^4.1.0",
