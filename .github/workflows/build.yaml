@@ -285,7 +285,34 @@ jobs:
               ref: 'refs/tags/v' + process.env.RELEASE_VERSION,
               sha: context.sha
             })
-            
+
+      # This generates the AWS credentials that give us permission to modify the S3 Bucket and DynamoDB table.
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::767397774077:role/GitHubActionsDeployerRole-apresdev-api-scaffolding
+          # append workflow name to session name, max 64 characters. Repo name is already in the IAM event.
+          role-session-name: ${{ format('GitHub_AWS_OIDC_{0}', github.workflow) }}
+          aws-region: us-east-2
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and tag Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: api-scaffolding # name of this repo
+          IMAGE_TAG: ${{ needs.plan.outputs.version }}
+        run: docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --platform linux/arm64 .
+
+      - name: Push Docker image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: api-scaffolding # name of this repo
+          IMAGE_TAG: ${{ needs.plan.outputs.version }}
+        run: docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
       - name: Create release
         uses: actions/create-release@v1
         id: create_release
