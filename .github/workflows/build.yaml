@@ -1,0 +1,288 @@
+name: Build
+
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened, labeled, unlabeled ]
+    paths:
+      - "**"
+      - .github/workflows/build.yml
+      - "!README.md"
+      - "!CHANGELOG.md"
+
+  pull_request_target:
+    types: [ closed ]
+    paths:
+      - "**"
+      - .github/workflows/build.yml
+      - "!README.md"
+      - "!CHANGELOG.md"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+
+  detect:
+    runs-on: ubuntu-latest
+    name: "Detect pull request context"
+    outputs:
+      changelog-text: ${{ steps.changelog-text.outputs.result }}
+      release-type: ${{ steps.check_pr_label.outputs.release-type}}
+      is-merge-event: >-
+        ${{ github.event_name == 'pull_request_target'
+         && github.event.action == 'closed'
+         && github.event.pull_request.merged == true }}
+    steps:
+      # I'm getting the labels from the API and not the context("contains(github.event.pull_request.labels.*.name, 'Env Promote')") as the labels
+      # are added in 2nd API call, so they aren't included in the PR context
+      - name: Check PR labels
+        id: check_pr_label
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}} #TODO: check if needed (we don't checkout the code..)
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        run: |
+          LABELS=$(gh pr view $PR_URL --json labels  --jq '.labels[]| select((.name=="minor-version") or (.name=="major-version") or (.name=="patch-version") or (.name=="no-version")) |.name')
+          NUMBER_OF_LABELS=$(echo "$LABELS" |wc -w)
+          if [ "$NUMBER_OF_LABELS" -eq "1" ] ; then
+            echo "Found labels: $LABELS"
+            echo "release-type=$LABELS" >> $GITHUB_OUTPUT
+          elif [ "$NUMBER_OF_LABELS" -gt "1" ] ; then
+            echo "::error ::Too many release type labels, choose only one of minor-version, major-version, patch-version, or no-version. Selected labels: $( echo $LABELS | tr '\n' ' ' )"
+            exit 1
+          else
+            echo "::error ::No release type labels found, choose one of minor-version, major-version, patch-version, or no-version."
+            exit 2
+          fi
+
+      - name: Get Changelog Text
+        id: changelog-text
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // if the trigger is dependabot, use the PR title as the changelog
+            if (github.actor == 'dependabot[bot]') {
+              return github.event.pull_request.title;
+            }
+            changelog = '';
+            lines = context.payload.pull_request.body.split('\n');
+            // Match all cases of "changelog:"
+            const re = /changelog: (.*)/i;
+            for(const line of lines) {
+              if (re.test(line)) {
+                // greedily get everything after the first colon and space
+                // sometimes we get a \r in there so trim it off
+                changelog = line.split(': ',2)[1].trim();
+                break;
+              }
+            }
+            if (changelog === '') {
+              // Fail because we should have had a Changelog.
+              core.error('No changelog found in PR body! Add a line beginning with "Changelog: " and rerun this job.');
+            }
+            console.log("Changelog: '" + changelog + "'");
+            return changelog;
+          result-encoding: string
+
+  validate:
+    needs: detect
+    name: Build
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build code
+        run: npm run build
+
+      - name: Lint code
+        run: npm run lint
+
+      - name: Run all tests
+        run: npm run test
+
+  plan:
+    needs: [ detect, validate ]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    name: "Plan versions:"
+    outputs:
+      version: ${{ steps.new-version.outputs.result }}
+    steps:
+      # Need the code to manage the changelog steps
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect previous version number
+        uses: actions/github-script@v4
+        id: prev-version
+        env:
+          PACKAGE_NAME: "lambda-ddb-sns-publisher"
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const query = `query($owner: String!, $repo: String!, $refPrefix: String!) {
+              repository(owner: $owner, name: $repo) {
+                refs(refPrefix: $refPrefix, first: 1, orderBy: {field: TAG_COMMIT_DATE, direction: DESC}) {
+                  edges { node { name } }
+                }
+              }
+            }`;
+            const result = await github.graphql(query, { owner, repo,
+              refPrefix: `refs/tags/`,
+            });
+            const prevNode = result.repository.refs.edges[0];
+            const prevVer = prevNode ? prevNode.node.name : '0.0.0';
+            console.log('Found previous version', prevVer);
+            return prevVer.substring(1);
+          result-encoding: string
+
+      - name: Determine new version number
+        uses: actions/github-script@v4
+        id: new-version
+        env:
+          PREV_VERSION: "${{ steps.prev-version.outputs.result }}"
+          RELEASE_TYPE: "${{ needs.detect.outputs.release-type }}"
+        with:
+          script: |
+            const { PREV_VERSION, RELEASE_TYPE } = process.env;
+            console.log('Previous version was', PREV_VERSION);
+            console.log('Release type is', RELEASE_TYPE);
+
+            if (RELEASE_TYPE === 'no-version') {
+              console.log('No version bump needed');
+              return PREV_VERSION;
+            }
+
+            const numbers = PREV_VERSION.split('.');
+            const numberIdx = ['major-version', 'minor-version', 'patch-version'].indexOf(RELEASE_TYPE);
+            numbers[numberIdx] = parseInt(numbers[numberIdx]) + 1;
+            for (let i = numberIdx + 1; i < numbers.length; i++) {
+              numbers[i] = 0;
+            }
+            const newVersion = numbers.join('.');
+            console.log('New version is: ', newVersion);
+            return newVersion;
+          result-encoding: string
+
+      - name: Store version numbers
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        run: |
+          mkdir output
+          echo '${{ steps.prev-version.outputs.result }}' > output/previous-version.txt
+          echo '${{ steps.new-version.outputs.result }}' > output/new-version.txt
+
+      - name: Upload result artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: "version-history"
+          path: output
+          retention-days: 5
+
+      # Use the changelog text from the PR body, parsed in the detect job.
+      - name: Update Changelog
+        uses: stefanzweifel/changelog-updater-action@v1
+        with:
+          latest-version: ${{ steps.new-version.outputs.result }}
+          # Get release notes from the detect job output
+          release-notes: ${{ needs.detect.outputs.changelog-text }}
+          path-to-changelog: CHANGELOG.md
+
+      - name: Commit with signed
+        uses: planetscale/ghcommit-action@v0.1.6
+        with:
+          commit_message: "Update CHANGELOG"
+          repo: ${{ github.repository }}
+          branch: ${{ github.head_ref || github.ref_name }}
+          file_pattern: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+  comment:
+    needs: [ detect, plan ]
+    if: needs.detect.outputs.is-merge-event == 'false'
+    runs-on: ubuntu-latest
+    name: "Comment on PR"
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: outputs
+      - name: Display structure of downloaded files
+        run: ls -R
+        working-directory: outputs
+
+      - uses: actions/github-script@v2
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const { number: issue_number } = context.issue;
+            const { readdir, readFile } = require('fs').promises;
+            const utf8 = { encoding: 'utf-8' };
+
+            const lines = [
+              '# Release plan', '',
+              '| Previous version | New version |',
+              '| -- | -- |',
+            ];
+            const sections = [];
+            const readText = (name) => readFile(name, utf8).then(x => x.trim());
+
+            lines.push('| '+[
+              `v${await readText(`outputs/version-history/previous-version.txt`)}`,
+              `**v${await readText(`outputs/version-history/new-version.txt`)}**`,
+            ].join(' | ')+' |');
+
+            const finalBody = [lines.join('\n'), ...sections].join('\n\n');
+
+            const {data: allComments} = await github.issues.listComments({ issue_number, owner, repo });
+            const ourComments = allComments
+              .filter(comment => comment.user.login === 'github-actions[bot]')
+              .filter(comment => comment.body.startsWith(lines[0]+'\n'));
+
+            const latestComment = ourComments.slice(-1)[0];
+            if (latestComment && latestComment.body === finalBody) {
+              console.log('Existing comment is already up to date.');
+              return;
+            }
+
+            const {data: newComment} = await github.issues.createComment({ issue_number, owner, repo, body: finalBody });
+            console.log('Posted comment', newComment.id, '@', newComment.html_url);
+            // Delete all our previous comments
+            for (const comment of ourComments) {
+              if (comment.id === newComment.id) continue;
+              console.log('Deleting previous PR comment from', comment.created_at);
+              await github.issues.deleteComment({ comment_id: comment.id, owner, repo });
+            }
+
+  release:
+    needs: [ detect, plan ]
+    if: needs.detect.outputs.is-merge-event == 'true'
+    runs-on: ubuntu-latest
+    name: "Release"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create tag
+        uses: actions/github-script@v5
+        env:
+          RELEASE_VERSION: "${{ needs.plan.outputs.version }}"
+        with:
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/v' + process.env.RELEASE_VERSION,
+              sha: context.sha
+            })
+            
