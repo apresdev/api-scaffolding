@@ -2,6 +2,10 @@
 
 This change log is automatically generated.
 
+## 0.0.17 - 2024-10-24
+
+Removing ARM as the docker platform.
+
 ## 0.0.16 - 2024-10-24
 
 Fixing role session name.
