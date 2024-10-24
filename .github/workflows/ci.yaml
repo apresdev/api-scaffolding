@@ -293,7 +293,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::767397774077:role/GitHubActionsDeployerRole-apresdev-api-scaffolding
           # append workflow name to session name, max 64 characters. Repo name is already in the IAM event.
-          role-session-name: ${{ format('GitHub_AWS_OIDC_{0}', github.workflow) }}
+          role-session-name: GitHub_AWS_OIDC_apresdev-api-scaffolding
           aws-region: us-east-2
 
       - name: Login to Amazon ECR
