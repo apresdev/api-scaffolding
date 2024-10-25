@@ -4,11 +4,11 @@ import { OpenAPIBuilder, Url } from "../builder";
 
 import { QueryGenerator, QueryProcessorContext } from "./query-generator";
 
-import { checkNotNull, JsonPath, toCamelCase } from "../../../common";
+import { checkNotNull, JsonPath, Objects, toCamelCase } from "../../../common";
 import { BaseQuery, EntityName } from "../../../specification";
 import { EntityProjections, Joins } from "../../../specification/joins";
 import { arraySchema, asArray } from "../util";
-import { filterableBy } from "./filters";
+import { filterBy } from "./filters";
 
 /**
  * Provides a base implementation of a QueryGenerator that splits the building into the constituent OpenAPI parts.
@@ -29,7 +29,7 @@ export abstract class BaseQueryGenerator<T extends BaseQuery> implements QueryGe
     const url = this.buildUrl(query, context);
     const operationId = this.buildOperationId(query, context);
     const summary = this.buildSummary(query, context);
-    const additionalParams = this.buildParameters(query, context);
+    const additionalParameters = this.buildParameters(query, context);
     const tag = this.buildTag(query, context);
     const requestBody = this.buildRequest(query, context);
     const response = this.buildResponse(query, context);
@@ -41,7 +41,7 @@ export abstract class BaseQueryGenerator<T extends BaseQuery> implements QueryGe
       .method(method)
       .withOperationId(toCamelCase(operationId))
       .withSummary(summary)
-      .withParameters([...url.parameters, ...additionalParams])
+      .withParameters([...url.parameters, ...additionalParameters])
       .withTag(tag)
       .withSuccessResponse(200, summary, response, metaData);
 
@@ -145,11 +145,11 @@ export abstract class BaseQueryGenerator<T extends BaseQuery> implements QueryGe
     }
 
     const requestBody: OpenAPIV3.SchemaObject = { type: "object" };
-    requestBody.properties = requestBody.properties || {};
+    requestBody.properties = Objects.orEmpty(requestBody.properties);
 
-    const filterBy = this.buildFilters(query, context);
-    if (filterBy) {
-      requestBody.properties["filterBy"] = filterBy;
+    const filters = this.buildFilters(query, context);
+    if (filters) {
+      requestBody.properties["filterBy"] = filters;
     }
 
     const orderBy = this.buildSort(query, context);
@@ -165,7 +165,7 @@ export abstract class BaseQueryGenerator<T extends BaseQuery> implements QueryGe
       return;
     }
 
-    return filterableBy(query.filterableBy, this.getSourceEntity(query, context), {
+    return filterBy(query.filterableBy, this.getSourceEntity(query, context), {
       ...context,
       jsonPath: JsonPath.resolve(context.jsonPath || "", "filterableBy"),
     });

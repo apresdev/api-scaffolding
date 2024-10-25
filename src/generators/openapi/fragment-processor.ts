@@ -1,14 +1,18 @@
-import * as fs from "fs";
-import * as path from "path";
+import { existsSync } from "node:fs";
+import path from "node:path";
 
 import { FileErrors, SchemaValidator, SourceMaps } from "../../common";
 import { FileProcessor, FileProcessorContext, PathError } from "../../common/io";
 import { PathProcessor } from "../../common/io/path-processor";
-import * as fragmentsSchema from "../../schemas/fragments.json";
+
 import { Fragment, Fragments, IncludeDirective, ObjectSchema, isIncludeDirective } from "../../specification";
 import { EntityProjections, Joins } from "../../specification/joins";
 import { QueryProcessorContext } from "./queries/query-generator";
 import { asArray } from "./util";
+
+/* eslint-disable import/no-namespace */
+import * as fragmentsSchema from "../../schemas/fragments.json";
+/* eslint-enable import/no-namespace */
 
 const validator = new SchemaValidator<Fragments>(fragmentsSchema, new SourceMaps());
 
@@ -33,8 +37,7 @@ export class FragmentsProcessor extends FileProcessor<Fragments, QueryProcessorC
    * @param context The execution context.
    */
   public processModel(fragments: Fragments, context: FileProcessorContext<QueryProcessorContext>): void {
-    // Iterate through each query in the collection.
-    fragments.forEach((fragment: Fragment | IncludeDirective, index: number): void => {
+    for (const [index, fragment] of fragments.entries()) {
       try {
         // Check to see if the query is actually a $include directive...
         if (isIncludeDirective(fragment)) {
@@ -47,19 +50,19 @@ export class FragmentsProcessor extends FileProcessor<Fragments, QueryProcessorC
           // ... otherise, render the query.
           this.processFragment(fragment as Fragment, { ...context, jsonPath: String(index) });
         }
-      } catch (err) {
-        if (typeof err === "string") {
-          this.withError(String(index), "unknown", err, context);
+      } catch (error) {
+        if (typeof error === "string") {
+          this.withError(String(index), "unknown", error, context);
           return;
         }
-        if (typeof err === "object" && err && "path" in err) {
-          const pathError = err as PathError;
+        if (typeof error === "object" && error && "path" in error) {
+          const pathError = error as PathError;
           this.withError(pathError.path, "unknown", pathError.message, context);
           return;
         }
-        this.withError(String(index), "unknown", (err as Error).message, context);
+        this.withError(String(index), "unknown", (error as Error).message, context);
       }
-    });
+    }
   }
 
   /**
@@ -70,14 +73,14 @@ export class FragmentsProcessor extends FileProcessor<Fragments, QueryProcessorC
    */
   private processInclude(query: IncludeDirective, context: FileProcessorContext<QueryProcessorContext>): void {
     const pathProcessor = new PathProcessor(path.dirname(context.path), this);
-    asArray(query.$include).forEach((includePath: string) => {
+    for (const includePath of asArray(query.$include)) {
       const absolutePath = path.resolve(path.dirname(context.path), includePath);
-      if (!fs.existsSync(absolutePath)) {
+      if (!existsSync(absolutePath)) {
         throw new PathError(`${absolutePath} does not exist`, context.jsonPath || "", "$include");
       }
 
       pathProcessor.processPath(includePath, context);
-    });
+    }
   }
 
   /**

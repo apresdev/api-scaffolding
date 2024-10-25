@@ -1,10 +1,10 @@
-import path from "path";
+import path from "node:path";
 
-import { pluralize, toCamelCase, toPascalCase } from "../common";
+import { Arrays, Objects, pluralize, toCamelCase, toPascalCase } from "../common";
 import { FileProcessor, FileProcessorContext } from "../common/io";
 import { FileErrors, SchemaValidator, SourceMaps } from "../common/schema";
 import { buildStrategies, isMutable, isSingleton, visitSchema } from "../entities";
-import { arraySchema, entitySchemaRef } from "../generators/openapi/util";
+import { entitySchemaReference } from "../generators/openapi/util";
 import {
   AnySchema,
   ArraySchema,
@@ -21,13 +21,15 @@ import {
   StringSchema,
   getServicePath,
 } from "../specification";
-import { directoryName, fileNameWithoutExtension } from "../util";
+import { deepCopy, directoryName, fileNameWithoutExtension } from "../util";
 
-import { SchemaRegistry } from "./schema_registry";
-import { EntityIdentifierRef, defineIdentifier } from "./util";
+import { SchemaRegistry } from "./schema-registry";
+import { EntityIdentifierReference, defineIdentifier } from "./util";
 
+/* eslint-disable import/no-namespace */
 import * as dataTypeScema from "../schemas/any.json";
 import * as entitySchema from "../schemas/model.json";
+/* eslint-enable import/no-namespace */
 
 const sourceMaps = new SourceMaps();
 
@@ -50,11 +52,10 @@ export function loadEntities(service: ServiceSpecification, results: FileErrors)
   }
 
   // Post-process the relationships.
-  service.relationships?.forEach((relationship: Relationship): void => {
+  for (const relationship of Objects.requireNonNull(service.relationships)) {
     defaultRelationshipName(relationship);
     embedParentId(relationship, schemaRegistry);
-    denormalize(relationship, schemaRegistry);
-  });
+  }
 
   return schemaRegistry;
 }
@@ -86,7 +87,7 @@ class ModelProcessor extends FileProcessor<EntitySchema, ModelProcessorContext> 
     this.preProcessInputModel(inputModel, context);
 
     // Add all of the system defined properties on to the input model.
-    let entityModel = JSON.parse(JSON.stringify(inputModel));
+    let entityModel = deepCopy(inputModel);
 
     const strategies = buildStrategies(entityModel);
     for (const strategy of strategies) {
@@ -98,7 +99,7 @@ class ModelProcessor extends FileProcessor<EntitySchema, ModelProcessorContext> 
     if (isMutable(inputModel)) {
       postProcessInputModel(inputModel, this.schemaRegistry);
       removeLinkProperties(inputModel);
-      this.schemaRegistry.set(toPascalCase(context.entity) + "Input", inputModel as EntitySchema);
+      this.schemaRegistry.set(`${toPascalCase(context.entity)}Input`, inputModel as EntitySchema);
     }
 
     // Use the decorated entity model for the entity.
@@ -148,24 +149,24 @@ class ModelProcessor extends FileProcessor<EntitySchema, ModelProcessorContext> 
       return;
     }
 
-    Object.keys(model.links).forEach((name: string): void => {
-      const link: Link = (model.links || {})[name];
+    for (const name of Object.keys(model.links)) {
+      const link: Link = Objects.orEmpty(model.links)[name];
 
       ensureEntityExists(context.entity, link.rel, `links.${name}.rel`, this.service, this.fileErrors);
 
       // Convert the link into a relationship
-      this.service.relationships = this.service.relationships || [];
+      this.service.relationships = Arrays.orEmpty(this.service.relationships);
       this.service.relationships.push({
         left: context.entity,
         type: link.type || RelationshipType.ASSOCIATION,
         cardinality: link.cardinality,
-        name: name,
+        name,
         summary: link.summary,
         description: link.description,
         via: link.via,
         right: link.rel,
       });
-    });
+    }
   }
 
   private processModelIdentifier(model: EntitySchema, context: FileProcessorContext<ModelProcessorContext>) {
@@ -174,7 +175,7 @@ class ModelProcessor extends FileProcessor<EntitySchema, ModelProcessorContext> 
       idenfierSchema = model.properties["id"];
       delete model.properties["id"];
     } else {
-      idenfierSchema = EntityIdentifierRef;
+      idenfierSchema = EntityIdentifierReference;
     }
     defineIdentifier(context.entity, this.schemaRegistry, idenfierSchema);
   }
@@ -186,61 +187,63 @@ class ModelProcessor extends FileProcessor<EntitySchema, ModelProcessorContext> 
    * @param model   The entity-schema for the current entity.
    * @param spec    The service specification.
    */
+  /* eslint-disable sonarjs/cognitive-complexity */
   private preProcessRelProperties(model: EntitySchema, context: FileProcessorContext<ModelProcessorContext>): void {
-    visitSchema(model, (subSchema, path: string) => {
+    visitSchema(model, (subSchema, jsonPath: string) => {
       if (!("properties" in subSchema)) {
         return;
       }
 
       const objectSchema = subSchema as ObjectSchema;
-      Object.keys(objectSchema.properties || {}).forEach((field: string): void => {
-        const subSchema = (objectSchema.properties || {})[field];
+      for (const field of Object.keys(Objects.orEmpty(objectSchema.properties))) {
+        const fieldSchema = Objects.orEmpty(objectSchema.properties)[field];
 
-        const fieldPath = path.length > 0 ? `${path}.properties.${field}` : "properties." + field;
+        const fieldPath = jsonPath.length > 0 ? `${jsonPath}.properties.${field}` : `properties.${field}`;
 
-        if (isRelSchema(subSchema)) {
-          const rel = subSchema as RelationshipSchema;
+        if (isRelationshipSchema(fieldSchema)) {
+          const relationshipSchema = fieldSchema as RelationshipSchema;
 
-          ensureEntityExists(context.entity, rel.rel, fieldPath + ".rel", this.service, this.fileErrors);
+          ensureEntityExists(context.entity, relationshipSchema.rel, `${fieldPath}.rel`, this.service, this.fileErrors);
 
           // This is a "to-one" relationship
-          this.service.relationships = this.service.relationships || [];
+          this.service.relationships = Arrays.orEmpty(this.service.relationships);
           this.service.relationships.push({
-            left: path.length > 0 ? path + "." + context.entity : context.entity,
-            type: rel.type || RelationshipType.ASSOCIATION,
-            cardinality: rel.fromOne ? Cardinality.ONE_TO_ONE : Cardinality.MANY_TO_ONE,
+            left: jsonPath.length > 0 ? `${jsonPath}.${context.entity}` : context.entity,
+            type: relationshipSchema.type || RelationshipType.ASSOCIATION,
+            cardinality: relationshipSchema.fromOne ? Cardinality.ONE_TO_ONE : Cardinality.MANY_TO_ONE,
             name: field,
-            summary: rel.summary,
-            description: rel.description,
-            via: rel.via,
-            right: rel.rel,
+            summary: relationshipSchema.summary,
+            description: relationshipSchema.description,
+            via: relationshipSchema.via,
+            right: relationshipSchema.rel,
           });
-        } else if (isArraySchema(subSchema)) {
-          const arraySchema = subSchema as ArraySchema;
+        } else if (isArraySchema(fieldSchema)) {
+          const arraySchema = fieldSchema as ArraySchema;
 
-          if (isRelSchema(arraySchema.items)) {
+          if (isRelationshipSchema(arraySchema.items)) {
             // This is a "to-many" relationship
-            const rel = arraySchema.items as RelationshipSchema;
+            const relationshipSchema = arraySchema.items as RelationshipSchema;
 
-            ensureEntityExists(context.entity, rel.rel, fieldPath + ".items.rel", this.service, this.fileErrors);
+            ensureEntityExists(context.entity, relationshipSchema.rel, `${fieldPath}.items.rel`, this.service, this.fileErrors);
 
-            this.service.relationships = this.service.relationships || [];
+            this.service.relationships = Arrays.orEmpty(this.service.relationships);
             this.service.relationships.push({
-              left: path.length > 0 ? path + "." + context.entity : context.entity,
-              type: rel.type || RelationshipType.ASSOCIATION,
-              cardinality: rel.fromOne ? Cardinality.ONE_TO_MANY : Cardinality.MANY_TO_MANY,
+              left: jsonPath.length > 0 ? `${jsonPath}.${context.entity}` : context.entity,
+              type: relationshipSchema.type || RelationshipType.ASSOCIATION,
+              cardinality: relationshipSchema.fromOne ? Cardinality.ONE_TO_MANY : Cardinality.MANY_TO_MANY,
               name: field,
-              summary: rel.summary,
-              description: rel.description,
-              via: rel.via,
-              right: rel.rel,
+              summary: relationshipSchema.summary,
+              description: relationshipSchema.description,
+              via: relationshipSchema.via,
+              right: relationshipSchema.rel,
             });
           }
         }
-      });
+      }
     });
   }
 }
+/* eslint-enable sonarjs/cognitive-complexity */
 
 function removeLinkProperties(model: EntitySchema): void {
   delete model["linkProperties"];
@@ -276,120 +279,23 @@ function embedParentId(relationship: Relationship, schemaRegistry: SchemaRegistr
     return;
   }
 
-  const entitySchema: EntitySchema = schemaRegistry.get(relationship.right);
-  entitySchema.properties = entitySchema.properties || {};
+  const childSchema: EntitySchema = schemaRegistry.get(relationship.right);
+  childSchema.properties = Objects.orEmpty(childSchema.properties);
 
   // Check if this is a one-to-one relationship based on COMPOSITION.
   if (Cardinality.isToOne(relationship.cardinality)) {
     // if it is, then assign the parent identifier as the child identifier
-    entitySchema.properties["id"] = entitySchemaRef(toPascalCase(relationship.left) + "Identifier") as ReferenceSchema;
+    childSchema.properties["id"] = entitySchemaReference(`${toPascalCase(relationship.left)}Identifier`) as ReferenceSchema;
   } else {
     // Otherwise, insert the parent identifier in the schema.
-    const parentId = toCamelCase(relationship.left) + "Id";
-    entitySchema.required = [...(entitySchema.required || []), parentId];
-    entitySchema.properties[parentId] = entitySchemaRef(toPascalCase(relationship.left) + "Identifier") as ReferenceSchema;
+    const parentId = `${toCamelCase(relationship.left)}Id`;
+    childSchema.required = [...Arrays.orEmpty(childSchema.required), parentId];
+    childSchema.properties[parentId] = entitySchemaReference(`${toPascalCase(relationship.left)}Identifier`) as ReferenceSchema;
   }
-  schemaRegistry.set(relationship.right, entitySchema);
+  schemaRegistry.set(relationship.right, childSchema);
 }
 
-function denormalize(relationship: Relationship, schemaRegistry: SchemaRegistry): void {
-  if (!relationship.denormalize) {
-    return;
-  }
-
-  switch (relationship.denormalize) {
-    case "byId":
-      return embedById(relationship, schemaRegistry);
-    case "byEntity":
-      return embedByEntity(relationship, schemaRegistry);
-  }
-}
-
-/**
- * Embeds a relationship by the entity identifiers.
- *
- * @param relationship   The relationship to embed.
- * @param schemaRegistry The registry of schemas.
- * @returns
- */
-function embedById(relationship: Relationship, schemaRegistry: SchemaRegistry): void {
-  // Update both the input and output schemas.
-  [relationship.left, relationship.left + "Input"].forEach((entity) => {
-    if (!schemaRegistry.has(entity)) {
-      return;
-    }
-
-    const entitySchema: EntitySchema = schemaRegistry.get(entity);
-
-    entitySchema.properties = entitySchema.properties || {};
-    if (Cardinality.isToMany(relationship.cardinality)) {
-      entitySchema.properties = entitySchema.properties || {};
-      entitySchema.properties[toCamelCase(relationship.name)] = arraySchema(
-        entitySchemaRef(toPascalCase(relationship.right) + "Identifier"),
-      ) as ArraySchema;
-    } else {
-      entitySchema.properties[toCamelCase(relationship.name)] = entitySchemaRef(toPascalCase(relationship.right) + "Identifier");
-    }
-
-    // Update the schema in the schema registry.
-    schemaRegistry.set(entity, entitySchema);
-  });
-
-  // TODO: Figure out if there's a better place to handle this in a single spot, currently we do this BEFORE we process the models and now
-  // AFTER we process the relationships (if the relationship overrides the identifer).
-  if (relationship.name === "id") {
-    schemaRegistry.markNaturalIdentifier(relationship.left);
-    processModelIdentifier(relationship.left, schemaRegistry.get(relationship.left), schemaRegistry);
-  }
-}
-
-/**
- * Embeds a relationship by the entity identifiers.
- *
- * @param relationship   The relationship to embed.
- * @param schemaRegistry The registry of schemas.
- * @returns
- */
-function embedByEntity(relationship: Relationship, schemaRegistry: SchemaRegistry): void {
-  // Update both the input and output schemas.
-  [relationship.left, relationship.left + "Input"].forEach((entity) => {
-    if (!schemaRegistry.has(entity)) {
-      return;
-    }
-
-    const entitySchema: EntitySchema = schemaRegistry.get(entity);
-
-    // TODO: Determine if using the Input version is safe here.
-    // I'm current using Input since it removes most of the system identifiers, given that we expect the embedded value to be fully user
-    // defined and should not have it's own identifiers.
-    entitySchema.properties = entitySchema.properties || {};
-    if (Cardinality.isToMany(relationship.cardinality)) {
-      entitySchema.properties[toCamelCase(relationship.name)] = arraySchema(
-        entitySchemaRef(toPascalCase(relationship.right) + "Input"),
-      ) as ArraySchema;
-    } else {
-      entitySchema.properties[toCamelCase(relationship.name)] = entitySchemaRef(toPascalCase(relationship.right) + "Input");
-    }
-
-    // Update the schema in the schema registry.
-    schemaRegistry.set(entity, entitySchema);
-  });
-}
-
-// function preProcessInputModel(
-//   entity: string,
-//   model: EntitySchema,
-//   schemaRegistry: SchemaRegistry,
-//   spec: ServiceSpecification,
-//   results: FileErrors
-// ) {
-//   processModelIdentifier(entity, model, schemaRegistry);
-//   processLinkProperties(entity, model, schemaRegistry, spec);
-//   preProcessRelProperties(entity, model, spec, results);
-//   processLinks(entity, model, spec, results);
-// }
-
-function isRelSchema(schema: AnySchema): boolean {
+function isRelationshipSchema(schema: AnySchema): boolean {
   return "rel" in schema;
 }
 
@@ -400,83 +306,21 @@ function isArraySchema(schema: AnySchema): boolean {
   return false;
 }
 
-// /**
-//  * Converts all links in the entity schema into named relationships.
-//  *
-//  * @param entity  The name of the entity that is currently being processed.
-//  * @param model   The entity-schema for the current entity.
-//  * @param spec    The service specification.
-//  */
-// function preProcessRelProperties(entity: string, model: EntitySchema, spec: ServiceSpecification, results: FileErrors): void {
-//   visitSchema(model, (subSchema, path: string) => {
-//     if (!("properties" in subSchema)) {
-//       return;
-//     }
-
-//     const objectSchema = subSchema as ObjectSchema;
-//     Object.keys(objectSchema.properties || {}).forEach((field: string): void => {
-//       const subSchema = (objectSchema.properties || {})[field];
-
-//       const fieldPath = path.length > 0 ? `${path}.properties.${field}` : "properties." + field;
-
-//       if (isRelSchema(subSchema)) {
-//         const rel = subSchema as RelationshipSchema;
-
-//         ensureEntityExists(entity, rel.rel, fieldPath + ".rel", spec, results);
-
-//         // This is a "to-one" relationship
-//         spec.relationships = spec.relationships || [];
-//         spec.relationships.push({
-//           left: path.length > 0 ? path + "." + entity : entity,
-//           type: rel.type || RelationshipType.ASSOCIATION,
-//           cardinality: rel.fromOne ? Cardinality.ONE_TO_ONE : Cardinality.MANY_TO_ONE,
-//           name: field,
-//           summary: rel.summary,
-//           description: rel.description,
-//           via: rel.via,
-//           right: rel.rel,
-//         });
-//       } else if (isArraySchema(subSchema)) {
-//         const arraySchema = subSchema as ArraySchema;
-
-//         if (isRelSchema(arraySchema.items)) {
-//           // This is a "to-many" relationship
-//           const rel = arraySchema.items as RelationshipSchema;
-
-//           ensureEntityExists(entity, rel.rel, fieldPath + ".items.rel", spec, results);
-
-//           spec.relationships = spec.relationships || [];
-//           spec.relationships.push({
-//             left: path.length > 0 ? path + "." + entity : entity,
-//             type: rel.type || RelationshipType.ASSOCIATION,
-//             cardinality: rel.fromOne ? Cardinality.ONE_TO_MANY : Cardinality.MANY_TO_MANY,
-//             name: field,
-//             summary: rel.summary,
-//             description: rel.description,
-//             via: rel.via,
-//             right: rel.rel,
-//           });
-//         }
-//       }
-//     });
-//   });
-// }
-
 /**
  * Ensures that a related entity exists in the service specification file.
  *
  * @param sourceEntity  The name of the source entity where the relationship is defined (the left-hand-side of the relationship).
  * @param linkedEntity  The name of the linked entity (the right-hand-side of the relationship)
- * @param path          The dotted JSON path to where the "rel" was defined.
+ * @param jsonPath      The dotted JSON path to where the "rel" was defined.
  * @param spec          The service specification.
  * @param results       The file processing results.
  */
-function ensureEntityExists(sourceEntity: string, linkedEntity: string, path: string, spec: ServiceSpecification, results: FileErrors) {
+function ensureEntityExists(sourceEntity: string, linkedEntity: string, jsonPath: string, spec: ServiceSpecification, results: FileErrors) {
   // Check the service specification to ensure that the "rel" entity exists.
   if (!spec.entities.includes(linkedEntity)) {
     // If not, lookup the file location where the link was defined...
     const sourcePath = toModelPath(sourceEntity);
-    const location = sourceMaps.getLocation(sourcePath, path.split("."));
+    const location = sourceMaps.getLocation(sourcePath, jsonPath.split("."));
 
     // ... and add an error indicating the unknown entity.
     results.withErrors(sourcePath, [
@@ -486,80 +330,11 @@ function ensureEntityExists(sourceEntity: string, linkedEntity: string, path: st
         severity: "error",
         keyword: "unknown-entity",
         message: `entity [${linkedEntity}] is missing in specification entities`,
-        path: path,
+        path: jsonPath,
       },
     ]);
   }
 }
-
-// /**
-//  * Converts all links in the entity schema into named relationships.
-//  *
-//  * @param entity  The name of the entity that is currently being processed.
-//  * @param model   The entity-schema for the current entity.
-//  * @param spec    The service specification.
-//  */
-// function processLinks(entity: string, model: EntitySchema, spec: ServiceSpecification, results: FileErrors): void {
-//   if (!model.links) {
-//     return;
-//   }
-
-//   Object.keys(model.links).forEach((name: string): void => {
-//     const link: Link = (model.links || {})[name];
-
-//     ensureEntityExists(entity, link.rel, `links.${name}.rel`, spec, results);
-
-//     // Convert the link into a relationship
-//     spec.relationships = spec.relationships || [];
-//     spec.relationships.push({
-//       left: entity,
-//       type: link.type || RelationshipType.ASSOCIATION,
-//       cardinality: link.cardinality,
-//       name: name,
-//       summary: link.summary,
-//       description: link.description,
-//       via: link.via,
-//       right: link.rel,
-//     });
-//   });
-// }
-
-// function processLinkProperties(entity: string, model: EntitySchema, schemaRegistry: SchemaRegistry, spec: ServiceSpecification) {
-//   if (!("linkProperties" in model)) {
-//     return;
-//   }
-
-//   const linkProperties = model.linkProperties;
-//   if (linkProperties) {
-//     Object.keys(linkProperties).forEach((property: string): void => {
-//       const link: LinkProperty = linkProperties[property];
-
-//       model.properties = model.properties || {};
-//       if (Cardinality.isToMany(link.cardinality)) {
-//         model.properties[toCamelCase(property)] = arraySchema(entitySchemaRef(toPascalCase(link.rel) + "Identifier")) as ArraySchema;
-//       } else {
-//         model.properties[toCamelCase(property)] = entitySchemaRef(toPascalCase(link.rel) + "Identifier");
-//       }
-
-//       // Add this to the set of known relationships
-//       // TODO: This violates the immutability of the service specification...
-//       spec.relationships = spec.relationships || [];
-//       spec.relationships.push({
-//         left: entity,
-//         name: property,
-//         summary: property,
-//         type: RelationshipType.ASSOCIATION,
-//         cardinality: link.cardinality,
-//         right: link.rel,
-//       });
-
-//       if ("id" === property) {
-//         schemaRegistry.markNaturalIdentifier(entity);
-//         processModelIdentifier(entity, model, schemaRegistry);
-//       }
-//     });
-//   }
-// }
 
 function postProcessInputModel(model: EntitySchema, schemaRegistry: SchemaRegistry) {
   removeReadOnlyFields(model, schemaRegistry);
@@ -571,11 +346,11 @@ function removeReadOnlyFields(model: EntitySchema, schemaRegistry: SchemaRegistr
     if ("properties" in schema) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const properties = schema.properties as any;
-      Object.keys(properties).forEach((property) => {
+      for (const property of Object.keys(properties)) {
         if (isReadOnly(properties[property], schemaRegistry)) {
           delete properties[property];
         }
-      });
+      }
     }
   });
 
@@ -586,12 +361,12 @@ function removeReadOnlyFields(model: EntitySchema, schemaRegistry: SchemaRegistr
 
   const linkProperties = model.linkProperties;
   if (linkProperties) {
-    Object.keys(linkProperties).forEach((property: string): void => {
+    for (const property of Object.keys(linkProperties)) {
       const link = linkProperties[property];
       if (link.readOnly && model.properties) {
         delete model.properties[property];
       }
-    });
+    }
   }
 }
 
@@ -602,40 +377,15 @@ function isReadOnly(schema: AnySchema, schemaRegistry: SchemaRegistry): boolean 
 
   if ("$ref" in schema) {
     const parts = schema.$ref.split("/");
-    return isReadOnly(schemaRegistry.get(parts[parts.length - 1]), schemaRegistry);
+    return isReadOnly(schemaRegistry.get(Objects.requireNonNull(parts.at(-1))), schemaRegistry);
   }
 
   return false;
 }
 
-function processModelIdentifier(entity: string, model: EntitySchema, schemaRegistry: SchemaRegistry) {
-  let idenfierSchema;
-  if (model.properties && "id" in model.properties) {
-    idenfierSchema = model.properties["id"];
-    delete model.properties["id"];
-  } else {
-    idenfierSchema = EntityIdentifierRef;
-  }
-  defineIdentifier(entity, schemaRegistry, idenfierSchema);
-}
-
 function toModelPath(entity: string): string {
   return path.resolve(path.dirname(getServicePath()), `entities/${entity}.yaml`);
 }
-
-// function loadEntity(entity: string, models: SchemaRegistry, results: FileErrors): EntitySchema {
-//   const modelPath = toModelPath(entity);
-//   const { model, errors } = entityValidator.loadYaml(modelPath);
-
-//   if (errors) {
-//     results.withErrors(modelPath, errors);
-//   }
-
-//   preProcessModel(model, model, models, results);
-//   removeDefinitions(model);
-
-//   return model as EntitySchema;
-// }
 
 function loadModel(entity: string, models: SchemaRegistry, results: FileErrors): EntitySchema {
   const modelPath = toModelPath(entity);
@@ -665,20 +415,20 @@ export function enforcePropertyCase(entityModel: AnySchema) {
       const objectSchema = schema as ObjectSchema;
       const properties = objectSchema.properties;
       if (properties) {
-        Object.keys(properties).forEach((key) => {
+        for (const key of Object.keys(properties)) {
           enforcePropertyCase(properties[key]);
           enforceNamingConvention(key, properties);
-        });
+        }
       }
     }
   });
 }
 
-function enforceNamingConvention(property: string, obj: Record<string, unknown>) {
+function enforceNamingConvention(property: string, object: Record<string, unknown>) {
   const newKey = jsonPropertyCase(property);
   if (newKey !== property) {
-    obj[newKey] = obj[property];
-    delete obj[property];
+    object[newKey] = object[property];
+    delete object[property];
   }
 }
 
@@ -689,13 +439,13 @@ function removeDefinitions(schema: AnySchema) {
 }
 
 function preProcessReferences(schema: AnySchema, model: AnySchema, models: SchemaRegistry, results: FileErrors) {
-  visitSchema(schema, (schema) => {
-    if (typeof schema !== "object") {
+  visitSchema(schema, (subSchema) => {
+    if (typeof subSchema !== "object") {
       return;
     }
 
-    if ("$ref" in schema) {
-      schema["$ref"] = resolveReference(schema["$ref"], model, models, results);
+    if ("$ref" in subSchema) {
+      subSchema["$ref"] = resolveReference(subSchema["$ref"], model, models, results);
     }
   });
 }
@@ -703,36 +453,36 @@ function preProcessReferences(schema: AnySchema, model: AnySchema, models: Schem
 const INTERNAL_REFERENCE_PREFIX = "#/definitions/";
 const OPENAPI_REFERENCE_PREFIX = "#/components/schemas/";
 
-function resolveReference($ref: string | undefined, model: AnySchema, models: SchemaRegistry, results: FileErrors): string {
-  if (!$ref) {
+function resolveReference($reference: string | undefined, model: AnySchema, models: SchemaRegistry, results: FileErrors): string {
+  if (!$reference) {
     throw new Error("Detected null or missing $ref value");
   }
 
-  if ($ref.startsWith(OPENAPI_REFERENCE_PREFIX)) {
+  if ($reference.startsWith(OPENAPI_REFERENCE_PREFIX)) {
     // This has already been resolved.
-    return $ref;
+    return $reference;
   }
 
-  if ($ref.startsWith(INTERNAL_REFERENCE_PREFIX)) {
+  if ($reference.startsWith(INTERNAL_REFERENCE_PREFIX)) {
     // Extract internal reference
-    return extractInternalReference($ref, model, models, results);
+    return extractInternalReference($reference, model, models, results);
   }
 
-  if ($ref.endsWith("#")) {
+  if ($reference.endsWith("#")) {
     // Extract external reference reference
-    return extractExternalReference($ref, model, models, results);
+    return extractExternalReference($reference, model, models, results);
   }
 
-  return $ref.toUpperCase();
+  return $reference.toUpperCase();
 }
 
-function extractInternalReference($ref: string, model: AnySchema, models: SchemaRegistry, results: FileErrors): string {
+function extractInternalReference($reference: string, model: AnySchema, models: SchemaRegistry, results: FileErrors): string {
   if (!("definitions" in model)) {
     throw new Error("unresolvable internal reference.");
   }
-  model["definitions"] = model["definitions"] || {};
+  model["definitions"] = Objects.orEmpty(model["definitions"]);
 
-  const referencedModelName = $ref.substring(INTERNAL_REFERENCE_PREFIX.length);
+  const referencedModelName = $reference.slice(INTERNAL_REFERENCE_PREFIX.length);
   const referencedModel = (model["definitions"] as Definitions)[referencedModelName];
 
   preProcessModel(referencedModel, model, models, results);
@@ -741,14 +491,14 @@ function extractInternalReference($ref: string, model: AnySchema, models: Schema
     models.set(referencedModelName, referencedModel as EntitySchema);
   }
 
-  return "#/components/schemas/" + toPascalCase(referencedModelName);
+  return `#/components/schemas/${toPascalCase(referencedModelName)}`;
 }
 
-function extractExternalReference($ref: string, model: AnySchema, models: SchemaRegistry, results: FileErrors): string {
-  const url = $ref.substring(0, $ref.length - 1);
+function extractExternalReference($reference: string, model: AnySchema, models: SchemaRegistry, results: FileErrors): string {
+  const url = $reference.slice(0, Math.max(0, $reference.length - 1));
   const referencedModelName = fileNameWithoutExtension(url);
   const dirname = directoryName(url);
-  const referencedModel = loadModel(dirname + "/" + referencedModelName, models, results);
+  const referencedModel = loadModel(`${dirname}/${referencedModelName}`, models, results);
 
   preProcessModel(referencedModel, model, models, results);
 
@@ -756,5 +506,5 @@ function extractExternalReference($ref: string, model: AnySchema, models: Schema
     models.set(referencedModelName, referencedModel as EntitySchema);
   }
 
-  return "#/components/schemas/" + toPascalCase(referencedModelName);
+  return `#/components/schemas/${toPascalCase(referencedModelName)}`;
 }

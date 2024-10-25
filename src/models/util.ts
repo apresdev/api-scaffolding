@@ -1,9 +1,10 @@
-import { entityIdentifier } from "../common";
+import { Objects } from "../common";
+import { entityIdentifier } from "../entities";
 import { AnySchema, ObjectSchema } from "../specification";
 
-import { SchemaRegistry } from "./schema_registry";
+import { SchemaRegistry } from "./schema-registry";
 
-export const EntityIdentifierRef = {
+export const EntityIdentifierReference = {
   $ref: "#/components/schemas/EntityIdentifier",
 };
 
@@ -18,12 +19,12 @@ export function resolveFully(schema: AnySchema, schemaRegistry: SchemaRegistry):
 
   if ("$ref" in schema) {
     const parts = schema.$ref.split("/");
-    const name = parts[parts.length - 1];
+    const name = Objects.requireNonNull(parts.at(-1));
     const referencedSchema = schemaRegistry.get(name);
     return referencedSchema;
   }
 
-  const copy: AnySchema = Object.assign({}, schema);
+  const copy: AnySchema = { ...schema };
 
   if ("items" in copy) {
     copy.items = resolveFully(copy.items, schemaRegistry);
@@ -31,10 +32,10 @@ export function resolveFully(schema: AnySchema, schemaRegistry: SchemaRegistry):
 
   if ("properties" in copy) {
     const object = copy as ObjectSchema;
-    Object.keys(object.properties || {}).forEach((property) => {
-      object.properties = object.properties || {};
+    for (const property of Object.keys(Objects.orEmpty(object.properties))) {
+      object.properties = Objects.orEmpty(object.properties);
       object.properties[property] = resolveFully(object.properties[property], schemaRegistry);
-    });
+    }
   }
 
   return schema;

@@ -1,0 +1,37 @@
+operations/queries/invalid-query.yaml:
+  - line: 0
+    column: 0
+    severity: "error"
+    keyword: "missingProperty: findAll"
+    message: "must have required property 'findAll'"
+    path: "0"
+  - line: 0
+    column: 0
+    severity: "error"
+    keyword: "missingProperty: findOne"
+    message: "must have required property 'findOne'"
+    path: "0"
+  - line: 0
+    column: 0
+    severity: "error"
+    keyword: "missingProperty: search"
+    message: "must have required property 'search'"
+    path: "0"
+  - line: 0
+    column: 0
+    severity: "error"
+    keyword: "missingProperty: $include"
+    message: "must have required property '$include'"
+    path: "0"
+  - line: 0
+    column: 0
+    severity: "error"
+    keyword: "missingProperty: name"
+    message: "must have required property 'name'"
+    path: "0"
+  - line: 0
+    column: 0
+    severity: "error"
+    keyword: "anyOf"
+    message: "must match a schema in anyOf"
+    path: "0"

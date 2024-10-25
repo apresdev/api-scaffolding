@@ -1,0 +1,95 @@
+# #####################################################################################################################################
+# List and Retrieve tests
+# #####################################################################################################################################
+# Test list and retrieve by entity name
+- findAll: vehicle
+  filterableBy:
+    - model: ["id"]
+- findOne: vehicle
+
+# Test list and retrieve by entity projection
+- findAll:
+    model:
+      - id
+      - name
+  # Tests a given clause
+  given:
+    - manufacturer
+  name: listModels
+- findOne:
+    model:
+      - id
+      - name
+  # Tests a given clause
+  given:
+    - manufacturer
+    - model
+  name: retrieveModel
+
+# Test list and retrieve by fragment
+- findAll: manufacturerDetails
+  # This tests custom tags
+  tag: Makes
+
+- findOne: manufacturerDetails
+  # This tests custom tags
+  tag: Makes
+
+# #####################################################################################################################################
+# Search tests
+# #####################################################################################################################################
+# Tests searching by an entity name.
+- search: manufacturer
+  filterableBy:
+    - model: ["id"]
+
+# Tests searching by an entity projection.
+- search:
+    model: ["id", "name"]
+  filterableBy:
+    - manufacturer: ["id"]
+  name: searchModels
+
+# Tests searching by a fragment.
+- search: vehicleDetails
+  filterableBy:
+    - manufacturer: ["name"]
+    - model: ["name"]
+    - vehicle:
+        - year
+        - listedOn
+        - features:
+            - addOns: ["name"]
+
+# #####################################################################################################################################
+# Named query
+# #####################################################################################################################################
+# Tests a named query with nested entity projections.
+- name: total-by-manufacturer
+  query:
+    dimensions:
+      - projection:
+          model:
+            - id
+            - name
+            - manufacturer:
+                - id
+                - name
+    measures:
+      - name: total
+        type: integer
+  # This tests named-query example validation
+  example:
+    - ["f9bcb624-e65a-4e64-aae0-564dbc976506", "Kona", "f9bcb624-e65a-4e64-aae0-564dbc976506", "Hyundai", 123]
+    - ["a16b55c0-70b1-706b-1ba9-8058a1176f3b", "Mazda 3", "f9bcb624-e65a-4e64-aae0-564dbc976506", "Mazda", 456]
+
+- name: total-by-model
+  query:
+    dimensions:
+      - projection:
+          model:
+            - id
+            - name
+    measures:
+      - name: total
+        type: integer

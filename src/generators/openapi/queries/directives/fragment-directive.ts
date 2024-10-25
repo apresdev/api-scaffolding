@@ -3,7 +3,7 @@ import { pluralize } from "../../../../common";
 import { isSingleton } from "../../../../entities";
 import { Fragment } from "../../../../specification";
 import { Joins } from "../../../../specification/joins";
-import { entitySchemaRef } from "../../util";
+import { entitySchemaReference } from "../../util";
 import { QueryProcessorContext } from "../query-generator";
 import { EntityDirective } from "./entity-directive";
 
@@ -30,7 +30,7 @@ export class FragmentDirective implements EntityDirective {
   }
 
   schema(): OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject {
-    return entitySchemaRef(this._fragment.name);
+    return entitySchemaReference(this._fragment.name);
   }
 
   path(): string {

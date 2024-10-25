@@ -1,0 +1,1543 @@
+openapi: 3.0.3
+info:
+  title: Vehicles API
+  version: 1.0.0
+  description: An auto-trader like API.
+  contact:
+    email: developers@example.com
+tags:
+  - name: Makes
+    description: Makes operations
+  - name: Manufacturers
+    description: Manufacturers operations
+  - name: Models
+    description: Models operations
+  - name: Query
+    description: Query operations.
+  - name: Vehicles
+    description: Vehicles operations
+servers:
+  - url: https://example.com/api/v1/vehicles
+    description: The production URL.
+    variables: {}
+paths:
+  /list/vehicles:
+    post:
+      operationId: listVehicles
+      summary: List all vehicles.
+      tags:
+        - Vehicles
+      description: List all vehicles.
+      requestBody:
+        $ref: "#/components/requestBodies/ListVehiclesRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/ListVehiclesResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+  /manufacturers:
+    get:
+      operationId: listManufacturers
+      summary: List all manufacturers.
+      tags:
+        - Makes
+      parameters:
+        - $ref: "#/components/parameters/LimitParameter"
+        - $ref: "#/components/parameters/OffsetParameter"
+      description: List all manufacturers.
+      responses:
+        "200":
+          $ref: "#/components/responses/ListManufacturersResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+    post:
+      operationId: createManufacturer
+      summary: Creates a manufacturer.
+      tags:
+        - Manufacturers
+      description: Creates a manufacturer.
+      requestBody:
+        $ref: "#/components/requestBodies/CreateManufacturerRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/CreateManufacturerResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+  /manufacturers/{manufacturerId}:
+    get:
+      operationId: retrieveManufacturer
+      summary: Find a manufacturer details.
+      tags:
+        - Makes
+      parameters:
+        - $ref: "#/components/parameters/ManufacturerIdParameter"
+      description: Find a manufacturer details.
+      responses:
+        "200":
+          $ref: "#/components/responses/RetrieveManufacturerResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+    put:
+      operationId: updateManufacturer
+      summary: Updates a manufacturer.
+      tags:
+        - Manufacturers
+      parameters:
+        - $ref: "#/components/parameters/ManufacturerIdParameter"
+      description: Updates a manufacturer.
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateManufacturerRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/UpdateManufacturerResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+    delete:
+      operationId: deleteManufacturer
+      summary: Deletes a manufacturer.
+      tags:
+        - Manufacturers
+      parameters:
+        - $ref: "#/components/parameters/ManufacturerIdParameter"
+      description: Deletes a manufacturer.
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+  /manufacturers/{manufacturerId}/models:
+    get:
+      operationId: listModels
+      summary: List all models for a given a manufacturer.
+      tags:
+        - Models
+      parameters:
+        - $ref: "#/components/parameters/ManufacturerIdParameter"
+        - $ref: "#/components/parameters/LimitParameter"
+        - $ref: "#/components/parameters/OffsetParameter"
+      description: List all models for a given a manufacturer.
+      responses:
+        "200":
+          $ref: "#/components/responses/ListModelsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+    post:
+      operationId: createModel
+      summary: Creates a model.
+      tags:
+        - Models
+      parameters:
+        - $ref: "#/components/parameters/ManufacturerIdParameter"
+      description: Creates a model.
+      requestBody:
+        $ref: "#/components/requestBodies/CreateModelRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/CreateModelResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+  /manufacturers/{manufacturerId}/models/{modelId}:
+    get:
+      operationId: retrieveModel
+      summary: Find a model.
+      tags:
+        - Models
+      parameters:
+        - $ref: "#/components/parameters/ManufacturerIdParameter"
+        - $ref: "#/components/parameters/ModelIdParameter"
+      description: Find a model.
+      responses:
+        "200":
+          $ref: "#/components/responses/RetrieveModelResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+    put:
+      operationId: updateModel
+      summary: Updates a model.
+      tags:
+        - Models
+      parameters:
+        - $ref: "#/components/parameters/ManufacturerIdParameter"
+        - $ref: "#/components/parameters/ModelIdParameter"
+      description: Updates a model.
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateModelRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/UpdateModelResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+    delete:
+      operationId: deleteModel
+      summary: Deletes a model.
+      tags:
+        - Models
+      parameters:
+        - $ref: "#/components/parameters/ManufacturerIdParameter"
+        - $ref: "#/components/parameters/ModelIdParameter"
+      description: Deletes a model.
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+  /queries/{queryId}:
+    post:
+      operationId: executeQuery
+      description: |
+        Executes a named query.
+      tags:
+        - Query
+      parameters:
+        - $ref: "#/components/parameters/QueryIdParameter"
+      requestBody:
+        $ref: "#/components/requestBodies/ExecuteQueryRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/ExecuteQueryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      x-apres-known-queries: {}
+  /search/manufacturers:
+    post:
+      operationId: searchManufacturers
+      summary: Searches for manufacturers.
+      tags:
+        - Manufacturers
+      parameters:
+        - $ref: "#/components/parameters/LimitParameter"
+        - $ref: "#/components/parameters/OffsetParameter"
+      description: Searches for manufacturers.
+      requestBody:
+        $ref: "#/components/requestBodies/SearchManufacturersRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/SearchManufacturersResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+  /search/models:
+    post:
+      operationId: searchModels
+      summary: Searches for models.
+      tags:
+        - Models
+      parameters:
+        - $ref: "#/components/parameters/LimitParameter"
+        - $ref: "#/components/parameters/OffsetParameter"
+      description: Searches for models.
+      requestBody:
+        $ref: "#/components/requestBodies/SearchModelsRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/SearchModelsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+  /search/vehicles:
+    post:
+      operationId: searchVehicles
+      summary: Searches for vehicles.
+      tags:
+        - Vehicles
+      parameters:
+        - $ref: "#/components/parameters/LimitParameter"
+        - $ref: "#/components/parameters/OffsetParameter"
+      description: Searches for vehicles.
+      requestBody:
+        $ref: "#/components/requestBodies/SearchVehiclesRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/SearchVehiclesResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+  /vehicles/{vehicleId}:
+    get:
+      operationId: retrieveVehicle
+      summary: Find a vehicle.
+      tags:
+        - Vehicles
+      parameters:
+        - $ref: "#/components/parameters/VehicleIdParameter"
+      description: Find a vehicle.
+      responses:
+        "200":
+          $ref: "#/components/responses/RetrieveVehicleResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+    post:
+      operationId: createVehicle
+      summary: Creates a vehicle.
+      tags:
+        - Vehicles
+      parameters:
+        - $ref: "#/components/parameters/VehicleIdParameter"
+      description: Creates a vehicle.
+      requestBody:
+        $ref: "#/components/requestBodies/CreateVehicleRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/CreateVehicleResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+    put:
+      operationId: updateVehicle
+      summary: Updates a vehicle.
+      tags:
+        - Vehicles
+      parameters:
+        - $ref: "#/components/parameters/VehicleIdParameter"
+      description: Updates a vehicle.
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateVehicleRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/UpdateVehicleResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+    delete:
+      operationId: deleteVehicle
+      summary: Deletes a vehicle.
+      tags:
+        - Vehicles
+      parameters:
+        - $ref: "#/components/parameters/VehicleIdParameter"
+      description: Deletes a vehicle.
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+components:
+  parameters:
+    LimitParameter:
+      in: query
+      name: limit
+      description: |
+        An optional query parameter used to indicate the number of records in a pagination result.  
+
+        For example please list the "limit" records after the given optional "offset" position.
+      required: false
+      schema:
+        $ref: "#/components/schemas/Limit"
+    OffsetParameter:
+      in: query
+      name: offset
+      description: |
+        An optional query parameter used to indicate the offset position to resume from in a pagination result. 
+
+        For example please list the "limit" records after the given optional "offset" position.
+      required: false
+      schema:
+        $ref: "#/components/schemas/Offset"
+    QueryIdParameter:
+      in: path
+      name: queryId
+      required: true
+      schema:
+        $ref: "#/components/schemas/QueryIdentifier"
+      example: territory.contacts.trend
+    VehicleIdParameter:
+      name: vehicleId
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/VehicleIdentifier"
+    ManufacturerIdParameter:
+      name: manufacturerId
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/ManufacturerIdentifier"
+    ModelIdParameter:
+      name: modelId
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/ModelIdentifier"
+  requestBodies:
+    ExecuteQueryRequest:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ExecuteQueryRequest"
+    ListVehiclesRequest:
+      description: On success
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ListVehiclesRequest"
+    SearchManufacturersRequest:
+      description: On success
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/SearchManufacturersRequest"
+    SearchModelsRequest:
+      description: On success
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/SearchModelsRequest"
+    SearchVehiclesRequest:
+      description: On success
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/SearchVehiclesRequest"
+    CreateVehicleRequest:
+      description: The new vehicle
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/VehicleInput"
+    UpdateVehicleRequest:
+      description: The new vehicle
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/VehicleInput"
+    CreateModelRequest:
+      description: The new model
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ModelInput"
+    UpdateModelRequest:
+      description: The new model
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ModelInput"
+    CreateManufacturerRequest:
+      description: The new manufacturer
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ManufacturerInput"
+    UpdateManufacturerRequest:
+      description: The new manufacturer
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ManufacturerInput"
+  responses:
+    NoContent:
+      description: |
+        The request completed successfully.  No response body will be sent.
+    ExecuteQueryResponse:
+      description: A response containing the results of the query
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ExecuteQueryResponse"
+          examples:
+            total-by-manufacturer:
+              value:
+                status: success
+                metadata:
+                  total: 2
+                  offset: 0
+                  columns:
+                    - name: model.id
+                      columnType: dimension
+                      dataType:
+                        type: string
+                        format: uuid
+                      sortable: false
+                    - name: model.name
+                      columnType: dimension
+                      dataType:
+                        type: string
+                      sortable: false
+                    - name: model.manufacturer.id
+                      columnType: dimension
+                      dataType:
+                        type: string
+                        format: uuid
+                      sortable: false
+                    - name: model.manufacturer.name
+                      columnType: dimension
+                      dataType:
+                        type: string
+                      sortable: false
+                    - name: total
+                      columnType: measure
+                      dataType:
+                        type: integer
+                      sortable: false
+                data:
+                  - - f9bcb624-e65a-4e64-aae0-564dbc976506
+                    - Kona
+                    - f9bcb624-e65a-4e64-aae0-564dbc976506
+                    - Hyundai
+                    - 123
+                  - - a16b55c0-70b1-706b-1ba9-8058a1176f3b
+                    - Mazda 3
+                    - f9bcb624-e65a-4e64-aae0-564dbc976506
+                    - Mazda
+                    - 456
+            total-by-model:
+              value:
+                status: success
+                metadata:
+                  offset: 0
+                  columns:
+                    - name: model.id
+                      columnType: dimension
+                      dataType:
+                        type: string
+                        format: uuid
+                      sortable: false
+                    - name: model.name
+                      columnType: dimension
+                      dataType:
+                        type: string
+                      sortable: false
+                    - name: total
+                      columnType: measure
+                      dataType:
+                        type: integer
+                      sortable: false
+    BadRequest:
+      description: |
+        An error occurred.  The client provided one or more invalid inputs.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/APIError"
+          example:
+            status: failure
+            data:
+              errors:
+                - message: bad_request
+                  description: The supplied value was invalid.
+                  path: request
+    Unauthorized:
+      description: |
+        An error occurred.  The client is not authenticated in the system.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/APIError"
+          example:
+            status: failure
+            data:
+              errors:
+                - message: unauthorized
+                  description: The client should authenticate itself to get the requested response.
+    Forbidden:
+      description: |
+        An error occurred.  The client is not authorized to perform the requested action.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/APIError"
+          example:
+            status: failure
+            data:
+              errors:
+                - message: forbidden
+                  description: The client does not have the access right for the content.
+    NotFound:
+      description: |
+        An error occurred.  The client requested a resource that does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/APIError"
+          example:
+            status: failure
+            data:
+              errors:
+                - message: not_found
+                  description: Could not find to requested resource.
+    Conflict:
+      description: >
+        An error occurred.  Indicates a request conflict with the current state of the target resource.
+
+
+        The primary use case for the 409 Conflict is to signal that a sync collection is too far out of date with the  current server
+        state.  As such, the client should truncate the current local state and should restart the  checkpoint iteration from the beginning
+        of time (i.e. start with an empty sync anchor).  This is useful for the  OLAP view sync collections that can add or remove
+        reseources, without deleting the resources, simply by  modifying the WHERE clause of the view.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/APIError"
+          example:
+            status: failure
+            data:
+              errors:
+                - message: conflict
+                  description: The request conflicts with the current state of the target resource.
+    InternalServerError:
+      description: |
+        An unexexpected error occurred during the request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/APIError"
+          example:
+            status: failure
+            data:
+              errors:
+                - message: server_error
+                  description: An error occurred while processing the request.
+    ListVehiclesResponse:
+      description: List all vehicles.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ListVehiclesResponse"
+    RetrieveVehicleResponse:
+      description: Find a vehicle.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RetrieveVehicleResponse"
+    ListModelsResponse:
+      description: List all models for a given a manufacturer.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ListModelsResponse"
+    RetrieveModelResponse:
+      description: Find a model.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RetrieveModelResponse"
+    ListManufacturersResponse:
+      description: List all manufacturers.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ListManufacturersResponse"
+    RetrieveManufacturerResponse:
+      description: Find a manufacturer details.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RetrieveManufacturerResponse"
+    SearchManufacturersResponse:
+      description: Searches for manufacturers.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/SearchManufacturersResponse"
+    SearchModelsResponse:
+      description: Searches for models.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/SearchModelsResponse"
+    SearchVehiclesResponse:
+      description: Searches for vehicles.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/SearchVehiclesResponse"
+    CreateVehicleResponse:
+      description: The current server side state of the newly created Vehicle.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CreateVehicleResponse"
+    UpdateVehicleResponse:
+      description: The current server side state of the updated Vehicle.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UpdateVehicleResponse"
+    CreateModelResponse:
+      description: The current server side state of the newly created Model.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CreateModelResponse"
+    UpdateModelResponse:
+      description: The current server side state of the updated Model.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UpdateModelResponse"
+    CreateManufacturerResponse:
+      description: The current server side state of the newly created Manufacturer.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CreateManufacturerResponse"
+    UpdateManufacturerResponse:
+      description: The current server side state of the updated Manufacturer.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UpdateManufacturerResponse"
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      description: This API uses OAuth 2 with the implicit grant flow. [More info](https://api.example.com/docs/auth)
+      flows:
+        authorizationCode:
+          authorizationUrl: /authorize
+          tokenUrl: /token
+          scopes: {}
+    cognito:
+      type: apiKey
+      name: Authorization
+      in: header
+      x-amazon-apigateway-authtype: cognito_user_pools
+      x-amazon-apigateway-authorizer:
+        type: cognito_user_pools
+        providerARNs:
+          - ${cognito_provider_arn}
+  schemas:
+    ApiStatus:
+      type: string
+      enum:
+        - success
+        - failure
+    QueryIdentifier:
+      type: string
+    ExecuteQueryRequest:
+      type: object
+      properties:
+        filterBy:
+          type: object
+          additionalProperties: {}
+        orderBy:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              direction:
+                $ref: "#/components/schemas/SortDirection"
+        limit:
+          $ref: "#/components/schemas/Limit"
+        offset:
+          $ref: "#/components/schemas/Offset"
+    Metadata:
+      type: object
+      properties:
+        total:
+          type: number
+          description: |
+            Returned in a paginated result set.  Indicates the total number of records in the given result set.
+          example: 1
+    SortDirection:
+      type: string
+      enum:
+        - asc
+        - desc
+    Limit:
+      type: integer
+      minimum: 0
+    Offset:
+      type: integer
+      minimum: 0
+    DateTimeFilter:
+      type: object
+      description: >
+        A filter used to filter results based on a given `date-time` field.
+
+        Specific filters allow the client to search between a starting and ending date-time range, before a given date-time, at a specific
+        date-time, and after a given date-time.
+
+        Relative filters allow the client to search the past X chrono units (e.g. past 30 days), the next X chrono units (e.g. the next 7
+        days), or within the current chrono unit (e.g. in the current month or year).
+      properties:
+        between:
+          $ref: "#/components/schemas/DateTimeRange"
+        before:
+          type: string
+          format: date-time
+        at:
+          type: string
+          format: date-time
+        after:
+          type: string
+          format: date-time
+        past:
+          $ref: "#/components/schemas/RelativeRange"
+        next:
+          $ref: "#/components/schemas/RelativeRange"
+        current:
+          $ref: "#/components/schemas/ChronoUnit"
+      minProperties: 1
+      maxProperties: 1
+      additionalProperties: false
+      example:
+        next:
+          duration: 1
+          unit: week
+    DateTimeRange:
+      type: object
+      description: |
+        A fixed date-time range, represented by a start date-time and an end date-time.
+      required:
+        - start
+        - end
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+    RelativeRange:
+      type: object
+      description: |
+        A relative range.  Used to represent a range of date/time values relative to the current date and time.
+      required:
+        - duration
+        - unit
+      properties:
+        duration:
+          type: integer
+          description: >
+            The number of chronological units to include in the range.  For example the next 30 days would have `duration: 30` and `unit:
+            day`
+        unit:
+          $ref: "#/components/schemas/ChronoUnit"
+        inclusive:
+          type: boolean
+          default: true
+          description: >
+            A flag to indicate if the relative range should commmence relative to the current date-time, or if it should start on the next
+            logical chronological boundary. For example, next month, could be the next 30-ish days starting from now (inclusive: true) or it
+            could be the full range of days in the next month, starting on the first of the month
+    ChronoUnit:
+      type: string
+      description: |
+        A standard set of date periods units. This set of units provide unit-based access to manipulate a date, time or date-time.
+      enum:
+        - day
+        - week
+        - month
+        - year
+    ValueType:
+      description: The data type of the values
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum:
+            - string
+            - integer
+            - number
+            - boolean
+            - object
+            - array
+        format:
+          type: string
+        items:
+          $ref: "#/components/schemas/ValueType"
+        properties:
+          additionalProperties:
+            $ref: "#/components/schemas/ValueType"
+    ColumnType:
+      description: |
+        The role of the column in the results
+          * attribute: column from a simple projection
+          * dimension: column from an aggregation query used in the 'group by' clause
+          * measure: column aggregated in an aggregation query
+          * constant: a constant value
+          * document: column with the full JSON payload of the record
+      type: string
+      enum:
+        - attribute
+        - dimension
+        - measure
+        - constant
+        - document
+    QueryResponseColumn:
+      type: object
+      properties:
+        name:
+          description: The name of the column
+          type: string
+          example: client.ip
+        columnType:
+          $ref: "#/components/schemas/ColumnType"
+        dataType:
+          $ref: "#/components/schemas/ValueType"
+        sortable:
+          description: Whether the column is sortable
+          type: boolean
+      required:
+        - name
+        - columnType
+        - dataType
+        - sortable
+    QueryMetadata:
+      type: object
+      required:
+        - columns
+        - offset
+      properties:
+        total:
+          description: Total number of records in the results
+          type: integer
+          format: int64
+          minimum: 0
+          example: 123456
+        offset:
+          description: Offset to use to get the next page of results
+          type: integer
+          format: int32
+          minimum: -1
+          example: 100
+        columns:
+          description: Metadata about the columns in the response
+          type: array
+          items:
+            $ref: "#/components/schemas/QueryResponseColumn"
+    ExecuteQueryResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        metadata:
+          $ref: "#/components/schemas/QueryMetadata"
+        data:
+          description: Results as an array of rows, each with an array of values
+          type: array
+          items:
+            type: array
+            items: {}
+    FieldError:
+      type: object
+      properties:
+        message:
+          type: string
+        description:
+          type: string
+        path:
+          type: string
+    APIError:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          type: object
+          properties:
+            errors:
+              type: array
+              items:
+                $ref: "#/components/schemas/FieldError"
+    ListVehiclesRequest:
+      type: object
+      properties:
+        filterBy:
+          type: object
+          properties:
+            model:
+              type: object
+              properties:
+                id:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+              required:
+                - id
+        limit:
+          $ref: "#/components/schemas/Limit"
+        offset:
+          $ref: "#/components/schemas/Offset"
+    SearchManufacturersRequest:
+      type: object
+      properties:
+        query:
+          type: string
+        filterBy:
+          type: object
+          properties:
+            model:
+              type: object
+              properties:
+                id:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+              required:
+                - id
+    SearchModelsRequest:
+      type: object
+      properties:
+        query:
+          type: string
+        filterBy:
+          type: object
+          properties:
+            manufacturer:
+              type: object
+              properties:
+                id:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+              required:
+                - id
+    SearchVehiclesRequest:
+      type: object
+      properties:
+        query:
+          type: string
+        filterBy:
+          type: object
+          properties:
+            manufacturer:
+              type: object
+              properties:
+                name:
+                  type: array
+                  items:
+                    type: string
+                    example: Mazda
+            model:
+              type: object
+              properties:
+                name:
+                  type: array
+                  items:
+                    type: string
+                    example: Mazda 3
+            vehicle:
+              type: object
+              properties:
+                year:
+                  type: array
+                  items:
+                    type: integer
+                    minimum: 1900
+                    maximum: 3000
+                    default: 2024
+                listedOn:
+                  $ref: "#/components/schemas/DateTimeFilter"
+                features:
+                  type: object
+                  properties:
+                    addOns:
+                      type: array
+                      description: |
+                        The collection of named add-ons the vehicle has.
+                      items:
+                        type: string
+    EntityIdentifier:
+      type: string
+      format: uuid
+    VinNumber:
+      type: string
+      pattern: "[A-Z0-9]{17}"
+      description: >
+        The car's vehicle identification number (VIN) is the identifying code for a SPECIFIC automobile. The VIN  serves as the car's
+        fingerprint, as no two vehicles in operation have the same VIN. A VIN is composed  of 17 characters (digits and capital letters)
+        that act as a unique identifier for the vehicle. A VIN  displays the car's unique features, specifications and manufacturer. The VIN
+        can be used to track recalls, registrations, warranty claims, thefts and insurance coverage.
+    GeoLocation:
+      type: object
+      properties:
+        latitude:
+          type: number
+        longitude:
+          type: number
+    VehicleIdentifier:
+      $ref: "#/components/schemas/VinNumber"
+    VehicleInput:
+      type: object
+      properties:
+        model:
+          $ref: "#/components/schemas/ModelIdentifier"
+        year:
+          type: integer
+          minimum: 1900
+          maximum: 3000
+          default: 2024
+        location:
+          $ref: "#/components/schemas/GeoLocation"
+        listedOn:
+          type: string
+          format: date-time
+        features:
+          type: object
+          properties:
+            addOns:
+              type: array
+              description: |
+                The collection of named add-ons the vehicle has.
+              items:
+                type: string
+    Vehicle:
+      type: object
+      properties:
+        model:
+          $ref: "#/components/schemas/ModelIdentifier"
+        year:
+          type: integer
+          minimum: 1900
+          maximum: 3000
+          default: 2024
+        location:
+          $ref: "#/components/schemas/GeoLocation"
+        listedOn:
+          type: string
+          format: date-time
+        features:
+          type: object
+          properties:
+            addOns:
+              type: array
+              description: |
+                The collection of named add-ons the vehicle has.
+              items:
+                type: string
+        id:
+          $ref: "#/components/schemas/VehicleIdentifier"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+    ModelIdentifier:
+      $ref: "#/components/schemas/EntityIdentifier"
+    ModelInput:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Mazda 3
+    Model:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Mazda 3
+        id:
+          $ref: "#/components/schemas/ModelIdentifier"
+        manufacturerId:
+          $ref: "#/components/schemas/ManufacturerIdentifier"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - manufacturerId
+    ManufacturerIdentifier:
+      $ref: "#/components/schemas/EntityIdentifier"
+    ManufacturerInput:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Mazda
+    Manufacturer:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Mazda
+        id:
+          $ref: "#/components/schemas/ManufacturerIdentifier"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+    ManufacturerDetails:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Mazda
+        models:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: Mazda 3
+    VehicleDetails:
+      type: object
+      properties:
+        make:
+          type: object
+          properties:
+            name:
+              type: string
+              example: Mazda
+        model:
+          type: object
+          properties:
+            name:
+              type: string
+              example: Mazda 3
+        year:
+          type: integer
+          minimum: 1900
+          maximum: 3000
+          default: 2024
+    ListVehiclesResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Vehicle"
+    RetrieveVehicleResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          $ref: "#/components/schemas/Vehicle"
+    ListModelsResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                $ref: "#/components/schemas/ModelIdentifier"
+              name:
+                type: string
+                example: Mazda 3
+            required:
+              - id
+    RetrieveModelResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          type: object
+          properties:
+            id:
+              $ref: "#/components/schemas/ModelIdentifier"
+            name:
+              type: string
+              example: Mazda 3
+          required:
+            - id
+    ListManufacturersResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ManufacturerDetails"
+    RetrieveManufacturerResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          $ref: "#/components/schemas/ManufacturerDetails"
+    SearchManufacturersResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Manufacturer"
+    SearchModelsResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                $ref: "#/components/schemas/ModelIdentifier"
+              name:
+                type: string
+                example: Mazda 3
+            required:
+              - id
+    SearchVehiclesResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/VehicleDetails"
+    CreateVehicleResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          $ref: "#/components/schemas/Vehicle"
+    UpdateVehicleResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          $ref: "#/components/schemas/Vehicle"
+    CreateModelResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          $ref: "#/components/schemas/Model"
+    UpdateModelResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          $ref: "#/components/schemas/Model"
+    CreateManufacturerResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          $ref: "#/components/schemas/Manufacturer"
+    UpdateManufacturerResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          $ref: "#/components/schemas/Manufacturer"

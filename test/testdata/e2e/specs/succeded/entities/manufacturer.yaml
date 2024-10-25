@@ -1,0 +1,11 @@
+type: object
+properties:
+  name:
+    type: string
+    example: Mazda
+links:
+  models:
+    rel: model
+    cardinality: "1..*"
+    # This tests a composition of paths
+    type: composition

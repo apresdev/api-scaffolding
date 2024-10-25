@@ -10,7 +10,9 @@ export class Predicates {
   /**
    * Hide the constructor of the utility class.
    */
-  private constructor() {}
+  private constructor() {
+    throw new Error("assertion error");
+  }
 
   /**
    * Returns a predicate that evaluates to true if each of its components evaluates to true. The components are evaluated in order, and
@@ -25,7 +27,7 @@ export class Predicates {
    */
   public static and<T>(...predicates: Array<Predicate<T>>): Predicate<T> {
     checkNotEmpty(predicates, "predicates must not be empty");
-    predicates.forEach((inner) => checkNotNull(inner, "predicates must not be null"));
+    for (const inner of predicates) checkNotNull(inner, "predicates must not be null");
 
     return (value: T): boolean => {
       for (const predicate of predicates) {
@@ -50,7 +52,7 @@ export class Predicates {
    */
   public static or<T>(...predicates: Array<Predicate<T>>): Predicate<T> {
     checkNotEmpty(predicates, "predicates must not be empty");
-    predicates.forEach((inner) => checkNotNull(inner, "predicates must not be null"));
+    for (const inner of predicates) checkNotNull(inner, "predicates must not be null");
 
     return (value: T): boolean => {
       for (const predicate of predicates) {
@@ -109,10 +111,10 @@ export class Predicates {
    *
    * @returns  a predicate that evaluates to true if each item in the supplied value evaluates to true against a given predicate.
    */
-  public static eachArrayItem<T>(predicate: Predicate<T>): Predicate<Array<T>> {
+  public static eachArrayItem<T>(predicate: Predicate<T>): Predicate<T[]> {
     checkNotNull(predicate, "predicate must not be null");
 
-    return (values: Array<T>) => {
+    return (values: T[]) => {
       if (!values) {
         return false;
       }
@@ -169,7 +171,7 @@ export class Predicates {
    *
    * @returns a predicate that returns true if and only if the supplied value is not `undefined`, is not null, and has a non-zero length.
    */
-  public static notEmpty<T extends string | Array<unknown>>(): Predicate<T> {
+  public static notEmpty<T extends string | unknown[]>(): Predicate<T> {
     return (input: T) => {
       return isDefined(input) && input.length > 0;
     };

@@ -1,6 +1,6 @@
 import { OpenAPIV3 } from "openapi-types";
 
-import { CommitMessage, DataVersion } from "./data_types";
+import { CommitMessage, DataVersion } from "./data-types";
 
 export const IfMatchHeader: OpenAPIV3.ParameterObject = {
   name: "If-Match",

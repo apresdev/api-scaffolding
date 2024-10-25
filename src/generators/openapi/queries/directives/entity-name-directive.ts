@@ -2,7 +2,7 @@ import { OpenAPIV3 } from "openapi-types";
 import { pluralize } from "../../../../common";
 import { isSingleton } from "../../../../entities";
 import { EntityName } from "../../../../specification";
-import { entitySchemaRef } from "../../util";
+import { entitySchemaReference } from "../../util";
 import { QueryProcessorContext } from "../query-generator";
 import { EntityDirective } from "./entity-directive";
 
@@ -26,7 +26,7 @@ export class EntityNameDirective implements EntityDirective {
   }
 
   schema(): OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject {
-    return entitySchemaRef(this._entityName);
+    return entitySchemaReference(this._entityName);
   }
 
   path(): string {

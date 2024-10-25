@@ -1,5 +1,5 @@
 import { OpenAPIV3 } from "openapi-types";
-import { JsonPath, ajv, toCamelCase, toKebabCase } from "../../../common";
+import { Arrays, JsonPath, Objects, ajv, toCamelCase, toKebabCase } from "../../../common";
 import { PathError } from "../../../common/io";
 import { resolveFully } from "../../../models/util";
 import { AnySchema, Cardinality, EntityName, EntityProjection, Nodes, isEntityProjection } from "../../../specification";
@@ -16,8 +16,8 @@ export class NamedQueryGenerator implements QueryGenerator<NamedQuery> {
   }
 
   private getResponse(context: QueryProcessorContext): OpenAPIV3.ResponseObject {
-    context.openAPI.components = context.openAPI.components || {};
-    context.openAPI.components.responses = context.openAPI.components.responses || {};
+    context.openAPI.components = Objects.orEmpty(context.openAPI.components);
+    context.openAPI.components.responses = Objects.orEmpty(context.openAPI.components.responses);
 
     if (!(NamedQueryResponseName in context.openAPI.components.responses)) {
       throw new PathError("template missing named query response", context.jsonPath || "", "unkown");
@@ -29,9 +29,9 @@ export class NamedQueryGenerator implements QueryGenerator<NamedQuery> {
   private getExamples(response: OpenAPIV3.ResponseObject): {
     [media: string]: OpenAPIV3.ReferenceObject | OpenAPIV3.ExampleObject;
   } {
-    response.content = response.content || {};
-    response.content[CONTENT_TYPE_JSON] = response.content[CONTENT_TYPE_JSON] || {};
-    response.content[CONTENT_TYPE_JSON].examples = response.content[CONTENT_TYPE_JSON].examples || {};
+    response.content = Objects.orEmpty(response.content);
+    response.content[CONTENT_TYPE_JSON] = Objects.orEmpty(response.content[CONTENT_TYPE_JSON]);
+    response.content[CONTENT_TYPE_JSON].examples = Objects.orEmpty(response.content[CONTENT_TYPE_JSON].examples);
     return response.content[CONTENT_TYPE_JSON].examples;
   }
 
@@ -55,7 +55,8 @@ export class NamedQueryGenerator implements QueryGenerator<NamedQuery> {
     };
   }
 
-  private validateExample(columns: Array<QueryResponseColumn>, query: NamedQuery, contex: QueryProcessorContext) {
+  /* eslint-disable sonarjs/cognitive-complexity */
+  private validateExample(columns: QueryResponseColumn[], query: NamedQuery, contex: QueryProcessorContext) {
     if (!query.example) {
       return;
     }
@@ -65,42 +66,43 @@ export class NamedQueryGenerator implements QueryGenerator<NamedQuery> {
       return ajv.compile(responseColumn.dataType);
     });
 
-    query.example.forEach((row, rowNum) => {
+    for (const [rowNumber, row] of query.example.entries()) {
       // Check the column count.
       if (row.length !== columns.length) {
         throw new PathError(
           `column count mismatch, expected ${columns.length}, found ${row.length}`,
-          JsonPath.resolve(contex.jsonPath || "", "example", String(rowNum)),
+          JsonPath.resolve(contex.jsonPath || "", "example", String(rowNumber)),
           "example",
         );
       }
 
-      row.forEach((cell, colNum) => {
+      for (const [colNumber, cell] of row.entries()) {
         // For now, we will assume that all cells are optional.
         if (null === cell) {
-          return;
+          continue;
         }
 
         // Check the cell value.
-        const validatorFn = validators[colNum];
-        const results = validatorFn(cell);
+        const validatorFunction = validators[colNumber];
+        const results = validatorFunction(cell);
 
         if (!results) {
-          for (const error of validatorFn.errors || []) {
+          for (const error of Arrays.orEmpty(validatorFunction.errors)) {
             throw new PathError(
-              "invalid example: " + error.message,
-              JsonPath.resolve(contex.jsonPath || "", "example", String(rowNum), String(colNum)),
+              `invalid example: ${error.message}`,
+              JsonPath.resolve(contex.jsonPath || "", "example", String(rowNumber), String(colNumber)),
               "example",
             );
           }
         }
-      });
-    });
+      }
+    }
   }
+  /* eslint-enable sonarjs/cognitive-complexity */
 
-  private generateColumns(query: NamedQuery, context: QueryProcessorContext): Array<QueryResponseColumn> {
-    const dimensions = query.query.dimensions || [];
-    const measures = query.query.measures || [];
+  private generateColumns(query: NamedQuery, context: QueryProcessorContext): QueryResponseColumn[] {
+    const dimensions = Arrays.orEmpty(query.query.dimensions);
+    const measures = Arrays.orEmpty(query.query.measures);
 
     return [
       ...dimensions.flatMap((dimension) => this.generateDimensionColumn(dimension, query, context)),
@@ -124,7 +126,7 @@ export class NamedQueryGenerator implements QueryGenerator<NamedQuery> {
     entity: EntityName,
     schema: AnySchema,
     context: QueryProcessorContext,
-  ): Array<QueryResponseColumn> {
+  ): QueryResponseColumn[] {
     const parentProjectedEntity = Joins.viaFrom(projection);
     return projection[parentProjectedEntity].flatMap((joinDirective) => {
       if (isEntityProjection(joinDirective)) {
@@ -145,11 +147,11 @@ export class NamedQueryGenerator implements QueryGenerator<NamedQuery> {
           subSchema = schema.properties[projectedEntity];
           name = projectedEntity;
         } else {
-          throw new Error("could not resolve edge " + projectedEntity);
+          throw new Error(`could not resolve edge ${projectedEntity}`);
         }
 
         const columns = this.generateEntityPojectionColumns(subProjection, query, name, subSchema, context);
-        columns.forEach((column) => {
+        for (const column of columns) {
           column.name = `${toCamelCase(parentProjectedEntity)}.${column.name}`;
           if (autoWrapArray) {
             column.dataType = {
@@ -157,7 +159,7 @@ export class NamedQueryGenerator implements QueryGenerator<NamedQuery> {
               items: column.dataType,
             };
           }
-        });
+        }
         return columns;
       }
 
@@ -185,12 +187,12 @@ export class NamedQueryGenerator implements QueryGenerator<NamedQuery> {
       throw new Error("detected undefined properties");
     }
 
-    const propSchemaOrRef = schema.properties[column];
-    if (!propSchemaOrRef) {
+    const propertySchemaOrReference = schema.properties[column];
+    if (!propertySchemaOrReference) {
       throw new Error(`invalid property name "${column}" on entity "${entity}"`);
     }
 
-    return this.toValueType(propSchemaOrRef, context);
+    return this.toValueType(propertySchemaOrReference, context);
   }
 
   /**
@@ -210,11 +212,11 @@ export class NamedQueryGenerator implements QueryGenerator<NamedQuery> {
     let properties: Record<string, ValueType> | undefined = undefined;
     if ("properties" in resolved && resolved.properties) {
       properties = {};
-      Object.keys(resolved.properties).forEach((property) => {
-        properties = properties || {};
-        resolved.properties = resolved.properties || {};
+      for (const property of Object.keys(resolved.properties)) {
+        properties = Objects.orEmpty(properties);
+        resolved.properties = Objects.orEmpty(resolved.properties);
         properties[property] = this.toValueType(resolved.properties[property], context);
-      });
+      }
     }
 
     return {
@@ -225,7 +227,7 @@ export class NamedQueryGenerator implements QueryGenerator<NamedQuery> {
     };
   }
 
-  private generateColumnDescriptorColumns(descriptor: ColumnDescriptor, query: NamedQuery): Array<QueryResponseColumn> {
+  private generateColumnDescriptorColumns(descriptor: ColumnDescriptor, query: NamedQuery): QueryResponseColumn[] {
     return [
       {
         name: toCamelCase(descriptor.name),
@@ -237,7 +239,7 @@ export class NamedQueryGenerator implements QueryGenerator<NamedQuery> {
   }
 
   private toDataType(descriptor: ColumnDescriptor): ValueType {
-    const copy = Object.assign({}, descriptor) as object;
+    const copy = { ...descriptor } as object;
     if ("name" in copy) {
       delete copy.name;
     }
@@ -269,9 +271,9 @@ export class NamedQueryGenerator implements QueryGenerator<NamedQuery> {
 
     return (
       query.query.sortableBy
-        .filter(isEntityProjection)
+        .filter((item) => isEntityProjection(item))
         .map((projection) => projection as EntityProjection)
-        .find((projection) => {
+        .some((projection) => {
           if (Joins.viaFrom(projection) !== entity) {
             return false;
           }

@@ -1,4 +1,4 @@
-export type IncludePaths = Array<IncludePath>;
+export type IncludePaths = IncludePath[];
 export type IncludePath = string;
 export interface IncludeDirective {
   $include: IncludePath | IncludePaths;
@@ -13,5 +13,5 @@ export function isIncludeDirective(value: unknown): boolean {
     return false;
   }
 
-  return "$include" in value;
+  return Object.keys(value).length === 1 && "$include" in value;
 }

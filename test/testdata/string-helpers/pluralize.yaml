@@ -1,0 +1,19 @@
+# -s use cases
+- input: apple
+  expected: apples
+# -es use cases
+- input: bus
+  expected: buses
+- input: fox
+  expected: foxes
+- input: church
+  expected: churches
+- input: glass
+  expected: glasses
+- input: quiz
+  expected: quizes
+- input: wish
+  expected: wishes
+# -ies use cases
+- input: ferry
+  expected: ferries

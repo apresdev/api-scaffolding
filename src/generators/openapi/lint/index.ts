@@ -1,3 +1,1 @@
-import { lintSpecification } from "./lint";
-
-export { lintSpecification };
+export { lintSpecification } from "./lint";

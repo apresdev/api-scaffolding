@@ -1,13 +1,13 @@
-import * as fs from "fs";
-import { basename, dirname } from "path";
+import { readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
 
-import * as yaml from "js-yaml";
+import { dump } from "js-yaml";
 import { read } from "yaml-import";
 
-export function dumpYaml<T>(data: T, path: string) {
-  fs.writeFileSync(
-    path,
-    yaml.dump(data, {
+export function dumpYaml<T>(data: T, filename: string) {
+  writeFileSync(
+    filename,
+    dump(data, {
       indent: 2,
       noRefs: true,
       lineWidth: 140,
@@ -17,28 +17,40 @@ export function dumpYaml<T>(data: T, path: string) {
 }
 
 export function sortKeys<T extends object>(data: T): T {
-  return Object.entries(data)
-    .sort()
-    .reduce((r, [k, v]) => ({ ...r, [k]: v }), {}) as T;
+  return Object.fromEntries(
+    Object.entries(data)
+      .sort()
+      .map(([k, v]) => [k, v]),
+  ) as T;
 }
 
-export function dumpJson<T extends object>(data: T, path: string) {
-  fs.writeFileSync(path, JSON.stringify(data, null, 2), "utf8");
+export function dumpJson<T extends object>(data: T, filename: string) {
+  writeFileSync(filename, JSON.stringify(data, undefined, 2), "utf8");
 }
 
-export function fileNameWithoutExtension(path: string): string {
-  return basename(path, ".yaml");
+export function fileNameWithoutExtension(filename: string): string {
+  return path.basename(filename, ".yaml");
 }
-export function directoryName(path: string): string {
-  return dirname(path);
+export function directoryName(filename: string): string {
+  return path.dirname(filename);
 }
 
-export function loadYaml<T>(path: string): T {
-  const contents = fs.readFileSync(path, "utf8");
+export function loadYaml<T>(filename: string): T {
+  const contents = readFileSync(filename, "utf8");
   if (!contents) {
-    throw new Error("could not read yaml file " + path);
+    throw new Error(`could not read yaml file ${filename}`);
   }
-  return read(path) as T;
+  return read(filename) as T;
+}
+
+/**
+ * Makes a deep copy of any data.
+ *
+ * @param data  The data to be copied.
+ * @returns  The deep copy of the data.
+ */
+export function deepCopy<T>(data: T): T {
+  return structuredClone(data);
 }
 
 export type DeepReadonly<T> = Readonly<{

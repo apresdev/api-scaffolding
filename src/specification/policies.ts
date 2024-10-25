@@ -44,7 +44,7 @@ export interface Policy {
   /**
    * The conditional modifiers that affect when the policy applies.
    */
-  condition?: Condition | Array<Condition>;
+  condition?: Condition | Condition[];
 }
 
 /**
@@ -61,7 +61,7 @@ export type Effect = "allow" | "deny";
  *
  * @minItems 1
  */
-export type SubjectSelections = Array<SubjectSelection>;
+export type SubjectSelections = SubjectSelection[];
 
 /**
  * A selector that specifies who the subject is that is invoking the action on the given resource.
@@ -79,7 +79,7 @@ export type SubjectSelection = string;
  *
  * @minItems 1
  */
-export type ResourceSelections = Array<ResourceSelection>;
+export type ResourceSelections = ResourceSelection[];
 
 /**
  * A selector that specifies the resource for which the action is being applied to.
@@ -97,7 +97,7 @@ export type ResourceSelection = string;
  *
  * @minItems 1
  */
-export type ActionSelections = Array<ActionSelection>;
+export type ActionSelections = ActionSelection[];
 
 /**
  * A selector that specifies the resource for which the action is being applied to.
@@ -115,7 +115,7 @@ export type ActionSelection = string;
  *
  * @minItems 1
  */
-export type RoleNames = Array<RoleName>;
+export type RoleNames = RoleName[];
 
 /**
  * The name of a role a subject may have assigned to them.

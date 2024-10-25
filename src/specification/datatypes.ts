@@ -14,8 +14,6 @@ export const EntityIdentifier: DeepReadonly<JSONSchema> = {
   format: "uuid",
 };
 
-// TODO: Figure out pagination....
-
 export const APIError: DeepReadonly<JSONSchema> = {
   type: "object",
   description: "A standard error returned from an API Operation",

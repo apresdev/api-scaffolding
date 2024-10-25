@@ -33,7 +33,7 @@ export interface NamedQuery {
   /**
    * An example of the query response data.
    */
-  example?: Array<Array<unknown>>;
+  example?: unknown[][];
 }
 
 export interface QueryDefinition {
@@ -42,7 +42,7 @@ export interface QueryDefinition {
    *
    * Note, this affects
    */
-  filterableBy?: Array<EntityProjection>;
+  filterableBy?: EntityProjection[];
 
   /**
    * The collection of fields that may be used for server side sorting.
@@ -56,7 +56,7 @@ export interface QueryDefinition {
    * (like an alphanumeric customer ID), but are not numeric values (It wouldn’t make sense to add up all the ID numbers in a column, for
    * example).
    */
-  dimensions?: Array<Dimension>;
+  dimensions?: Dimension[];
 
   /**
    * Measures are quantifications — fields like order subtotal, quantity of items purchased, or duration spent on a specific page.
@@ -64,7 +64,7 @@ export interface QueryDefinition {
    * Measures are therefore computable. Say you have a measure, quantity of items purchased: you can do things like calculate the average
    * quantity ordered, sort by descending quantities, sum all quantities, and so on.
    */
-  measures?: Array<Measure>;
+  measures?: Measure[];
 }
 
 /**

@@ -2,6 +2,7 @@ import { OpenAPIV3 } from "openapi-types";
 import { toPascalCase } from "../common";
 import { asSchemaObject } from "../entities";
 import { AnySchema, EntitySchema, Fragment } from "../specification";
+import { deepCopy } from "../util";
 
 /**
  * The schema registry stores all known schemas in the system.
@@ -33,7 +34,7 @@ export class SchemaRegistry {
    */
   public set<T extends AnySchema>(entity: string, schema: T) {
     // Store a copy of the schema, to prevent the caller from manipulating the schema post-insert.
-    this.schemas.set(toPascalCase(entity), JSON.parse(JSON.stringify(schema)));
+    this.schemas.set(toPascalCase(entity), deepCopy(schema) as EntitySchema);
   }
 
   /**
@@ -44,10 +45,10 @@ export class SchemaRegistry {
    */
   public get<T extends AnySchema>(entity: string): T {
     if (!this.has(entity)) {
-      throw new Error("unknown entity " + entity);
+      throw new Error(`unknown entity ${entity}`);
     }
     // Return a copy of the schema to prevent the caller from manipulating the internal representation.
-    return JSON.parse(JSON.stringify(this.schemas.get(toPascalCase(entity))));
+    return deepCopy(this.schemas.get(toPascalCase(entity))) as T;
   }
 
   /**
@@ -104,8 +105,8 @@ export class SchemaRegistry {
    *
    * @param callbackFn The iterator callback.
    */
-  public forEach(callbackFn: (value: EntitySchema, key: string) => void) {
-    this.schemas.forEach(callbackFn);
+  public entries(): MapIterator<[string, EntitySchema]> {
+    return this.schemas.entries();
   }
 
   public registerFragment(fragment: Fragment): void {

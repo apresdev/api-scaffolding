@@ -1,6 +1,7 @@
-import { entityIdentifier } from "../common";
-import { entitySchemaRef } from "../generators/openapi/util";
+import { Arrays, Objects } from "../common";
+import { entitySchemaReference } from "../generators/openapi/util";
 import { EntitySchema, MutationKeywords } from "../specification";
+import { entityIdentifier } from "./entities";
 
 export type EntityStrategy = (entity: EntitySchema, name: string) => EntitySchema;
 
@@ -73,8 +74,8 @@ export function isDeleteable(model: EntitySchema): boolean {
   return true;
 }
 
-export function buildStrategies(model: EntitySchema): Array<EntityStrategy> {
-  const strategies: Array<EntityStrategy> = [identifiable];
+export function buildStrategies(model: EntitySchema): EntityStrategy[] {
+  const strategies: EntityStrategy[] = [identifiable];
 
   if (isVersioned(model)) {
     strategies.push(versioned);
@@ -103,13 +104,13 @@ export function buildStrategies(model: EntitySchema): Array<EntityStrategy> {
  * @returns the properties decorator that includes an "id"
  */
 export function identifiable(entity: EntitySchema, name: string): EntitySchema {
-  entity.required = entity.required || [];
+  entity.required = Arrays.orEmpty(entity.required);
   if (!entity.required.includes("id")) {
     entity.required = ["id", ...entity.required];
   }
 
-  entity.properties = entity.properties || {};
-  entity.properties["id"] = entitySchemaRef(entityIdentifier(name));
+  entity.properties = Objects.orEmpty(entity.properties);
+  entity.properties["id"] = entitySchemaReference(entityIdentifier(name));
 
   return entity;
 }
@@ -120,7 +121,7 @@ export function identifiable(entity: EntitySchema, name: string): EntitySchema {
  * @returns  the properties decorator that includes the "created_at" property.
  */
 function createable(entity: EntitySchema): EntitySchema {
-  entity.properties = Object.assign(entity.properties || {}, {
+  entity.properties = Object.assign(Objects.orEmpty(entity.properties), {
     created_at: {
       type: "string",
       format: "date-time",
@@ -136,7 +137,7 @@ function createable(entity: EntitySchema): EntitySchema {
  * @returns  the properties decorator that includes the "updated_at" property.
  */
 function updateable(entity: EntitySchema): EntitySchema {
-  entity.properties = Object.assign(entity.properties || {}, {
+  entity.properties = Object.assign(Objects.orEmpty(entity.properties), {
     updated_at: {
       type: "string",
       format: "date-time",
@@ -153,7 +154,7 @@ function updateable(entity: EntitySchema): EntitySchema {
  */
 
 function deleteable(entity: EntitySchema): EntitySchema {
-  entity.properties = Object.assign(entity.properties || {}, {
+  entity.properties = Object.assign(Objects.orEmpty(entity.properties), {
     deleted_at: {
       type: "string",
       format: "date-time",
@@ -169,7 +170,7 @@ function deleteable(entity: EntitySchema): EntitySchema {
  * @returns  the properties decorator that includes a "version"
  */
 function versioned(entity: EntitySchema): EntitySchema {
-  entity.properties = Object.assign(entity.properties || {}, {
+  entity.properties = Object.assign(Objects.orEmpty(entity.properties), {
     version: { $ref: "#/components/schemas/DataVersion" },
   });
 

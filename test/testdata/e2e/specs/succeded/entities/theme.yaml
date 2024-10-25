@@ -1,0 +1,6 @@
+type: object
+# This tenant user-based ownership
+ownership: tenant
+properties:
+  name:
+    type: string

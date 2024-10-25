@@ -1,0 +1,39 @@
+type: object
+properties:
+  id:
+    # This tests a natural identifer.
+    $ref: "./definitions/vin-number.yaml#"
+  model:
+    # This tests a direct link
+    rel: model
+  year:
+    type: integer
+    minimum: 1900
+    maximum: 3000
+    default: 2024
+  location:
+    # This tests a external references.
+    $ref: "./definitions/geo-location.yaml#"
+  listedOn:
+    type: string
+    # This will be used to test date-time filters.
+    format: date-time
+  features:
+    type: object
+    properties:
+      addOns:
+        # This will be used to test array filters.
+        type: array
+        description: >
+          The collection of named add-ons the vehicle has.
+        items:
+          type: string
+
+links:
+  # This tests a transitive link
+  make:
+    rel: manufacturer
+    cardinality: "*..1"
+    via: make
+    description: >
+      Every vehicle is manufactured by the given manufacturer, which can be determined by the vehicle's model.

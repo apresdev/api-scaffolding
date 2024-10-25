@@ -1,0 +1,35 @@
+apresApi: 1.0.0
+info:
+  title: Vehicles API
+  version: 1.0.0
+  baseUrl: https://example.com/api/v1/vehicles
+  description: An auto-trader like API.
+  contact:
+    email: developers@example.com
+
+entities:
+  - vehicle
+  - model
+  - manufacturer
+
+operations:
+  mutations:
+    - entity: vehicle
+    - entity: model
+    - entity: manufacturer
+
+  fragments:
+    # Joins the manufacturer with all models provided by the manufacturer
+    - name: manufacturerDetails
+      on:
+        manufacturer:
+          - name
+          - models: ["name"]
+
+    # Tests an included fragment
+    - $include:
+        - fragments/vehicle-details.yaml
+
+  queries:
+    - $include:
+        - operations/queries/vehicles.yaml

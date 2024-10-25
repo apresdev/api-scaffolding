@@ -1,2 +1,2 @@
-export * from "./errors";
+export * from "./path-error";
 export * from "./processor";

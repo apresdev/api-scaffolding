@@ -1,0 +1,7 @@
+entities/invalid.yaml:
+  - line: 3
+    column: 11
+    severity: "error"
+    keyword: "type: object"
+    message: "must be object"
+    path: "properties"
