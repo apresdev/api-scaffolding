@@ -1,3 +1,5 @@
+import { Objects } from "../common";
+
 export type IncludePaths = IncludePath[];
 export type IncludePath = string;
 export interface IncludeDirective {
@@ -5,13 +7,5 @@ export interface IncludeDirective {
 }
 
 export function isIncludeDirective(value: unknown): boolean {
-  if (!value) {
-    return false;
-  }
-
-  if (typeof value !== "object") {
-    return false;
-  }
-
-  return Object.keys(value).length === 1 && "$include" in value;
+  return typeof value === "object" && Object.keys(Objects.orEmpty(value)).length === 1 && "$include" in Objects.orEmpty(value);
 }
