@@ -1,14 +1,14 @@
 import { OpenAPIV3 } from "openapi-types";
 
 import { OpenAPIBuilder, RequestHeadersBuilder, Url, UrlBuilder } from "./builder";
-import { ConflictError, PreConditionsFailedError } from "./status_codes";
+import { ConflictError } from "./status-codes";
 import { OpenAPISpecification } from "./types";
-import { arraySchema, entitySchemaRef, toSummaryCase } from "./util";
+import { entitySchemaReference, toSummaryCase } from "./util";
 
 import { aOrAn, pluralize, toPascalCase, toTitleCase } from "../../common";
-import { isCreateable, isDeleteable, isEditable, isVersioned } from "../../entities";
+import { isCreateable, isDeleteable, isEditable } from "../../entities";
 import { SchemaRegistry } from "../../models";
-import { Ancestor, DependencyGraph, EntitySchema, Mutation } from "../../specification";
+import { DependencyGraph, EntitySchema, Mutation } from "../../specification";
 
 /**
  * Adds the standard CRUD operations to an OpenAPI specication.  This includes two operations at the container path: list (GET) and create
@@ -19,13 +19,10 @@ import { Ancestor, DependencyGraph, EntitySchema, Mutation } from "../../specifi
  * @param openAPI   The OpenAPI specification.
  */
 export function renderMutations(mutation: Mutation, openAPI: OpenAPISpecification, graph: DependencyGraph, schemaRegistry: SchemaRegistry) {
-  const entityModel: EntitySchema = schemaRegistry.get(mutation.entity);
-  const versioned = isVersioned(entityModel);
-
   if (graph.isCollection(mutation.entity)) {
-    renderCrudOperations(mutation, openAPI, graph, schemaRegistry, versioned);
+    renderCrudOperations(mutation, openAPI, graph, schemaRegistry);
   } else {
-    renderUpsertOperations(mutation, openAPI, graph, schemaRegistry, versioned);
+    renderUpsertOperations(mutation, openAPI, graph, schemaRegistry);
   }
 }
 
@@ -37,13 +34,7 @@ export function renderMutations(mutation: Mutation, openAPI: OpenAPISpecificatio
  * @param service The service specification, used to determine ancestry.
  * @param openAPI The OpenAPI specification.
  */
-function renderCrudOperations(
-  mutation: Mutation,
-  openAPI: OpenAPISpecification,
-  graph: DependencyGraph,
-  schemaRegistry: SchemaRegistry,
-  versioned: boolean,
-) {
+function renderCrudOperations(mutation: Mutation, openAPI: OpenAPISpecification, graph: DependencyGraph, schemaRegistry: SchemaRegistry) {
   const entity = mutation.entity;
 
   // Build the ancestral paths.
@@ -60,24 +51,20 @@ function renderCrudOperations(
     // For models that have natural identifiers defined, we want to caller to specify the identifier, since the ids will not be system
     // managed values, but rather user supplied.
     if (schemaRegistry.hasNaturalIdentifier(entity)) {
-      generateCreateOp(mutation, itemUrl, openAPI, schemaRegistry, versioned, {
+      generateCreateOp(mutation, itemUrl, openAPI, schemaRegistry, {
         ...ConflictError,
       });
     } else {
-      generateCreateOp(mutation, containerUrl, openAPI, schemaRegistry, versioned);
+      generateCreateOp(mutation, containerUrl, openAPI, schemaRegistry);
     }
   }
 
   if (isEditable(schema)) {
-    generateUpdateOp(mutation, itemUrl, openAPI, schemaRegistry, versioned);
+    generateUpdateOp(mutation, itemUrl, openAPI, schemaRegistry);
   }
 
   if (isDeleteable(schema)) {
-    generateDeleteOp(mutation, itemUrl, openAPI, schemaRegistry, versioned);
-  }
-
-  if (versioned) {
-    renderHistoryOperations(mutation, itemUrl, openAPI, schemaRegistry);
+    generateDeleteOp(mutation, itemUrl, openAPI, schemaRegistry);
   }
 }
 
@@ -89,30 +76,12 @@ function renderCrudOperations(
  * @param openAPI The OpenAPI specification.
  * @param graph   The entity-relationship dependency graph.
  */
-function renderUpsertOperations(
-  mutation: Mutation,
-  openAPI: OpenAPISpecification,
-  graph: DependencyGraph,
-  schemaRegistry: SchemaRegistry,
-  versioned: boolean,
-) {
+function renderUpsertOperations(mutation: Mutation, openAPI: OpenAPISpecification, graph: DependencyGraph, schemaRegistry: SchemaRegistry) {
   const entity = mutation.entity;
   const itemUrl = buildAncestralPath(entity, graph, schemaRegistry).path().withNoun(schemaRegistry.getAlias(entity), false).end().build();
-  generateUpsertOp(mutation, itemUrl, openAPI, schemaRegistry, versioned);
-
-  if (versioned) {
-    renderHistoryOperations(mutation, itemUrl, openAPI, schemaRegistry);
-  }
+  generateUpsertOp(mutation, itemUrl, openAPI, schemaRegistry);
 }
 
-function renderHistoryOperations(mutation: Mutation, itemUrl: Url, openAPI: OpenAPISpecification, schemaRegistry: SchemaRegistry) {
-  const urlBuilder = UrlBuilder.fromUrl(itemUrl).path().withNoun("version", true).end();
-  const versionContainerUrl = urlBuilder.build();
-  const versionItemUrl = urlBuilder.path().withVersion().end().build();
-
-  generateListVersionHistoryOp(mutation, versionContainerUrl, openAPI, schemaRegistry);
-  generateRetrieveVersionOp(mutation, versionItemUrl, openAPI, schemaRegistry);
-}
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CRUD Operations
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -129,15 +98,10 @@ function generateCreateOp(
   url: Url,
   openAPI: OpenAPISpecification,
   schemaRegistry: SchemaRegistry,
-  versioned: boolean,
   additionalErrors: OpenAPIV3.ResponsesObject = {},
 ) {
   const entity = mutation.entity;
   const requestHeaders = RequestHeadersBuilder.newBuilder();
-
-  if (versioned) {
-    requestHeaders.withCommitMessage();
-  }
 
   OpenAPIBuilder.newBuilder(openAPI, schemaRegistry)
     .path(url.path)
@@ -146,8 +110,8 @@ function generateCreateOp(
     .withSummary(`Creates ${aOrAn(entity)} ${toSummaryCase(entity)}.`)
     .withTag(mutation.tag || toPascalCase(pluralize(schemaRegistry.getAlias(entity))))
     .withParameters([...url.parameters, ...requestHeaders.build()])
-    .withRequestBody(entitySchemaRef(entity + "Input"), `The new ${toSummaryCase(entity)}`)
-    .withSuccessResponse(201, `The current server side state of the newly created ${toTitleCase(entity)}.`, entitySchemaRef(entity))
+    .withRequestBody(entitySchemaReference(`${entity}Input`), `The new ${toSummaryCase(entity)}`)
+    .withSuccessResponse(201, `The current server side state of the newly created ${toTitleCase(entity)}.`, entitySchemaReference(entity))
     .withResponse(additionalErrors)
     .build();
 }
@@ -165,15 +129,10 @@ function generateUpdateOp(
   url: Url,
   openAPI: OpenAPISpecification,
   schemaRegistry: SchemaRegistry,
-  versioned: boolean,
   additionalErrors: OpenAPIV3.ResponsesObject = {},
 ) {
   const entity = mutation.entity;
   const requestHeaders = RequestHeadersBuilder.newBuilder();
-
-  if (versioned) {
-    requestHeaders.withIfMatch().withCommitMessage();
-  }
 
   OpenAPIBuilder.newBuilder(openAPI, schemaRegistry)
     .path(url.path)
@@ -182,10 +141,9 @@ function generateUpdateOp(
     .withSummary(`Updates ${aOrAn(entity)} ${toSummaryCase(entity)}.`)
     .withTag(mutation.tag || toPascalCase(pluralize(schemaRegistry.getAlias(entity))))
     .withParameters([...url.parameters, ...requestHeaders.build()])
-    .withRequestBody(entitySchemaRef(entity + "Input"), `The new ${toSummaryCase(entity)}`)
-    .withSuccessResponse(200, `The current server side state of the updated ${toTitleCase(entity)}.`, entitySchemaRef(entity))
+    .withRequestBody(entitySchemaReference(`${entity}Input`), `The new ${toSummaryCase(entity)}`)
+    .withSuccessResponse(200, `The current server side state of the updated ${toTitleCase(entity)}.`, entitySchemaReference(entity))
     .withResponse({
-      ...(versioned ? PreConditionsFailedError : {}),
       ...additionalErrors,
     })
     .build();
@@ -204,15 +162,10 @@ function generateDeleteOp(
   url: Url,
   openAPI: OpenAPISpecification,
   schemaRegistry: SchemaRegistry,
-  versioned: boolean,
   additionalErrors: OpenAPIV3.ResponsesObject = {},
 ) {
   const entity = mutation.entity;
   const requestHeaders = RequestHeadersBuilder.newBuilder();
-
-  if (versioned) {
-    requestHeaders.withIfMatch().withCommitMessage();
-  }
 
   OpenAPIBuilder.newBuilder(openAPI, schemaRegistry)
     .path(url.path)
@@ -223,7 +176,6 @@ function generateDeleteOp(
     .withParameters([...url.parameters, ...requestHeaders.build()])
     .withNoContent()
     .withResponse({
-      ...(versioned ? PreConditionsFailedError : {}),
       ...additionalErrors,
     })
     .build();
@@ -246,15 +198,10 @@ function generateUpsertOp(
   url: Url,
   openAPI: OpenAPISpecification,
   schemaRegistry: SchemaRegistry,
-  versioned: boolean,
   additionalErrors: OpenAPIV3.ResponsesObject = {},
 ) {
   const entity = mutation.entity;
   const requestHeaders = RequestHeadersBuilder.newBuilder();
-
-  if (versioned) {
-    requestHeaders.withIfMatch().withCommitMessage();
-  }
 
   OpenAPIBuilder.newBuilder(openAPI, schemaRegistry)
     .path(url.path)
@@ -263,65 +210,15 @@ function generateUpsertOp(
     .withSummary(`Upserts ${aOrAn(entity)} ${toSummaryCase(entity)}.`)
     .withTag(mutation.tag || toPascalCase(pluralize(schemaRegistry.getAlias(entity))))
     .withParameters([...url.parameters, ...requestHeaders.build()])
-    .withRequestBody(entitySchemaRef(entity + "Input"), `The new ${toSummaryCase(entity)}`)
+    .withRequestBody(entitySchemaReference(`${entity}Input`), `The new ${toSummaryCase(entity)}`)
     .withSuccessResponse(
       200,
       `The current server side state of the newly created or updated ${toTitleCase(entity)}.`,
-      entitySchemaRef(entity),
+      entitySchemaReference(entity),
     )
     .withResponse({
-      ...(versioned ? PreConditionsFailedError : {}),
       ...additionalErrors,
     })
-    .build();
-}
-
-// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Revision History Operations
-// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/**
- * Generates the standard "List" operation
- *
- * @param entity  The name of the entity that requires CRUD operations.
- * @param url     The URL descriptor for the operation.
- * @param openAPI The OpenAPI specification.
- */
-export function generateListVersionHistoryOp(mutation: Mutation, url: Url, openAPI: OpenAPISpecification, schemaRegistry: SchemaRegistry) {
-  const entity = mutation.entity;
-  OpenAPIBuilder.newBuilder(openAPI, schemaRegistry)
-    .path(url.path)
-    .get()
-    .withOperationId(`list${toPascalCase(entity)}Versions`)
-    .withSummary(`Lists all versions of ${aOrAn(entity)}  ${toSummaryCase(entity)}.`)
-    .withTag(mutation.tag || toPascalCase(pluralize(schemaRegistry.getAlias(entity))))
-    .withParameters([...url.parameters])
-    .withSuccessResponse(
-      200,
-      `All historical versions of  ${aOrAn(entity)} ${toTitleCase(entity)}.`,
-      arraySchema(revisionSchema(entitySchemaRef(entity))),
-    )
-    .build();
-}
-
-/**
-   * Generates the standard "Retrieve" operation
-   *
-   * @param entity  The name of the entity that requires CRUD operations.
-   * @param url     The URL descriptor for the operation.
-   * @param openAPI The OpenAPI specification.
-  
-   */
-export function generateRetrieveVersionOp(mutation: Mutation, url: Url, openAPI: OpenAPISpecification, schemaRegistry: SchemaRegistry) {
-  const entity = mutation.entity;
-  OpenAPIBuilder.newBuilder(openAPI, schemaRegistry)
-    .path(url.path)
-    .get()
-    .withOperationId(`retrieve${toPascalCase(entity)}Version`)
-    .withSummary(`Retrieves a version of ${aOrAn(entity)} ${toSummaryCase(entity)}.`)
-    .withTag(mutation.tag || toPascalCase(pluralize(schemaRegistry.getAlias(entity))))
-    .withParameters([...url.parameters])
-    .withSuccessResponse(200, `A historical version of  ${aOrAn(entity)} ${toTitleCase(entity)}.`, revisionSchema(entitySchemaRef(entity)))
     .build();
 }
 
@@ -342,37 +239,15 @@ export function generateRetrieveVersionOp(mutation: Mutation, url: Url, openAPI:
  * @returns The URL Builder with the ancestral entities included as path segments and parameters.
  */
 function buildAncestralPath(entity: string, graph: DependencyGraph, schemaRegistry: SchemaRegistry): UrlBuilder {
-  return graph.listAncestors(entity).reduce((urlBuilder: UrlBuilder, ancestor: Ancestor): UrlBuilder => {
+  const urlBuilder = UrlBuilder.newBuilder();
+  for (const ancestor of graph.listAncestors(entity)) {
     const alias = schemaRegistry.getAlias(ancestor.name);
 
     urlBuilder.path().withNoun(alias, ancestor.isCollection);
     if (ancestor.isCollection) {
       urlBuilder.path().withIdentifier(alias);
     }
-    return urlBuilder;
-  }, UrlBuilder.newBuilder());
-}
+  }
 
-function revisionSchema(entitySchema: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject): OpenAPIV3.SchemaObject {
-  return {
-    type: "object",
-    properties: {
-      commit: {
-        type: "object",
-        properties: {
-          author: {
-            type: "string",
-          },
-          message: {
-            type: "string",
-          },
-          date: {
-            type: "string",
-            format: "date-time",
-          },
-        },
-      },
-      content: entitySchema,
-    },
-  };
+  return urlBuilder;
 }

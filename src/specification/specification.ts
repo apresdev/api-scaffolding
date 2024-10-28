@@ -1,8 +1,5 @@
-import _ = require("underscore");
-
 import { Predicates } from "../common";
 
-import { Aggregation } from "./aggregations";
 import { Policies } from "./policies";
 
 import { IncludeDirective } from ".";
@@ -11,7 +8,7 @@ import { NamedQuery } from "./named-query";
 export type EntityName = string;
 export type RelationshipName = string;
 export type ViaEntry = EntityName | RelationshipName;
-export type Via = ViaEntry | Array<ViaEntry>;
+export type Via = ViaEntry | ViaEntry[];
 // export type Projection = Record<EntityName, Array<FieldName>>;
 
 /**
@@ -56,7 +53,7 @@ export interface ServiceSpecificationVersion1 extends BaseServiceSpecification {
   /**
    * The collection of entities managed by the service.
    */
-  entities: Array<EntityName>;
+  entities: EntityName[];
 
   /**
    * The entity relationships defined by the service.
@@ -121,7 +118,7 @@ export interface ContactInformation {
   email: string;
 }
 
-export type Relationships = Array<Relationship>;
+export type Relationships = Relationship[];
 
 /**
  * Defines a relationship between two entities.
@@ -229,7 +226,7 @@ export interface Operations {
 /**
  * A collection of Mutation objects.
  */
-export type Mutations = Array<Mutation>;
+export type Mutations = Mutation[];
 
 /**
  * Defines a mutable entity in the service.
@@ -246,10 +243,10 @@ export interface Mutation {
   tag?: string;
 }
 
-export type Queries = Array<Query>;
-export type Query = ListQuery | RetrieveQuery | SearchQuery | SelectQuery | IncludeDirective | NamedQuery;
+export type Queries = Query[];
+export type Query = ListQuery | RetrieveQuery | SearchQuery | NamedQuery | IncludeDirective;
 export type JoinDirective = ViaEntry | EntityProjection;
-export type Join = Array<JoinDirective>;
+export type Join = JoinDirective[];
 export type FragmentName = string;
 
 export interface Fragment {
@@ -284,12 +281,12 @@ export interface BaseQuery {
    *
    * Note, this affects
    */
-  filterableBy?: Array<EntityProjection>;
+  filterableBy?: EntityProjection[];
 
   /**
    * The collection of fields that may be used for server side sorting.
    */
-  sortableBy?: Array<EntityProjection>;
+  sortableBy?: EntityProjection[];
 }
 
 export interface FindQuery extends BaseQuery {
@@ -299,7 +296,7 @@ export interface FindQuery extends BaseQuery {
    *
    * Note, this affects path parameters in the operation URL.
    */
-  given?: EntityName | Array<EntityName>;
+  given?: EntityName | EntityName[];
 
   /**
    * The collection of entity or entities to join in the result set.
@@ -348,7 +345,7 @@ export interface SearchQuery extends BaseQuery {
    *
    * Note, this affects
    */
-  filterableBy?: Array<EntityProjection>;
+  filterableBy?: EntityProjection[];
 }
 
 /**
@@ -357,7 +354,7 @@ export interface SearchQuery extends BaseQuery {
  * @minProperties 1
  * @maxProperties 1
  */
-export type EntityProjection = Record<ViaEntry, Array<JoinDirective>>;
+export type EntityProjection = Record<ViaEntry, JoinDirective[]>;
 
 const isProjectedColumn = Predicates.not(Predicates.eachArrayItem(Predicates.or(Predicates.isString(), isEntityProjection)));
 
@@ -367,28 +364,26 @@ const isProjectedColumn = Predicates.not(Predicates.eachArrayItem(Predicates.or(
  * @param value The entity project or aggregation to check.
  * @returns true if and only if the the value is an object where every property is an array of strings.
  */
-export function isEntityProjection(value: GroupBy | Aggregation): boolean {
+export function isEntityProjection(value: GroupBy): boolean {
   if (typeof value !== "object") {
     return false;
   }
 
   const record = value as Record<string, unknown>;
-  const exceptions = _.chain(Object.keys(value as Record<string, unknown>))
-    .filter((key: string) => isProjectedColumn(record[key] as never))
-    .value();
+  const exceptions = Object.keys(value as Record<string, unknown>).filter((key: string) => isProjectedColumn(record[key] as never));
 
   return exceptions.length === 0;
 }
 
-export function isViaEntry(value: GroupBy | Aggregation): boolean {
+export function isViaEntry(value: GroupBy): boolean {
   return typeof value === "string";
 }
 
-export function isProjectection(value: GroupBy | Aggregation): boolean {
+export function isProjectection(value: GroupBy): boolean {
   return isViaEntry(value) || isEntityProjection(value);
 }
 
-export function isDistinctProjection(value: GroupBy | Aggregation): boolean {
+export function isDistinctProjection(value: GroupBy): boolean {
   if (typeof value !== "object") {
     return false;
   }
@@ -402,7 +397,7 @@ export function isDistinctProjection(value: GroupBy | Aggregation): boolean {
   return keys[0] === "distinct" && isProjectection(values[0]);
 }
 
-export function isGroupBy(value: GroupBy | Aggregation): boolean {
+export function isGroupBy(value: GroupBy): boolean {
   return isProjectection(value) || isDistinctProjection(value);
 }
 
@@ -413,59 +408,46 @@ export interface DistinctProjection {
 export type Projection = ViaEntry | EntityProjection;
 export type GroupBy = DistinctProjection | Projection;
 
-// TODO: Make this extend base query.  For now I want the freedom to change things.
-export interface SelectQuery extends BaseQuery {
-  /**
-   * The values to project.
-   */
-  select: Array<GroupBy | Aggregation>;
-
-  /**
-   * The collection of entity or entities to join in the result set.
-   * Currently assumes these are relationships to the source entity of the query.
-   */
-  from: EntityName | Array<ViaEntry>;
-
-  /**
-   * The option entity or entities to filter the query by.
-   * Currently assumes that the entity and entity identifier are included in the path of the query.
-   */
-  given?: EntityName | Array<EntityName>;
-}
-
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Cardinality {
   export function reverse(cardinality: Cardinality): Cardinality {
     switch (cardinality) {
       case Cardinality.MANY_TO_MANY:
-      case Cardinality.ONE_TO_ONE:
+      case Cardinality.ONE_TO_ONE: {
         return cardinality;
-      case Cardinality.ONE_TO_MANY:
+      }
+      case Cardinality.ONE_TO_MANY: {
         return Cardinality.MANY_TO_ONE;
-      case Cardinality.MANY_TO_ONE:
+      }
+      case Cardinality.MANY_TO_ONE: {
         return Cardinality.ONE_TO_MANY;
+      }
     }
   }
 
   export function isToMany(cardinality: Cardinality): boolean {
     switch (cardinality) {
       case Cardinality.MANY_TO_MANY:
-      case Cardinality.ONE_TO_MANY:
+      case Cardinality.ONE_TO_MANY: {
         return true;
+      }
       case Cardinality.ONE_TO_ONE:
-      case Cardinality.MANY_TO_ONE:
+      case Cardinality.MANY_TO_ONE: {
         return false;
+      }
     }
   }
 
   export function isFromMany(cardinality: Cardinality): boolean {
     switch (cardinality) {
       case Cardinality.MANY_TO_MANY:
-      case Cardinality.MANY_TO_ONE:
+      case Cardinality.MANY_TO_ONE: {
         return true;
+      }
       case Cardinality.ONE_TO_MANY:
-      case Cardinality.ONE_TO_ONE:
+      case Cardinality.ONE_TO_ONE: {
         return false;
+      }
     }
   }
 

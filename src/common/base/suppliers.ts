@@ -10,10 +10,10 @@ export type Supplier<T> = () => T;
  */
 export class Suppliers {
   /**
-   * Hide the constructor of a utility class.
+   * Hide the constructor of the utility class.
    */
   private constructor() {
-    // Hide constructor for utility classes.
+    throw new Error("assertion error");
   }
 
   /**

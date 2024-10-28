@@ -17,13 +17,7 @@ import { Predicates } from ".";
 export function checkArgument(assertion: boolean, message: string): boolean;
 export function checkArgument(assertion: Supplier<boolean>, message: string): boolean;
 export function checkArgument(assertion: boolean | Supplier<boolean>, message: string): boolean {
-  let result: boolean;
-
-  if (typeof assertion === "boolean") {
-    result = assertion;
-  } else {
-    result = assertion();
-  }
+  const result = typeof assertion === "boolean" ? assertion : assertion();
 
   if (!result) {
     throw new Error(message);
@@ -33,7 +27,7 @@ export function checkArgument(assertion: boolean | Supplier<boolean>, message: s
 }
 
 export function isDefined<T>(value: T): boolean {
-  return typeof value !== "undefined" && value !== null;
+  return value !== undefined && value !== null;
 }
 
 /**
@@ -56,9 +50,9 @@ export function checkNotNull<T>(value: T, message: string): boolean {
  *
  * @throws  error if the value is null, undefined, or has a non-positive length.
  */
-export function checkNotEmpty<T>(value: string | Array<T>, message: string): boolean {
+export function checkNotEmpty<T>(value: string | T[], message: string): boolean {
   return (
-    checkNotNull(value, "value was not non-null. " + message) &&
+    checkNotNull(value, `value was not non-null. ${message}`) &&
     checkArgument((): boolean => {
       return value.length > 0;
     }, message)

@@ -1,10 +1,9 @@
 #! /usr/bin/env node
 
-import * as path from "path";
-
 import { program } from "commander";
 import Handlebars = require("handlebars");
 
+import path from "node:path";
 import { FileErrors, logErrors, toPascalCase } from "./common";
 import { CodeGenerator } from "./generators/base";
 import { EntityRelationshipGenerator } from "./generators/docs";
@@ -31,7 +30,7 @@ program
   .command("docs")
   .description("Generates the ER and class diagrams")
   .argument("<spec_path>", "the path to the service specification")
-  .action(generateDocs);
+  .action(generateDocumentation);
 
 program.parse(process.argv);
 
@@ -41,7 +40,7 @@ program.parse(process.argv);
 /**
  * Runs the OpenAPI code generators.
  *
- * @param path  The path to the service specification.
+ * @param specPath  The path to the service specification.
  */
 interface GenerateOpenApiOptions {
   outfile: string;
@@ -53,19 +52,19 @@ async function generateOpenApi(specPath: string, options: GenerateOpenApiOptions
 /**
  * Runs all documentation code generators.
  *
- * @param path  The path to the service specification.
+ * @param specPath  The path to the service specification.
  */
-async function generateDocs(path: string) {
-  await generateService(path, new EntityRelationshipGenerator());
+async function generateDocumentation(specPath: string) {
+  await generateService(specPath, new EntityRelationshipGenerator());
 }
 
 /**
  * Loads the service specification and runs a collection of code generators.
  *
- * @param path        The path to the service specification.
+ * @param specPath    The path to the service specification.
  * @param generators  The code generators to run
  */
-async function generateService(path: string, ...generators: Array<CodeGenerator>) {
+async function generateService(specPath: string, ...generators: CodeGenerator[]) {
   // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Load the templates, service specifications, and schemas from the file system
   // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -73,34 +72,35 @@ async function generateService(path: string, ...generators: Array<CodeGenerator>
     const results = new FileErrors();
     const openAPISpecification = loadTemplateOpenAPISpecification();
 
-    const serviceDescriptor: ServiceSpecification = loadService(path, results);
-    exitOnFailure(results);
+    const serviceDescriptor: ServiceSpecification = loadService(specPath, results);
+    await exitOnFailure(results);
 
     const entityMap = loadEntities(serviceDescriptor, results);
-    exitOnFailure(results);
+    await exitOnFailure(results);
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Run all of the code generators.
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    generators.forEach((generator) => {
+    for (const generator of generators) {
       generator.generate(serviceDescriptor, entityMap, openAPISpecification, results);
-    });
-
-    exitOnFailure(results);
-  } catch (e) {
-    if (typeof e === "string") {
-      console.error(e);
-    } else if (e instanceof Error) {
-      console.error((e as Error).message);
     }
+
+    await exitOnFailure(results);
+  } catch (error) {
+    /* eslint-disable no-console  */
+    if (typeof error === "string") {
+      console.error(error);
+    } else if (error instanceof Error) {
+      console.error((error as Error).message);
+    }
+    /* eslint-enable no-console  */
     process.exit(-1);
   }
 }
 
-function exitOnFailure(results: FileErrors) {
+async function exitOnFailure(results: FileErrors) {
   if (results.hasErrors()) {
-    logErrors(results).then(() => {
-      process.exit(-1);
-    });
+    await logErrors(results);
+    process.exit(-1);
   }
 }

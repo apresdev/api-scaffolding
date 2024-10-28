@@ -84,7 +84,7 @@ export interface BaseSchema {
 export interface BaseSchemaWithExample<T> extends BaseSchema {
   default?: T;
   example?: T;
-  examples?: Array<T>;
+  examples?: T[];
 }
 
 export type DataClassification = "sensitive" | "public";
@@ -93,7 +93,7 @@ export interface BaseScalarSchema<T> extends BaseSchemaWithExample<T> {
    *
    */
   "data-classification"?: DataClassification;
-  enum?: Array<T>;
+  enum?: T[];
 }
 
 /**
@@ -113,13 +113,13 @@ export interface ObjectSchema extends BaseSchemaWithExample<object> {
    * By default, the properties defined by the `properties` keyword are not required. However, one can provide a list of required properties
    * using the `required` keyword.
    */
-  required?: Array<string>;
+  required?: string[];
 }
 
 /**
  * Arrays are used for ordered elements. In JSON, each element in an array may be of a different type.
  */
-export interface ArraySchema extends BaseSchemaWithExample<Array<unknown>> {
+export interface ArraySchema extends BaseSchemaWithExample<unknown[]> {
   type: "array";
 
   /**
@@ -152,7 +152,7 @@ export interface ArraySchema extends BaseSchemaWithExample<Array<unknown>> {
    *
    * The value of this keyword must be an array of strings - property names that should have unique values across all items.
    */
-  uniqueItemProperties?: Array<string>;
+  uniqueItemProperties?: string[];
 }
 
 /**

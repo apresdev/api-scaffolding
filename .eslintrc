@@ -8,22 +8,43 @@
   "plugins": [
     "@typescript-eslint",
     "unused-imports",
+    "sonarjs",
+    "woke",
+    "unicorn",
     "import"
   ],
+  // https://github.com/dustinspecker/awesome-eslint?tab=readme-ov-file#code-quality
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
+    "plugin:depend/recommended",
+    "plugin:github/recommended",
+    "plugin:github/typescript",
+    "plugin:sonarjs/recommended-legacy",
+    "plugin:unicorn/recommended",
     "prettier"
   ],
   "ignorePatterns" : [
     "dist",
+    "coverage",
     "node_modules",
     "babel.config.js",
-    "jest.config.ts"
+    "jest.config.ts",
+    "tests",
+    "**/*.json"
   ],
   "rules": {
     "unused-imports/no-unused-imports": "error",
-    "import/no-duplicates": "error"
+    "import/no-duplicates": "error",
+    "woke/all": 2,
+
+    // Disable certain rules.
+    // I'm ok with a redundant type alias for now...
+    "sonarjs/redundant-type-aliases": "off",
+    // There are certain rules I am selectively disabling via comments.
+    "eslint-comments/no-use": "off",
+    // This is intended to generate english comments for now...
+    "i18n-text/no-en" : "off"
   }
 }

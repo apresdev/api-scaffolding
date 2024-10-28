@@ -1,0 +1,9 @@
+type: object
+# This tests user-based ownership
+ownership: user
+# This tests singletone routes.
+singleton: true
+properties:
+  email:
+    type: string
+    format: email

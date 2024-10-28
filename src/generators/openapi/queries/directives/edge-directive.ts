@@ -1,7 +1,7 @@
 import { OpenAPIV3 } from "openapi-types";
 import { checkNotEmpty, checkNotNull, pluralize } from "../../../../common";
 import { Cardinality, Edge, EntityName, RelationshipName } from "../../../../specification";
-import { entitySchemaRef } from "../../util";
+import { entitySchemaReference } from "../../util";
 import { EntityDirective } from "./entity-directive";
 
 /**
@@ -62,7 +62,7 @@ export class EdgeDirective implements EntityDirective {
    * @returns a reference to the schema for the edge node.
    */
   schema(): OpenAPIV3.ReferenceObject {
-    return entitySchemaRef(this._edge.node.name);
+    return entitySchemaReference(this._edge.node.name);
   }
 
   path(): string {

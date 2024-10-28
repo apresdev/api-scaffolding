@@ -1,3 +1,1 @@
-import { default as adSensitiveParameterCheck } from "./adSensitiveParameterCheck";
-
-export { adSensitiveParameterCheck };
+export { default as adSensitiveParameterCheck } from "./ad-sensitive-parameter-check";

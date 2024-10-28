@@ -2,16 +2,19 @@ import { OpenAPIV3 } from "openapi-types";
 
 import { OpenAPIBuilder, Url, UrlBuilder } from "../builder";
 import { PaginationParameters } from "../parameters";
-import { arraySchema, entitySchemaRef, toSummaryCase } from "../util";
+import { arraySchema, toSummaryCase } from "../util";
 
 import { QueryGenerator, QueryProcessorContext } from "./query-generator";
 import { Metadata } from "./util";
 
-import { JsonPath, checkNotNull, pluralize, toCamelCase, toPascalCase } from "../../../common";
-import { asSchemaObject } from "../../../entities";
-import { EntityName, EntityProjection, SearchQuery, isEntityProjection } from "../../../specification";
-import { EntityProjections, Joins } from "../../../specification/joins";
-import { filterableBy } from "./filters";
+import { JsonPath, Objects, checkNotNull, pluralize, toCamelCase, toPascalCase } from "../../../common";
+import { SearchQuery } from "../../../specification";
+import { EntityDirective, compileFind } from "./directives";
+import { filterBy } from "./filters";
+
+export interface SearchQueryProcessorContext extends QueryProcessorContext {
+  directive: EntityDirective;
+}
 
 /**
  * The SearchQueryGenerator renders a SearchQuery as an OpenAPI operation.
@@ -23,15 +26,19 @@ export class SearchQueryGenerator implements QueryGenerator<SearchQuery> {
    * @param query   The user supplied query to be rendered as an OpenAPI operation.
    * @param context The execution context.
    */
-  render(query: SearchQuery, context: QueryProcessorContext): void {
+  render(query: SearchQuery, queryProcessorContext: QueryProcessorContext): void {
     checkNotNull(query, "query must be specified.");
-    checkNotNull(context, "context must be specified.");
+    checkNotNull(queryProcessorContext, "context must be specified.");
 
-    const url = this.buildUrl(query);
-    const operationId = this.buildOperationId(query);
-    const summary = this.buildSummary(query);
-    const additionalParams = this.buildParameters();
-    const tag = this.buildTag(query);
+    const context = queryProcessorContext as SearchQueryProcessorContext;
+
+    context.directive = compileFind(query, "search", undefined, context);
+
+    const url = this.buildUrl(query, context);
+    const operationId = this.buildOperationId(query, context);
+    const summary = this.buildSummary(query, context);
+    const additionalParameters = this.buildParameters();
+    const tag = this.buildTag(query, context);
     const requestBody = this.buildRequestBody(query, context);
     const response = this.buildResponse(query, context);
     const metaData = this.buildMetaData();
@@ -41,7 +48,7 @@ export class SearchQueryGenerator implements QueryGenerator<SearchQuery> {
       .post()
       .withOperationId(toCamelCase(operationId))
       .withSummary(summary)
-      .withParameters([...url.parameters, ...additionalParams])
+      .withParameters([...url.parameters, ...additionalParameters])
       .withTag(tag)
       .withRequestBody(requestBody)
       .withSuccessResponse(200, summary, response, metaData)
@@ -55,8 +62,8 @@ export class SearchQueryGenerator implements QueryGenerator<SearchQuery> {
    *
    * @returns the operation tag.
    */
-  protected buildTag(query: SearchQuery): string {
-    return query.tag || toPascalCase(pluralize(Joins.viaFrom(query.search)));
+  protected buildTag(query: SearchQuery, context: SearchQueryProcessorContext): string {
+    return query.tag || toPascalCase(pluralize(context.directive.entity()));
   }
   /**
    * Builds the operation tag.
@@ -65,7 +72,7 @@ export class SearchQueryGenerator implements QueryGenerator<SearchQuery> {
    *
    * @returns the operation tag.
    */
-  protected buildRequestBody(query: SearchQuery, context: QueryProcessorContext): OpenAPIV3.SchemaObject {
+  protected buildRequestBody(query: SearchQuery, context: SearchQueryProcessorContext): OpenAPIV3.SchemaObject {
     const requestBody: OpenAPIV3.SchemaObject = {
       type: "object",
       properties: {
@@ -76,8 +83,8 @@ export class SearchQueryGenerator implements QueryGenerator<SearchQuery> {
     };
 
     if (query.filterableBy) {
-      requestBody.properties = requestBody.properties || {};
-      requestBody.properties["filterBy"] = filterableBy(query.filterableBy, Joins.viaFrom(query.search), {
+      requestBody.properties = Objects.orEmpty(requestBody.properties);
+      requestBody.properties["filterBy"] = filterBy(query.filterableBy, context.directive.entity(), {
         ...context,
         jsonPath: JsonPath.resolve(context.jsonPath || "", "filterableBy"),
       }) as OpenAPIV3.SchemaObject;
@@ -93,8 +100,8 @@ export class SearchQueryGenerator implements QueryGenerator<SearchQuery> {
    *
    * @returns the operation URL.
    */
-  protected buildUrl(query: SearchQuery): Url {
-    return UrlBuilder.newBuilder().path().withNoun("search", false).withNoun(Joins.viaFrom(query.search), true).end().build();
+  protected buildUrl(query: SearchQuery, context: SearchQueryProcessorContext): Url {
+    return UrlBuilder.newBuilder().path().withNoun("search", false).withNoun(context.directive.entity(), true).end().build();
   }
 
   /**
@@ -104,12 +111,12 @@ export class SearchQueryGenerator implements QueryGenerator<SearchQuery> {
    *
    * @returns the operation identifier for the query.
    */
-  protected buildOperationId(query: SearchQuery): string {
+  protected buildOperationId(query: SearchQuery, context: SearchQueryProcessorContext): string {
     if (query.name) {
       return query.name;
     }
 
-    return "search" + toPascalCase(pluralize(Joins.viaFrom(query.search)));
+    return `search${toPascalCase(pluralize(context.directive.entity()))}`;
   }
 
   /**
@@ -119,12 +126,12 @@ export class SearchQueryGenerator implements QueryGenerator<SearchQuery> {
    *
    * @returns the summary string for the query.
    */
-  protected buildSummary(query: SearchQuery): string {
+  protected buildSummary(query: SearchQuery, context: SearchQueryProcessorContext): string {
     if (query.summary) {
       return query.summary;
     }
 
-    return "Searches for " + toSummaryCase(pluralize(Joins.viaFrom(query.search))) + ".";
+    return `Searches for ${toSummaryCase(pluralize(context.directive.entity()))}.`;
   }
 
   /**
@@ -133,23 +140,8 @@ export class SearchQueryGenerator implements QueryGenerator<SearchQuery> {
    * @param query   The query to render.
    * @returns the response data schema.
    */
-  protected buildResponse(query: SearchQuery, context: QueryProcessorContext): OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject {
-    if (isEntityProjection(query.search)) {
-      const entityProjection: EntityProjection = query.search as EntityProjection;
-
-      return arraySchema(
-        asSchemaObject(
-          EntityProjections.projectionSchema(
-            entityProjection,
-            EntityProjections.viaFrom(entityProjection),
-            JsonPath.resolve(context.jsonPath || "", "search"),
-            context,
-          ),
-        ),
-      );
-    }
-
-    return arraySchema(entitySchemaRef(toPascalCase(query.search as EntityName)));
+  protected buildResponse(query: SearchQuery, context: SearchQueryProcessorContext): OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject {
+    return arraySchema(context.directive.schema(context));
   }
 
   /**

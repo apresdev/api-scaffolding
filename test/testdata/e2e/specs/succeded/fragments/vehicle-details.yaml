@@ -1,0 +1,7 @@
+# Joins the vehicle, make, and model
+- name: vehicleDetails
+  on:
+    vehicle:
+      - make: ["name"]
+      - model: ["name"]
+      - year

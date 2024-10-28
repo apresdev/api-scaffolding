@@ -1,0 +1,55 @@
+- input: a.b
+  expected:
+    camelCase: aB
+    pascalCase: AB
+    titleCase: A B
+    kebabCase: a-b
+    snakeCase: a_b
+
+- input: one
+  expected:
+    camelCase: one
+    pascalCase: One
+    titleCase: One
+    kebabCase: one
+    snakeCase: one
+
+- input: one-two
+  expected:
+    camelCase: oneTwo
+    pascalCase: OneTwo
+    titleCase: One Two
+    kebabCase: one-two
+    snakeCase: one_two
+
+- input: one.two.three
+  expected:
+    camelCase: oneTwoThree
+    pascalCase: OneTwoThree
+    titleCase: One Two Three
+    kebabCase: one-two-three
+    snakeCase: one_two_three
+
+- input: "one two \n three \t four"
+  expected:
+    camelCase: oneTwoThreeFour
+    pascalCase: OneTwoThreeFour
+    titleCase: One Two Three Four
+    kebabCase: one-two-three-four
+    snakeCase: one_two_three_four
+
+- input: oneTwoThreeFourFive
+  expected:
+    camelCase: oneTwoThreeFourFive
+    pascalCase: OneTwoThreeFourFive
+    titleCase: One Two Three Four Five
+    kebabCase: one-two-three-four-five
+    snakeCase: one_two_three_four_five
+
+- input: "this.is-a_mixed UseCase"
+  expected:
+    camelCase: thisIsAMixedUseCase
+    pascalCase: ThisIsAMixedUseCase
+    titleCase: This Is A Mixed Use Case
+    kebabCase: this-is-a-mixed-use-case
+    snakeCase: this_is_a_mixed_use_case

@@ -1,0 +1,18 @@
+apresApi: 1.0.0
+info:
+  title: Invalid Entity API
+  version: 1.0.0
+  baseUrl: https://example.com/api/v1/admin
+  description: The administrative API.
+  contact:
+    email: developers@example.com
+
+entities:
+  - valid
+
+operations:
+  mutations:
+    - entity: valid
+  queries:
+    - $include:
+        - operations/queries/invalid-query.yaml

@@ -1,0 +1,7 @@
+type: string
+pattern: "[A-Z0-9]{17}"
+description: >
+  The car's vehicle identification number (VIN) is the identifying code for a SPECIFIC automobile. The VIN  serves as the car's fingerprint,
+  as no two vehicles in operation have the same VIN. A VIN is composed  of 17 characters (digits and capital letters) that act as a unique
+  identifier for the vehicle. A VIN  displays the car's unique features, specifications and manufacturer. The VIN can be used to track
+  recalls, registrations, warranty claims, thefts and insurance coverage.

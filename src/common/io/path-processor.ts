@@ -1,5 +1,5 @@
-import * as fs from "fs";
-import * as path from "path";
+import { lstatSync, readdirSync } from "node:fs";
+import path from "node:path";
 
 import { FileProcessor } from ".";
 
@@ -36,29 +36,29 @@ export class PathProcessor<T, C> {
    * @param filePath Processes
    * @param ctx
    */
-  public processPath(filePath: string, ctx: C) {
+  public processPath(filePath: string, context: C) {
     const absolutePath = path.resolve(this.basePath, filePath);
-    this.doPath(absolutePath, ctx);
+    this.doPath(absolutePath, context);
   }
 
-  private doPath(filePath: string, ctx: C) {
-    if (fs.lstatSync(filePath).isDirectory()) {
-      this.doProcessDirectory(filePath, ctx);
+  private doPath(filePath: string, context: C) {
+    if (lstatSync(filePath).isDirectory()) {
+      this.doProcessDirectory(filePath, context);
     } else {
-      this.doProcessFile(filePath, ctx);
+      this.doProcessFile(filePath, context);
     }
   }
 
   /**
    * Iterates through each item in a directory and processes the path.
    *
-   * @param dirPath The directory path.
+   * @param directoryPath The directory path.
    * @param ctx     The file processor context.
    */
-  private doProcessDirectory(dirPath: string, ctx: C) {
-    fs.readdirSync(dirPath).forEach((filePath: string): void => {
-      this.doPath(path.resolve(dirPath, filePath), ctx);
-    });
+  private doProcessDirectory(directoryPath: string, context: C) {
+    for (const filePath of readdirSync(directoryPath)) {
+      this.doPath(path.resolve(directoryPath, filePath), context);
+    }
   }
 
   /**
@@ -67,7 +67,7 @@ export class PathProcessor<T, C> {
    * @param filePath    The file path.
    * @param ctx         The file processor context.
    */
-  private doProcessFile(filePath: string, ctx: C) {
-    this.fileProcessor.processFile(filePath, ctx);
+  private doProcessFile(filePath: string, context: C) {
+    this.fileProcessor.processFile(filePath, context);
   }
 }

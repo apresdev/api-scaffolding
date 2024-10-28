@@ -10,17 +10,17 @@ import { AnySchema, RelationshipSchema } from "../../specification";
  * @param entitySchema The entity schema to convert to a JSON schema.
  */
 export function toSchemaObject(entitySchema: AnySchema): OpenAPIV3.SchemaObject {
-  const schemaObj: OpenAPIV3.SchemaObject = Object.assign({}, entitySchema) as unknown as OpenAPIV3.SchemaObject;
+  const schemaObject: OpenAPIV3.SchemaObject = { ...entitySchema } as unknown as OpenAPIV3.SchemaObject;
 
-  removeLinks(schemaObj);
-  removeExtensionKeywords(schemaObj);
-  convertRelIntoRef(schemaObj);
+  removeLinks(schemaObject);
+  removeExtensionKeywords(schemaObject);
+  convertRelationshipIntoReference(schemaObject);
 
-  return schemaObj as OpenAPIV3.SchemaObject;
+  return schemaObject as OpenAPIV3.SchemaObject;
 }
 
-function convertRelIntoRef(schemaObj: OpenAPIV3.SchemaObject) {
-  visitSchema(schemaObj, (subSchema) => {
+function convertRelationshipIntoReference(schemaObject: OpenAPIV3.SchemaObject) {
+  visitSchema(schemaObject, (subSchema) => {
     if ("rel" in subSchema) {
       processRelationshipSchema(subSchema as unknown as RelationshipSchema);
     }
@@ -33,10 +33,10 @@ function convertRelIntoRef(schemaObj: OpenAPIV3.SchemaObject) {
  * @param schema The relationship schema.
  */
 function processRelationshipSchema(schema: RelationshipSchema) {
-  const $ref = "#/components/schemas/" + toPascalCase(schema.rel) + "Identifier";
+  const $reference = `#/components/schemas/${toPascalCase(schema.rel)}Identifier`;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Object.keys(schema).forEach((key) => delete (schema as any)[key]);
-  (schema as unknown as OpenAPIV3.ReferenceObject).$ref = $ref;
+  for (const key of Object.keys(schema)) delete (schema as any)[key];
+  (schema as unknown as OpenAPIV3.ReferenceObject).$ref = $reference;
 }
 
 /**

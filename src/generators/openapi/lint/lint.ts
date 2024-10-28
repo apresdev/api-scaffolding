@@ -1,6 +1,8 @@
 import { Document, ISpectralDiagnostic, Ruleset, Spectral } from "@stoplight/spectral-core";
 import { oas3 } from "@stoplight/spectral-formats";
+/* eslint-disable import/no-unresolved */
 import { stylish } from "@stoplight/spectral-formatters";
+/* eslint-enable import/no-unresolved */
 import { Json } from "@stoplight/spectral-parsers";
 import { oas } from "@stoplight/spectral-rulesets";
 import { DiagnosticSeverity } from "@stoplight/types";
@@ -43,9 +45,11 @@ function initializeSpectral(): Spectral {
       "ad-no-sensitive-data-in-url": {
         severity: "error",
         given: "#OperationObject",
+        /* eslint-disable unicorn/no-thenable */
         then: {
           function: adSensitiveParameterCheck,
         },
+        /* eslint-enable unicorn/no-thenable */
       },
     },
   });
@@ -62,7 +66,7 @@ function initializeSpectral(): Spectral {
  * @returns the linting results.
  */
 async function runSpectral(spectral: Spectral, spec: OpenAPISpecification, outfile: string): Promise<ISpectralDiagnostic[]> {
-  const document = new Document(JSON.stringify(spec, null, 2), Json, outfile);
+  const document = new Document(JSON.stringify(spec, undefined, 2), Json, outfile);
   return await spectral.run(document);
 }
 
@@ -71,6 +75,7 @@ async function runSpectral(spectral: Spectral, spec: OpenAPISpecification, outfi
  *
  * @param results The linting results.
  */
+/* eslint-disable no-console */
 function dumpResults(results: ISpectralDiagnostic[]) {
   console.log(
     stylish(results, {
@@ -78,3 +83,4 @@ function dumpResults(results: ISpectralDiagnostic[]) {
     }),
   );
 }
+/* eslint-enable no-console */

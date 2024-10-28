@@ -1,0 +1,24 @@
+apresApi: 1.0.0
+info:
+  title: Admin API
+  version: 1.0.0
+  baseUrl: https://example.com/api/v1/admin
+  description: The administrative API.
+  contact:
+    email: developers@example.com
+
+entities:
+  - feature-flag
+  - preference
+  - theme
+
+operations:
+  mutations:
+    - entity: feature-flag
+    - entity: preference
+    - entity: theme
+  queries:
+    - findOne: feature-flag
+    - findAll: theme
+    - findOne: theme
+    - findOne: preference

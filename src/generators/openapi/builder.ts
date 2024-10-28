@@ -1,13 +1,12 @@
 import { OpenAPIV3 } from "openapi-types";
-import _ = require("underscore");
 
-import { DataVersion } from "./data_types";
+import { DataVersion } from "./data-types";
 import { CommitMessageHeader, IfMatchHeader } from "./headers";
-import { BadRequestError, CommonErrors, NoContent, NotFoundError } from "./status_codes";
+import { BadRequestError, CommonErrors, NoContent, NotFoundError } from "./status-codes";
 import { OpenAPISpecification, Security } from "./types";
-import { entitySchemaRef, openApiPath, pathIdentifier, pathIdentifierParameter, toPathNounCase } from "./util";
+import { entitySchemaReference, openApiPath, pathIdentifier, pathIdentifierParameter, toPathNounCase } from "./util";
 
-import { pluralize, toPascalCase, toTitleCase } from "../../common";
+import { Arrays, Objects, pluralize, toPascalCase, toTitleCase } from "../../common";
 import { SchemaRegistry } from "../../models";
 import { EntitySchema } from "../../specification";
 
@@ -65,7 +64,7 @@ interface SuccessResponse {
   statusCode: number;
   description: string;
   schema: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject;
-  examples?: Array<OpenAPIV3.ExampleObject>;
+  examples?: OpenAPIV3.ExampleObject[];
 }
 
 export class OpenAPIOperationBuilder {
@@ -154,21 +153,19 @@ export class OpenAPIOperationBuilder {
     return this;
   }
 
-  public withParameter(param: OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject): OpenAPIOperationBuilder {
-    this.parameters.push(param);
+  public withParameter(parameter: OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject): OpenAPIOperationBuilder {
+    this.parameters.push(parameter);
 
-    if ("in" in param) {
-      if ((param as OpenAPIV3.ParameterObject).in === "path") {
-        this.withNotFoundError();
-      }
+    if ("in" in parameter && (parameter as OpenAPIV3.ParameterObject).in === "path") {
+      this.withNotFoundError();
     }
 
     return this.withBadRequest();
   }
 
-  public withParameters(params: Array<OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject>): OpenAPIOperationBuilder {
-    for (const param of params) {
-      this.withParameter(param);
+  public withParameters(parameters: Array<OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject>): OpenAPIOperationBuilder {
+    for (const parameter of parameters) {
+      this.withParameter(parameter);
     }
     return this;
   }
@@ -202,7 +199,7 @@ export class OpenAPIOperationBuilder {
           status: {
             $ref: "#/components/schemas/ApiStatus",
           },
-          metadata: metadata,
+          metadata,
           data: schema,
         },
       } as OpenAPIV3.SchemaObject,
@@ -229,11 +226,11 @@ export class OpenAPIOperationBuilder {
     }
 
     const tag = this.tag;
-    this.openAPI.tags = this.openAPI.tags || [];
-    if (!_.find(this.openAPI.tags, (tagObject) => tagObject.name === tag)) {
+    this.openAPI.tags = Arrays.orEmpty(this.openAPI.tags);
+    if (!this.openAPI.tags.some((tagObject) => tagObject.name === tag)) {
       this.openAPI.tags.push({
         name: tag,
-        description: toTitleCase(tag) + " operations",
+        description: `${toTitleCase(tag)} operations`,
       });
     }
 
@@ -266,9 +263,9 @@ export class OpenAPIOperationBuilder {
       operationId: this.operationId,
       summary: this.summary,
       tags: this.buildTag(),
-      parameters: parameters,
+      parameters,
       description: this.description || this.summary || this.operationId,
-      requestBody: requestBody,
+      requestBody,
       responses: {
         ...successResponse,
         ...this.errors,
@@ -295,7 +292,6 @@ export class OpenAPIOperationBuilder {
     return this;
   }
 
-  // TODO: Inject examples here...
   private buildResponseExample(): OpenAPIV3.ExampleObject | OpenAPIV3.ReferenceObject | undefined {
     return undefined;
   }
@@ -312,18 +308,17 @@ export class OpenAPIOperationBuilder {
     // Build the success response object, if one was specified.
     const successResponse: OpenAPIV3.ResponsesObject = {};
     if (this.successResponse) {
-      const responseName = toPascalCase(this.operationId) + "Response";
+      const responseName = `${toPascalCase(this.operationId)}Response`;
 
-      // TODO: Figure out how to handle this if we change the EntitySchema type.
       this.schemaRegistry.set(responseName, this.successResponse.schema as EntitySchema);
 
-      this.openAPI.components = this.openAPI.components || {};
-      this.openAPI.components.responses = this.openAPI.components.responses || {};
+      this.openAPI.components = Objects.orEmpty(this.openAPI.components);
+      this.openAPI.components.responses = Objects.orEmpty(this.openAPI.components.responses);
       this.openAPI.components.responses[responseName] = {
         description: this.successResponse.description,
         content: {
           "application/json": {
-            schema: entitySchemaRef(responseName),
+            schema: entitySchemaReference(responseName),
             example: this.buildResponseExample(),
             examples: this.buildResponseExamples(),
           },
@@ -339,33 +334,33 @@ export class OpenAPIOperationBuilder {
 
   private buildRequestBody() {
     if (!this.requestBody) {
-      return undefined;
+      return;
     }
 
     const requestBodyName = toPascalCase(`${this.operationId}Request`);
 
-    let schemaRef;
+    let schemaReference;
 
-    if (isSchemaRef(this.requestBody)) {
-      schemaRef = this.requestBody as OpenAPIV3.ReferenceObject;
+    if (isSchemaReference(this.requestBody)) {
+      schemaReference = this.requestBody as OpenAPIV3.ReferenceObject;
     } else {
-      this.openAPI.components = this.openAPI.components || {};
-      this.openAPI.components.schemas = this.openAPI.components.schemas || {};
+      this.openAPI.components = Objects.orEmpty(this.openAPI.components);
+      this.openAPI.components.schemas = Objects.orEmpty(this.openAPI.components.schemas);
       this.openAPI.components.schemas[requestBodyName] = this.requestBody;
 
-      schemaRef = {
+      schemaReference = {
         $ref: `#/components/schemas/${requestBodyName}`,
       };
     }
 
-    this.openAPI.components = this.openAPI.components || {};
-    this.openAPI.components.requestBodies = this.openAPI.components.requestBodies || {};
+    this.openAPI.components = Objects.orEmpty(this.openAPI.components);
+    this.openAPI.components.requestBodies = Objects.orEmpty(this.openAPI.components.requestBodies);
     this.openAPI.components.requestBodies[requestBodyName] = {
       description: this.requestBodyDescription || "On success",
       required: true,
       content: {
         "application/json": {
-          schema: schemaRef,
+          schema: schemaReference,
         },
       },
     };
@@ -375,42 +370,42 @@ export class OpenAPIOperationBuilder {
     };
   }
 
-  private buildParameters(): Array<OpenAPIV3.ReferenceObject> | undefined {
+  private buildParameters(): OpenAPIV3.ReferenceObject[] | undefined {
     if (!this.parameters || this.parameters.length === 0) {
       return undefined;
     }
 
-    return this.parameters.map((paramOrRef: OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject) => {
-      if ("$ref" in paramOrRef) {
-        return paramOrRef as OpenAPIV3.ReferenceObject;
+    return this.parameters.map((parameterOrReference: OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject) => {
+      if ("$ref" in parameterOrReference) {
+        return parameterOrReference as OpenAPIV3.ReferenceObject;
       }
 
-      const param = paramOrRef as OpenAPIV3.ParameterObject;
-      const paramName = toPascalCase(param.name) + "Parameter";
+      const parameter = parameterOrReference as OpenAPIV3.ParameterObject;
+      const parameterName = `${toPascalCase(parameter.name)}Parameter`;
 
-      this.openAPI.components = this.openAPI.components || {};
-      this.openAPI.components.parameters = this.openAPI.components.parameters || {};
-      this.openAPI.components.parameters[paramName] = param;
+      this.openAPI.components = Objects.orEmpty(this.openAPI.components);
+      this.openAPI.components.parameters = Objects.orEmpty(this.openAPI.components.parameters);
+      this.openAPI.components.parameters[parameterName] = parameter;
 
       return {
-        $ref: `#/components/parameters/${paramName}`,
+        $ref: `#/components/parameters/${parameterName}`,
       };
     });
   }
 }
 
 export class Url {
-  readonly _pathSegments: Array<string>;
-  readonly _parameters: Array<OpenAPIV3.ParameterObject>;
+  readonly _pathSegments: string[];
+  readonly _parameters: OpenAPIV3.ParameterObject[];
 
-  constructor(pathSegments: Array<string>, parameters: Array<OpenAPIV3.ParameterObject>) {
+  constructor(pathSegments: string[], parameters: OpenAPIV3.ParameterObject[]) {
     // Store a copy of the array contents, to prevent further mutations on the base arrays.
     this._pathSegments = [...pathSegments];
     this._parameters = [...parameters];
   }
 
   public get path(): string {
-    return "/" + this._pathSegments.join("/");
+    return `/${this._pathSegments.join("/")}`;
   }
 
   public get parameters(): Iterable<OpenAPIV3.ParameterObject> {
@@ -420,8 +415,8 @@ export class Url {
 
 export class PathBuilder {
   private urlBuilder: UrlBuilder;
-  pathSegments: Array<string>;
-  parameters: Array<OpenAPIV3.ParameterObject>;
+  pathSegments: string[];
+  parameters: OpenAPIV3.ParameterObject[];
 
   constructor(urlBuilder: UrlBuilder, url?: Url) {
     this.urlBuilder = urlBuilder;
@@ -487,7 +482,7 @@ export class UrlBuilder {
 }
 
 export class RequestHeadersBuilder {
-  private headers: Array<OpenAPIV3.ParameterObject>;
+  private headers: OpenAPIV3.ParameterObject[];
 
   public static newBuilder(): RequestHeadersBuilder {
     return new RequestHeadersBuilder();
@@ -512,6 +507,6 @@ export class RequestHeadersBuilder {
   }
 }
 
-function isSchemaRef(schema: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject): boolean {
+function isSchemaReference(schema: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject): boolean {
   return "$ref" in schema;
 }

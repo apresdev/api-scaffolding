@@ -12,24 +12,26 @@ export type Transform<F, T> = (input: F) => T;
  */
 export class Functions {
   /**
-   * Hide the constructor of a utility class.
+   * Hide the constructor of the utility class.
    */
-  private constructor() {}
+  private constructor() {
+    throw new Error("assertion error");
+  }
 
   /**
-   * Returns the composition of two functions. For f: A->B and g: B->C, composition is defined as the function h such that h(a) == g(f(a))
+   * Returns the composition of two functions. For first: A->B and second: B->C, composition is defined as the function h such that h(a) == second(first(a))
    * for each a.
    *
-   * @param g the second function to apply
-   * @param f the first function to apply
+   * @param first the first function to apply
+   * @param second the second function to apply
    *
    * @returns the composition of f and g
    */
-  public static compose<A, B, C>(g: Transform<B, C>, f: Transform<A, B>): Transform<A, C> {
-    checkNotNull(g, "g compose function must not be null");
-    checkNotNull(f, "f compose function must not be null");
+  public static compose<A, B, C>(first: Transform<A, B>, second: Transform<B, C>): Transform<A, C> {
+    checkNotNull(first, "first compose function must not be null");
+    checkNotNull(second, "second compose function must not be null");
 
-    return (input: A) => g(f(input));
+    return (input: A) => second(first(input));
   }
 
   /**
@@ -87,7 +89,7 @@ export class Functions {
       }
 
       if (!isDefined(defaultValue)) {
-        throw new Error("no value at given key " + key);
+        throw new Error(`no value at given key ${key}`);
       }
 
       if (typeof defaultValue === "function") {
@@ -115,7 +117,7 @@ export class Functions {
       }
 
       if (!isDefined(defaultValue)) {
-        throw new Error("no value at given key " + String(key));
+        throw new Error(`no value at given key ${String(key)}`);
       }
 
       if (typeof defaultValue === "function") {

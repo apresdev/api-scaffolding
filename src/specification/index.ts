@@ -1,5 +1,4 @@
-export * from "./aggregations";
-export * from "./dependency_graph";
+export * from "./dependency-graph";
 export * from "./entity";
 export * from "./fs";
 export * from "./include";

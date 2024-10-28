@@ -1,0 +1,57 @@
+# See: https://www.scribbr.com/commonly-confused-words/a-vs-an/
+
+# "A" use cases
+# Does not start with a vowel
+- input: box
+  expected: a
+- input: cat
+  expected: a
+- input: dog
+  expected: a
+
+# Consonant exceptions
+- input: uniform
+  expected: a
+- input: university
+  expected: a
+- input: unique
+  expected: a
+- input: unite
+  expected: a
+- input: ubiquitous
+  expected: a
+- input: Uganda
+  expected: a
+- input: useful
+  expected: a
+- input: usually
+  expected: a
+- input: uterus
+  expected: a
+- input: utilize
+  expected: a
+- input: union
+  expected: a
+
+# "An" use cases
+# Starts with a vowel
+- input: apple
+  expected: an
+- input: easel
+  expected: an
+- input: igloo
+  expected: an
+- input: octopus
+  expected: an
+- input: understatement
+  expected: an
+
+# Consonant exceptions
+- input: honor
+  expected: an
+- input: heir
+  expected: an
+- input: honest
+  expected: an
+- input: homage
+  expected: an

@@ -1,0 +1,14 @@
+type: object
+# This tests global ownership
+ownership: global
+singleton: true
+properties:
+  features:
+    # This tests internal references
+    $ref: "#/definitions/Features"
+definitions:
+  Features:
+    type: object
+    properties:
+      widgetEnabled:
+        type: boolean

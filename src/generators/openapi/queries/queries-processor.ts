@@ -1,5 +1,5 @@
-import * as fs from "fs";
-import * as path from "path";
+import { existsSync } from "node:fs";
+import path from "node:path";
 
 import { asArray } from "../util";
 
@@ -7,15 +7,17 @@ import { FindAllQueryGenerator } from "./find-all-query";
 import { FindOneQueryGenerator } from "./find-one-query";
 import { QueryGenerator, QueryProcessorContext } from "./query-generator";
 import { SearchQueryGenerator } from "./search-query";
-import { SelectQueryGenerator } from "./select-query";
-import { isListQuery, isNamedQuery, isRetrieveQuery, isSearchQuery, isSelectQuery } from "./util";
+import { isListQuery, isNamedQuery, isRetrieveQuery, isSearchQuery } from "./util";
 
-import { FileErrors, SchemaValidator, SourceMaps } from "../../../common";
+import { FileErrors, JsonPath, SchemaValidator, SourceMaps } from "../../../common";
 import { FileProcessor, FileProcessorContext, PathError } from "../../../common/io";
 import { PathProcessor } from "../../../common/io/path-processor";
-import * as queriesSchema from "../../../schemas/queries.json";
-import { BaseQuery, IncludeDirective, Queries, Query, isIncludeDirective } from "../../../specification";
+import { BaseQuery, IncludeDirective, Queries, isIncludeDirective } from "../../../specification";
 import { NamedQueryGenerator } from "./named-query";
+
+/* eslint-disable import/no-namespace */
+import * as queriesSchema from "../../../schemas/queries.json";
+/* eslint-enable import/no-namespace */
 
 const queriesValidator = new SchemaValidator<Queries>(queriesSchema, new SourceMaps());
 
@@ -25,7 +27,6 @@ interface QueryGeneratorEntry<T extends BaseQuery> {
 }
 
 const queryGenerators: Array<QueryGeneratorEntry<BaseQuery>> = [
-  { predicate: isSelectQuery, generator: new SelectQueryGenerator() },
   { predicate: isSearchQuery, generator: new SearchQueryGenerator() },
   { predicate: isListQuery, generator: new FindAllQueryGenerator() },
   { predicate: isRetrieveQuery, generator: new FindOneQueryGenerator() },
@@ -53,7 +54,7 @@ export class QueriesProcessor extends FileProcessor<Queries, QueryProcessorConte
    */
   public processModel(queries: Queries, context: FileProcessorContext<QueryProcessorContext>): void {
     // Iterate through each query in the collection.
-    queries.forEach((query: Query, index: number): void => {
+    for (const [index, query] of queries.entries()) {
       try {
         // Check to see if the query is actually a $include directive...
         if (isIncludeDirective(query)) {
@@ -64,21 +65,21 @@ export class QueriesProcessor extends FileProcessor<Queries, QueryProcessorConte
           });
         } else {
           // ... otherwise, render the query.
-          this.processQuery(query as BaseQuery, { ...context, jsonPath: String(index) });
+          this.processQuery(query as BaseQuery, { ...context, jsonPath: JsonPath.resolve(context.jsonPath || "", String(index)) });
         }
-      } catch (err) {
-        if (typeof err === "string") {
-          this.withError(String(index), "unknown", err, context);
+      } catch (error) {
+        if (typeof error === "string") {
+          this.withError(String(index), "unknown", error, context);
           return;
         }
-        if (typeof err === "object" && err && "path" in err) {
-          const pathError = err as PathError;
+        if (typeof error === "object" && error && "path" in error) {
+          const pathError = error as PathError;
           this.withError(pathError.path, "unknown", pathError.message, context);
           return;
         }
-        this.withError(String(index), "unknown", (err as Error).message, context);
+        this.withError(String(index), "unknown", (error as Error).message, context);
       }
-    });
+    }
   }
 
   /**
@@ -89,14 +90,14 @@ export class QueriesProcessor extends FileProcessor<Queries, QueryProcessorConte
    */
   private processInclude(query: IncludeDirective, context: FileProcessorContext<QueryProcessorContext>): void {
     const pathProcessor = new PathProcessor(path.dirname(context.path), this);
-    asArray(query.$include).forEach((includePath) => {
+    for (const includePath of asArray(query.$include)) {
       const absolutePath = path.resolve(path.dirname(context.path), includePath);
-      if (!fs.existsSync(absolutePath)) {
+      if (!existsSync(absolutePath)) {
         throw new PathError(`${absolutePath} does not exist`, context.jsonPath || "", "$include");
       }
 
       pathProcessor.processPath(includePath, context);
-    });
+    }
   }
 
   /**
@@ -106,7 +107,7 @@ export class QueriesProcessor extends FileProcessor<Queries, QueryProcessorConte
    * @param context The execution context.
    */
   private processQuery<T extends BaseQuery>(query: T, context: QueryProcessorContext): void {
-    const entry: QueryGeneratorEntry<T> | undefined = queryGenerators.find((entry) => entry.predicate(query));
+    const entry: QueryGeneratorEntry<T> | undefined = queryGenerators.find((item) => item.predicate(query));
 
     if (!entry) {
       throw new PathError("encountered unexpected query type", context.jsonPath || "", "unsupported-query");

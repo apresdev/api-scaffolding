@@ -1,5 +1,3 @@
-import _ = require("underscore");
-
 import { CodeGenerator } from "../base";
 
 import { renderMutations } from "./mutation-generator";
@@ -7,23 +5,23 @@ import { QueriesProcessor } from "./queries";
 import { OpenAPISpecification } from "./types";
 import { CONTENT_TYPE_JSON, trimTrailingSlash } from "./util";
 
-import { FileErrors } from "../../common";
+import { OpenAPIV3 } from "openapi-types";
+import { Arrays, FileErrors, Objects } from "../../common";
 import { asSchemaObject } from "../../entities/entities";
 import { SchemaRegistry, enforcePropertyCase } from "../../models";
 import {
   EntitySchema,
   Fragments,
-  Mutation,
   Queries,
   ServiceSpecification,
   buildGraph,
   getServicePath,
-  getServiceSourceMap
+  getServiceSourceMap,
 } from "../../specification";
-import { dumpJson, sortKeys } from "../../util";
+import { dumpJson, dumpYaml, sortKeys } from "../../util";
 import { FragmentsProcessor } from "./fragment-processor";
 import { lintSpecification } from "./lint";
-import { OpenAPIV3 } from "openapi-types";
+import { References } from "./references";
 import ResponseObject = OpenAPIV3.ResponseObject;
 
 export class OpenAPIGenerator implements CodeGenerator {
@@ -38,12 +36,13 @@ export class OpenAPIGenerator implements CodeGenerator {
     schemaRegistry: SchemaRegistry,
     openAPISpecification: OpenAPISpecification,
     results: FileErrors,
+    asYaml: boolean = false,
   ) {
     this.generateInfo(serviceSpecification, openAPISpecification);
     this.generateOperations(serviceSpecification, schemaRegistry, openAPISpecification, results);
     this.generateSchemas(schemaRegistry, openAPISpecification);
     await this.postProcess(openAPISpecification);
-    this.writeSpecification(openAPISpecification);
+    this.writeSpecification(openAPISpecification, asYaml);
   }
 
   private generateInfo(serviceSpecification: ServiceSpecification, openAPISpecification: OpenAPISpecification) {
@@ -108,48 +107,47 @@ export class OpenAPIGenerator implements CodeGenerator {
     });
 
     // Append all mutation operations.
-    serviceSpecification.operations.mutations.forEach((mutation: Mutation): void => {
+    for (const mutation of serviceSpecification.operations.mutations) {
       renderMutations(mutation, openAPISpecification, graph, schemaRegistry);
-
-      // if (isVersioned(schema)) {
-      //   appendRevisionHistoryOperations(name, serviceSpecification, openAPISpecification, graph);
-      // }
-    });
+    }
   }
 
   private generateSchemas(schemaRegistry: SchemaRegistry, openAPISpecification: OpenAPISpecification) {
-    schemaRegistry.forEach((schema: EntitySchema, name: string) => {
+    for (const [name, schema] of schemaRegistry.entries()) {
       const result = asSchemaObject(schema);
 
-      // TODO: Figure out proper typing here if and when we change our EntityModel type.
       enforcePropertyCase(result as EntitySchema);
 
-      openAPISpecification.components = openAPISpecification.components || {};
-      openAPISpecification.components.schemas = openAPISpecification.components.schemas || {};
+      openAPISpecification.components = Objects.orEmpty(openAPISpecification.components);
+      openAPISpecification.components.schemas = Objects.orEmpty(openAPISpecification.components.schemas);
       openAPISpecification.components.schemas[name] = result;
-    });
+    }
   }
 
-  private writeSpecification(openAPISpecification: OpenAPISpecification) {
+  private writeSpecification(openAPISpecification: OpenAPISpecification, asYaml: boolean) {
     // Order tags by name alphabetically
-    openAPISpecification.tags = (openAPISpecification.tags || []).sort((a, b) => a.name.localeCompare(b.name));
+    openAPISpecification.tags = Arrays.orEmpty(openAPISpecification.tags).sort((a, b) => a.name.localeCompare(b.name));
 
     // Order paths by path URL alphabetically
     openAPISpecification.paths = sortKeys(openAPISpecification.paths);
 
-    dumpJson(openAPISpecification, this.outfile);
+    if (asYaml) {
+      dumpYaml(openAPISpecification, this.outfile);
+    } else {
+      dumpJson(openAPISpecification, this.outfile);
+    }
   }
 
   private hasNamedQuery(openapi: OpenAPISpecification): boolean {
-    const xqr = openapi.components?.responses?.ExecuteQueryResponse as ResponseObject
+    const xqr = openapi.components?.responses?.ExecuteQueryResponse as ResponseObject;
     if (!xqr || !xqr.content) {
-      return false
+      return false;
     }
-    const examples = xqr.content[CONTENT_TYPE_JSON]?.examples as object
+    const examples = xqr.content[CONTENT_TYPE_JSON]?.examples as object;
     if (!examples) {
-      return false
+      return false;
     }
-    return Object.keys(examples).length > 0
+    return Object.keys(examples).length > 0;
   }
 
   /**
@@ -160,7 +158,7 @@ export class OpenAPIGenerator implements CodeGenerator {
    */
   private removeUnusedQueryEndpoint(openapi: OpenAPISpecification): void {
     if (!this.hasNamedQuery(openapi)) {
-      delete openapi.paths["/queries/{queryId}"]
+      delete openapi.paths["/queries/{queryId}"];
     }
   }
 
@@ -171,7 +169,7 @@ export class OpenAPIGenerator implements CodeGenerator {
    * @private
    */
   private removeUnusedOperations(openapi: OpenAPISpecification): void {
-    this.removeUnusedQueryEndpoint(openapi)
+    this.removeUnusedQueryEndpoint(openapi);
   }
 
   /**
@@ -184,18 +182,24 @@ export class OpenAPIGenerator implements CodeGenerator {
     interface StringToBoolMap {
       [key: string]: boolean;
     }
-    const allReferencedTags : StringToBoolMap = {}
+    const allReferencedTags: StringToBoolMap = {};
     for (const path in openapi.paths) {
-      const pathItem = openapi.paths[path]
+      const pathItem = openapi.paths[path];
       for (const m in pathItem) {
-        const method = m as OpenAPIV3.HttpMethods
-        const pi = pathItem[method]
-        pi?.tags?.forEach((tag) => {
-          allReferencedTags[tag] = true
-        })
+        const method = m as OpenAPIV3.HttpMethods;
+        const operation = pathItem[method];
+
+        if (!operation) {
+          continue;
+        }
+
+        if ("tags" in operation)
+          for (const tag of Arrays.orEmpty(operation.tags)) {
+            allReferencedTags[tag] = true;
+          }
       }
     }
-    openapi.tags = openapi.tags?.filter((tag) => allReferencedTags[tag.name])
+    openapi.tags = openapi.tags?.filter((tag) => allReferencedTags[tag.name]);
   }
 
   /**
@@ -204,8 +208,8 @@ export class OpenAPIGenerator implements CodeGenerator {
    * @param openapi The OpenAPI specification.
    */
   private async postProcess(openapi: OpenAPISpecification): Promise<boolean> {
-    this.removeUnusedOperations(openapi)
-    this.removeUnusedTags(openapi)
+    this.removeUnusedOperations(openapi);
+    this.removeUnusedTags(openapi);
     do {
       // Keep tree shaking unused components until no unused components are found.
       // Note, we need to keep doing this in a loop because there could be components that are only referenced by other components that do
@@ -227,60 +231,37 @@ export class OpenAPIGenerator implements CodeGenerator {
    * @returns true if and only if at least one unused component was found.
    */
   private treeShakeUnusedComponents(openapi: OpenAPISpecification): boolean {
-    const prunedReferences: Array<string> = [];
+    const prunedReferences: string[] = [];
     if (!openapi.components) {
       return false;
     }
 
-    const references = new Set<string>();
-    findAllReferences(openapi, references);
+    const references = new References();
+    references.analyze(openapi);
 
-    componentTypeNames.forEach((type: ComponentTypeName) => {
-      const components = openapi.components || {};
+    for (const type of componentTypeNames) {
+      const components = Objects.orEmpty(openapi.components);
       const value: Record<string, unknown> = components[type as ComponentTypeName] as Record<string, unknown>;
       if (typeof value !== "object") {
-        return;
+        continue;
       }
 
       const componentsType: Record<string, unknown> = components[type] as Record<string, unknown>;
-      Object.keys(componentsType).forEach((name: string) => {
+      for (const name of Object.keys(componentsType)) {
         const reference = `#/components/${type}/${name}`;
 
         if (references.has(reference)) {
-          return;
+          continue;
         }
 
-        // console.log("Pruning unused component: " + reference);
         delete componentsType[name];
 
         prunedReferences.push(reference);
-      });
-    });
+      }
+    }
 
     return prunedReferences.length > 0;
   }
-}
-
-function findAllReferences<T>(value: T, references: Set<string>) {
-  if (!value) {
-    return;
-  }
-
-  if (typeof value !== "object" && !Array.isArray(value)) {
-    return;
-  }
-
-  if (Array.isArray(value)) {
-    value.forEach((subValue) => findAllReferences(subValue, references));
-    return;
-  }
-
-  if ("$ref" in value) {
-    const ref: string = value["$ref"] as string;
-    references.add(_.first(ref.split("/"), 4).join("/"));
-  }
-
-  Object.keys(value).forEach((property: string) => findAllReferences((value as Record<string, unknown>)[property], references));
 }
 
 const componentTypeNames = ["schemas", "responses", "parameters", "examples", "requestBodies", "headers", "links", "callbacks"] as const;

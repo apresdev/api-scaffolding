@@ -1,0 +1,602 @@
+openapi: 3.0.3
+info:
+  title: Admin API
+  version: 1.0.0
+  description: The administrative API.
+  contact:
+    email: developers@example.com
+tags:
+  - name: FeatureFlags
+    description: Feature Flags operations
+  - name: Preferences
+    description: Preferences operations
+  - name: Themes
+    description: Themes operations
+servers:
+  - url: https://example.com/api/v1/admin
+    description: The production URL.
+    variables: {}
+paths:
+  /feature-flag:
+    get:
+      operationId: retrieveFeatureFlag
+      summary: Find a feature flag.
+      tags:
+        - FeatureFlags
+      description: Find a feature flag.
+      responses:
+        "200":
+          $ref: "#/components/responses/RetrieveFeatureFlagResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+    put:
+      operationId: upsertFeatureFlag
+      summary: Upserts a feature flag.
+      tags:
+        - FeatureFlags
+      description: Upserts a feature flag.
+      requestBody:
+        $ref: "#/components/requestBodies/UpsertFeatureFlagRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/UpsertFeatureFlagResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+  /preference:
+    get:
+      operationId: retrievePreference
+      summary: Find a preference.
+      tags:
+        - Preferences
+      description: Find a preference.
+      responses:
+        "200":
+          $ref: "#/components/responses/RetrievePreferenceResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+    put:
+      operationId: upsertPreference
+      summary: Upserts a preference.
+      tags:
+        - Preferences
+      description: Upserts a preference.
+      requestBody:
+        $ref: "#/components/requestBodies/UpsertPreferenceRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/UpsertPreferenceResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+  /themes:
+    get:
+      operationId: listThemes
+      summary: List all themes.
+      tags:
+        - Themes
+      parameters:
+        - $ref: "#/components/parameters/LimitParameter"
+        - $ref: "#/components/parameters/OffsetParameter"
+      description: List all themes.
+      responses:
+        "200":
+          $ref: "#/components/responses/ListThemesResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+    post:
+      operationId: createTheme
+      summary: Creates a theme.
+      tags:
+        - Themes
+      description: Creates a theme.
+      requestBody:
+        $ref: "#/components/requestBodies/CreateThemeRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/CreateThemeResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+  /themes/{themeId}:
+    get:
+      operationId: retrieveTheme
+      summary: Find a theme.
+      tags:
+        - Themes
+      parameters:
+        - $ref: "#/components/parameters/ThemeIdParameter"
+      description: Find a theme.
+      responses:
+        "200":
+          $ref: "#/components/responses/RetrieveThemeResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+    put:
+      operationId: updateTheme
+      summary: Updates a theme.
+      tags:
+        - Themes
+      parameters:
+        - $ref: "#/components/parameters/ThemeIdParameter"
+      description: Updates a theme.
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateThemeRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/UpdateThemeResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+    delete:
+      operationId: deleteTheme
+      summary: Deletes a theme.
+      tags:
+        - Themes
+      parameters:
+        - $ref: "#/components/parameters/ThemeIdParameter"
+      description: Deletes a theme.
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+components:
+  parameters:
+    LimitParameter:
+      in: query
+      name: limit
+      description: |
+        An optional query parameter used to indicate the number of records in a pagination result.  
+
+        For example please list the "limit" records after the given optional "offset" position.
+      required: false
+      schema:
+        $ref: "#/components/schemas/Limit"
+    OffsetParameter:
+      in: query
+      name: offset
+      description: |
+        An optional query parameter used to indicate the offset position to resume from in a pagination result. 
+
+        For example please list the "limit" records after the given optional "offset" position.
+      required: false
+      schema:
+        $ref: "#/components/schemas/Offset"
+    ThemeIdParameter:
+      name: themeId
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/ThemeIdentifier"
+  requestBodies:
+    UpsertFeatureFlagRequest:
+      description: The new feature flag
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/FeatureFlagInput"
+    UpsertPreferenceRequest:
+      description: The new preference
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PreferenceInput"
+    CreateThemeRequest:
+      description: The new theme
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ThemeInput"
+    UpdateThemeRequest:
+      description: The new theme
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ThemeInput"
+  responses:
+    NoContent:
+      description: |
+        The request completed successfully.  No response body will be sent.
+    BadRequest:
+      description: |
+        An error occurred.  The client provided one or more invalid inputs.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/APIError"
+          example:
+            status: failure
+            data:
+              errors:
+                - message: bad_request
+                  description: The supplied value was invalid.
+                  path: request
+    Unauthorized:
+      description: |
+        An error occurred.  The client is not authenticated in the system.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/APIError"
+          example:
+            status: failure
+            data:
+              errors:
+                - message: unauthorized
+                  description: The client should authenticate itself to get the requested response.
+    Forbidden:
+      description: |
+        An error occurred.  The client is not authorized to perform the requested action.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/APIError"
+          example:
+            status: failure
+            data:
+              errors:
+                - message: forbidden
+                  description: The client does not have the access right for the content.
+    NotFound:
+      description: |
+        An error occurred.  The client requested a resource that does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/APIError"
+          example:
+            status: failure
+            data:
+              errors:
+                - message: not_found
+                  description: Could not find to requested resource.
+    InternalServerError:
+      description: |
+        An unexexpected error occurred during the request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/APIError"
+          example:
+            status: failure
+            data:
+              errors:
+                - message: server_error
+                  description: An error occurred while processing the request.
+    RetrieveFeatureFlagResponse:
+      description: Find a feature flag.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RetrieveFeatureFlagResponse"
+    ListThemesResponse:
+      description: List all themes.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ListThemesResponse"
+    RetrieveThemeResponse:
+      description: Find a theme.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RetrieveThemeResponse"
+    RetrievePreferenceResponse:
+      description: Find a preference.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RetrievePreferenceResponse"
+    UpsertFeatureFlagResponse:
+      description: The current server side state of the newly created or updated Feature Flag.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UpsertFeatureFlagResponse"
+    UpsertPreferenceResponse:
+      description: The current server side state of the newly created or updated Preference.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UpsertPreferenceResponse"
+    CreateThemeResponse:
+      description: The current server side state of the newly created Theme.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CreateThemeResponse"
+    UpdateThemeResponse:
+      description: The current server side state of the updated Theme.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UpdateThemeResponse"
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      description: This API uses OAuth 2 with the implicit grant flow. [More info](https://api.example.com/docs/auth)
+      flows:
+        authorizationCode:
+          authorizationUrl: /authorize
+          tokenUrl: /token
+          scopes: {}
+    cognito:
+      type: apiKey
+      name: Authorization
+      in: header
+      x-amazon-apigateway-authtype: cognito_user_pools
+      x-amazon-apigateway-authorizer:
+        type: cognito_user_pools
+        providerARNs:
+          - ${cognito_provider_arn}
+  schemas:
+    ApiStatus:
+      type: string
+      enum:
+        - success
+        - failure
+    Metadata:
+      type: object
+      properties:
+        total:
+          type: number
+          description: |
+            Returned in a paginated result set.  Indicates the total number of records in the given result set.
+          example: 1
+    Limit:
+      type: integer
+      minimum: 0
+    Offset:
+      type: integer
+      minimum: 0
+    FieldError:
+      type: object
+      properties:
+        message:
+          type: string
+        description:
+          type: string
+        path:
+          type: string
+    APIError:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          type: object
+          properties:
+            errors:
+              type: array
+              items:
+                $ref: "#/components/schemas/FieldError"
+    EntityIdentifier:
+      type: string
+      format: uuid
+    Features:
+      type: object
+      properties:
+        widgetEnabled:
+          type: boolean
+    FeatureFlagIdentifier:
+      $ref: "#/components/schemas/EntityIdentifier"
+    FeatureFlagInput:
+      type: object
+      properties:
+        features:
+          $ref: "#/components/schemas/Features"
+      x-apres-singleton: true
+      x-apres-ownership: global
+    FeatureFlag:
+      type: object
+      properties:
+        features:
+          $ref: "#/components/schemas/Features"
+        id:
+          $ref: "#/components/schemas/FeatureFlagIdentifier"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+      x-apres-singleton: true
+      x-apres-ownership: global
+    PreferenceIdentifier:
+      $ref: "#/components/schemas/EntityIdentifier"
+    PreferenceInput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+      x-apres-singleton: true
+      x-apres-ownership: user
+    Preference:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        id:
+          $ref: "#/components/schemas/PreferenceIdentifier"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+      x-apres-singleton: true
+      x-apres-ownership: user
+    ThemeIdentifier:
+      $ref: "#/components/schemas/EntityIdentifier"
+    ThemeInput:
+      type: object
+      properties:
+        name:
+          type: string
+      x-apres-ownership: tenant
+    Theme:
+      type: object
+      properties:
+        name:
+          type: string
+        id:
+          $ref: "#/components/schemas/ThemeIdentifier"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+      x-apres-ownership: tenant
+    RetrieveFeatureFlagResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          $ref: "#/components/schemas/FeatureFlag"
+    ListThemesResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Theme"
+    RetrieveThemeResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          $ref: "#/components/schemas/Theme"
+    RetrievePreferenceResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          $ref: "#/components/schemas/Preference"
+    UpsertFeatureFlagResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          $ref: "#/components/schemas/FeatureFlag"
+    UpsertPreferenceResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          $ref: "#/components/schemas/Preference"
+    CreateThemeResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          $ref: "#/components/schemas/Theme"
+    UpdateThemeResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          $ref: "#/components/schemas/Theme"

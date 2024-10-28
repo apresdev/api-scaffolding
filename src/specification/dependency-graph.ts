@@ -1,4 +1,4 @@
-import { pluralize, toCamelCase } from "../common";
+import { Arrays, pluralize, toCamelCase } from "../common";
 import { SchemaRegistry } from "../models";
 
 import { getOrSet } from "./util";
@@ -19,26 +19,28 @@ export class Nodes {
   /**
    * Hide the constructor of the utility class.
    */
-  private constructor() {}
+  private constructor() {
+    throw new Error("assertion error");
+  }
 
   /**
    * Given a node find the edge that best matches the given name.  The name can either refer to a node name or an edge name.
    *
    * @param node  The node to analyze.
-   * @param name  The name of the node or edge to find amoungst the node's edges.
+   * @param name  The name of the node or edge to find amongst the node's edges.
    *
    * @returns the edge that best matches the supplied name, or undefined if no such edge exists.
    */
   public static findEdge(node: Node, name: string): Edge | undefined {
-    const edges: Array<Edge> = [];
+    const edges: Edge[] = [];
     if (node.parent) {
       edges.push(node.parent);
     }
     if (node.children) {
-      edges.push(...Array.from(node.children));
+      edges.push(...node.children);
     }
     if (node.aggregations) {
-      edges.push(...Array.from(node.aggregations));
+      edges.push(...node.aggregations);
     }
 
     return edges.find((edge: Edge): boolean => {
@@ -55,42 +57,42 @@ export interface Edge {
 }
 
 export interface Connection {
-  edges: Array<Node>;
+  edges: Node[];
 }
 
 export interface Ancestor {
   name: string;
   isCollection: boolean;
 }
-export type Ancestry = Array<Ancestor>;
+export type Ancestry = Ancestor[];
 
 export function buildGraph(service: ServiceSpecification, schemaRegistry: SchemaRegistry): DependencyGraph {
   const nodes: Map<string, Node> = new Map<string, Node>();
 
-  for (const relationship of service.relationships || []) {
+  for (const relationship of Arrays.orEmpty(service.relationships)) {
     const left: Node = getOrSet(nodes, sanitizeKey(relationship.left), asNode);
     const right: Node = getOrSet(nodes, sanitizeKey(relationship.right), asNode);
 
     switch (relationship.type) {
-      case RelationshipType.COMPOSITION:
+      case RelationshipType.COMPOSITION: {
         right.parent = {
           type: relationship.type,
-          cardinality: relationship.cardinality,
+          cardinality: Cardinality.reverse(relationship.cardinality),
           node: left,
           name: relationship.name || (Cardinality.isFromMany(relationship.cardinality) ? pluralize(relationship.left) : relationship.left),
         };
 
         left.children.add({
           type: relationship.type,
-          cardinality: Cardinality.reverse(relationship.cardinality),
+          cardinality: relationship.cardinality,
           node: right,
           name: relationship.name || (Cardinality.isToMany(relationship.cardinality) ? pluralize(relationship.right) : relationship.right),
         });
         break;
+      }
 
-      // TODO: Figure out if association and aggregation need to be treated separately
       case RelationshipType.ASSOCIATION:
-      case RelationshipType.AGGREGATION:
+      case RelationshipType.AGGREGATION: {
         left.aggregations.add({
           type: relationship.type,
           cardinality: relationship.cardinality,
@@ -105,6 +107,7 @@ export function buildGraph(service: ServiceSpecification, schemaRegistry: Schema
           name: Cardinality.isFromMany(relationship.cardinality) ? pluralize(relationship.left) : relationship.left,
         });
         break;
+      }
     }
   }
 
@@ -135,7 +138,7 @@ export class DependencyGraph {
   public get(entity: string): Node {
     const node = this.graph.get(sanitizeKey(entity));
     if (!node) {
-      throw new Error("unknown entity " + entity);
+      throw new Error(`unknown entity ${entity}`);
     }
 
     return node;
@@ -191,7 +194,7 @@ export class DependencyGraph {
     const node = this.graph.get(sanitizeKey(entity));
 
     if (node && node.parent) {
-      return Cardinality.isToMany(node.parent.cardinality);
+      return Cardinality.isFromMany(node.parent.cardinality);
     }
 
     const schema = this.schemaRegistry.get(entity);
@@ -211,10 +214,10 @@ export class DependencyGraph {
    * @param entity The entity name to lookup.
    * @returns The collection of ancestral entities.
    */
-  public findListAssociations(entity: string): Array<string> {
+  public findListAssociations(entity: string): string[] {
     const node = this.graph.get(sanitizeKey(entity));
     if (!node) {
-      throw new Error("unknown entity detected " + entity);
+      throw new Error(`unknown entity detected ${entity}`);
     }
 
     return [...node.aggregations]

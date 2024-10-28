@@ -1,5 +1,6 @@
 import { OpenAPIV3 } from "openapi-types";
 
+import { Objects, toPascalCase } from "../common";
 import { toSchemaObject } from "../generators/openapi/entities";
 import { AnySchema, EntitySchema, MutationKeywords } from "../specification";
 
@@ -8,11 +9,13 @@ export type EntitySchemaVisitor = (
   path: string,
 ) => void;
 
-export function visitSchema(
-  schema: EntitySchema | AnySchema | OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject,
-  visitor: EntitySchemaVisitor,
-  path: string = "",
-) {
+export function entityIdentifier(entity: string): string {
+  return `${toPascalCase(entity)}Identifier`;
+}
+
+export type VisitableSchemas = EntitySchema | AnySchema | OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject;
+
+export function visitSchema(schema: VisitableSchemas, visitor: EntitySchemaVisitor, path: string = "") {
   if (!schema) {
     return;
   }
@@ -27,17 +30,17 @@ export function visitSchema(
   // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   if ("items" in schema) {
     const items = schema.items;
-    visitSchema(items, visitor, path.length > 0 ? path + ".items" : "items");
+    visitSchema(items, visitor, path.length > 0 ? `${path}.items` : "items");
   }
 
   // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Walk through any schemas for object properties.
   // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   if ("properties" in schema) {
-    const properties = schema.properties || {};
-    Object.keys(properties).forEach((property) => {
-      visitSchema(properties[property], visitor, path.length > 1 ? path + ".properties." + property : "properties." + property);
-    });
+    const properties = Objects.orEmpty(schema.properties);
+    for (const property of Object.keys(properties)) {
+      visitSchema(properties[property], visitor, path.length > 1 ? `${path}.properties.${property}` : `properties.${property}`);
+    }
   }
 
   if ("additionalProperties" in schema) {
@@ -50,12 +53,6 @@ export function visitSchema(
 
 export function asSchemaObject(schema: AnySchema): OpenAPIV3.SchemaObject {
   return toSchemaObject(schema);
-  // const schemaDef = Object.assign({}, schema);
-
-  // // TODO: Figure out what to do with EntityModel if and when we change the type.
-  // removeExtensionKeywords(schemaDef as EntitySchema);
-
-  // return schemaDef as OpenAPIV3.SchemaObject;
 }
 
 /**
@@ -66,7 +63,7 @@ const propertyKeywordExtensions = ["calculated", "data-classification"];
 /**
  * The collection of entity keyword extensions to be removed from the output schema.
  */
-const entityKeywordExtensions: Array<string> = [
+const entityKeywordExtensions: string[] = [
   "singleton",
   "alias",
   "ownership",
@@ -85,10 +82,10 @@ export function removeExtensionKeywords(entityModel: EntitySchema | AnySchema | 
         schema.example = schema.examples[0];
       }
 
-      [...entityKeywordExtensions, ...propertyKeywordExtensions].forEach((keyword: string): void => {
-        schema["x-apres-" + keyword] = schema[keyword];
+      for (const keyword of [...entityKeywordExtensions, ...propertyKeywordExtensions]) {
+        schema[`x-apres-${keyword}`] = schema[keyword];
         delete schema[keyword];
-      });
+      }
     }
   });
 }

@@ -1,17 +1,19 @@
-import * as path from "path";
+import path from "node:path";
 
 import Ajv, { Schema, ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
 import ajvKeywords from "ajv-keywords";
 import SourceMap from "js-yaml-source-map";
 import { read } from "yaml-import";
+import { deepCopy } from "../../util";
+import { Arrays } from "../base";
 
 export const ajv = new Ajv();
 addFormats(ajv);
 ajvKeywords(ajv);
 
 export type Severity = "warning" | "error";
-export type ProcessingErrors = Array<ProcessingError>;
+export type ProcessingErrors = ProcessingError[];
 export interface ProcessingError {
   line: number;
   column: number;
@@ -52,13 +54,13 @@ export class SourceMaps {
     this.sourceMaps.set(entity, map);
   }
 
-  public getLocation(entity: string, path: string | string[]): SourceLocation | undefined {
+  public getLocation(entity: string, jsonPath: string | string[]): SourceLocation | undefined {
     const map = this.sourceMaps.get(entity);
     if (!map) {
       throw new UnknownEntityError(entity);
     }
 
-    return map.lookup(path);
+    return map.lookup(jsonPath);
   }
 }
 
@@ -91,13 +93,13 @@ export class SchemaValidator<T> {
     // Validate the loaded model.
     const results = this.validatorFn(model);
     if (!results) {
-      for (const error of this.validatorFn.errors || []) {
+      for (const error of Arrays.orEmpty(this.validatorFn.errors)) {
         const jsonPointer = error.instancePath.split("/");
         const location = sourceMap.lookup(jsonPointer);
 
-        const paramKeys = Object.keys(error.params);
+        const parameterKeys = Object.keys(error.params);
         let keyword: string = error.keyword;
-        if (paramKeys.length > 0) {
+        if (parameterKeys.length > 0) {
           keyword = Object.keys(error.params)
             .map((key: string) => `${key}: ${String(error.params[key])}`)
             .join(", ");
@@ -107,11 +109,11 @@ export class SchemaValidator<T> {
           line: location?.line || 0,
           column: location?.column || 0,
           severity: "error",
-          keyword: keyword,
+          keyword,
           message: error.message || "",
           path: error.instancePath
             .split("/")
-            .filter((s) => s.length !== 0)
+            .filter((s) => s.length > 0)
             .join("."),
         });
       }
@@ -132,27 +134,32 @@ export class FileErrors {
   public withErrors(sourcePath: string, errors: ProcessingErrors) {
     const absolutePath = path.resolve(sourcePath);
     this.errorsExist = true;
-    this.fileErrors[absolutePath] = [...(this.fileErrors[absolutePath] || []), ...errors];
+    this.fileErrors[absolutePath] = [...Arrays.orEmpty(this.fileErrors[absolutePath]), ...errors];
   }
 
   public hasErrors(): boolean {
     return this.errorsExist;
   }
 
-  public forEach(iterator: (file: string, errors: Iterable<ProcessingError>) => void): void {
+  public iterate(iterator: (file: string, errors: Iterable<ProcessingError>) => void): void {
     for (const filename in this.fileErrors) {
       iterator(filename, this.fileErrors[filename]);
     }
   }
+
+  public errors(): Record<string, ProcessingErrors> {
+    return deepCopy(this.fileErrors);
+  }
 }
 
+/* eslint-disable no-console */
 export async function logErrors(result: FileErrors) {
-  result.forEach((filename, errors) => {
+  result.iterate((filename, errors) => {
     console.log(underline(filename));
 
     for (const error of errors) {
       const position = `${error.line}:${error.column}`;
-      const color = error.severity === "error" ? red : yellow;
+      const color = error.severity === "error" ? errorColor : warningColor;
       console.log(
         ` ${position.padEnd(8, " ")} ${color(error.severity.padEnd(8, " "))} ${error.keyword.padEnd(35, " ")} ${error.message?.padEnd(
           54,
@@ -163,15 +170,16 @@ export async function logErrors(result: FileErrors) {
     console.log();
   });
 }
+/* eslint-enable no-console */
 
 export function underline(value: string): string {
-  return `\x1b[4m${value}\x1b[0m`;
+  return `\u001B[4m${value}\u001B[0m`;
 }
 
-export function red(value: string): string {
-  return `\x1b[31m${value}\x1b[0m`;
+export function errorColor(value: string): string {
+  return `\u001B[31m${value}\u001B[0m`;
 }
 
-export function yellow(value: string): string {
-  return `\x1b[33m${value}\x1b[0m`;
+export function warningColor(value: string): string {
+  return `\u001B[33m${value}\u001B[0m`;
 }
