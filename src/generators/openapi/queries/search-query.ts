@@ -142,22 +142,6 @@ export class SearchQueryGenerator implements QueryGenerator<SearchQuery> {
    */
   protected buildResponse(query: SearchQuery, context: SearchQueryProcessorContext): OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject {
     return arraySchema(context.directive.schema(context));
-    // if (isEntityProjection(query.search)) {
-    //   const entityProjection: EntityProjection = query.search as EntityProjection;
-
-    //   return arraySchema(
-    //     asSchemaObject(
-    //       EntityProjections.projectionSchema(
-    //         entityProjection,
-    //         EntityProjections.viaFrom(entityProjection),
-    //         JsonPath.resolve(context.jsonPath || "", "search"),
-    //         context,
-    //       ),
-    //     ),
-    //   );
-    // }
-
-    // return arraySchema(entitySchemaRef(toPascalCase(query.search as EntityName)));
   }
 
   /**
