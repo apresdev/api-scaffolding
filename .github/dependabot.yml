@@ -4,3 +4,5 @@ updates:
     directory: .
     schedule:
       interval: "weekly"
+    labels:
+      - "patch-version" # this repo uses semantic versioning, honor that.
