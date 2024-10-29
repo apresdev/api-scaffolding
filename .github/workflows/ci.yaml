@@ -188,6 +188,7 @@ jobs:
           mkdir output
           echo '${{ steps.prev-version.outputs.result }}' > output/previous-version.txt
           echo '${{ steps.new-version.outputs.result }}' > output/new-version.txt
+          npm ci
           npm version ${{ steps.new-version.outputs.result }} --no-git-tag-version
           npm run generate.version
 
