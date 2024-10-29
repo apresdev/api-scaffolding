@@ -61,8 +61,9 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            console.log( "GitHub Actor: " + context.actor );
             // if the trigger is dependabot, use the PR title as the changelog
-            if (github.actor == 'dependabot[bot]') {
+            if (context.actor == 'dependabot[bot]') {
               return github.event.pull_request.title;
             }
             changelog = '';
@@ -193,6 +194,7 @@ jobs:
       # Use the changelog text from the PR body, parsed in the detect job.
       - name: Update Changelog
         uses: stefanzweifel/changelog-updater-action@v1
+        if: needs.detect.outputs.release-type != 'no-version' # Only update the ChangeLog on a version change
         with:
           latest-version: ${{ steps.new-version.outputs.result }}
           # Get release notes from the detect job output
@@ -201,6 +203,7 @@ jobs:
 
       - name: Commit with signed
         uses: planetscale/ghcommit-action@v0.1.6
+        if: needs.detect.outputs.release-type != 'no-version' # Only update the ChangeLog on a version change
         with:
           commit_message: "Update CHANGELOG"
           repo: ${{ github.repository }}
@@ -267,7 +270,7 @@ jobs:
 
   release:
     needs: [ detect, plan ]
-    if: needs.detect.outputs.is-merge-event == 'true'
+    if: needs.detect.outputs.is-merge-event == 'true' && needs.detect.outputs.release-type != 'no-version'
     runs-on: ubuntu-latest
     name: "Release"
     steps:
