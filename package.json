@@ -1,7 +1,7 @@
 {
   "name": "@apresdev/api-scaffolding",
   "homepage": "https://github.com/apresdev/api-scaffolding",
-  "version": "0.0.11",
+  "version": "0.0.9",
   "description": "",
   "bin": {
     "apres-api": "dist/index.js"
