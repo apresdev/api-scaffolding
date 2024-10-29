@@ -125,6 +125,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
       - name: Detect previous version number
         uses: actions/github-script@v4
         id: prev-version
@@ -183,6 +188,7 @@ jobs:
           mkdir output
           echo '${{ steps.prev-version.outputs.result }}' > output/previous-version.txt
           echo '${{ steps.new-version.outputs.result }}' > output/new-version.txt
+          npm version ${{ steps.new-version.outputs.result }}
 
       - name: Upload result artifacts
         uses: actions/upload-artifact@v4
@@ -205,10 +211,10 @@ jobs:
         uses: planetscale/ghcommit-action@v0.1.6
         if: needs.detect.outputs.release-type != 'no-version' # Only update the ChangeLog on a version change
         with:
-          commit_message: "Update CHANGELOG"
+          commit_message: "Update CHANGELOG and version"
           repo: ${{ github.repository }}
           branch: ${{ github.head_ref || github.ref_name }}
-          file_pattern: CHANGELOG.md
+          file_pattern: "CHANGELOG.md package.json"
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
