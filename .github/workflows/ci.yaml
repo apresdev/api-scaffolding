@@ -189,6 +189,7 @@ jobs:
           echo '${{ steps.prev-version.outputs.result }}' > output/previous-version.txt
           echo '${{ steps.new-version.outputs.result }}' > output/new-version.txt
           npm version ${{ steps.new-version.outputs.result }}
+          npm run generate.version
 
       - name: Upload result artifacts
         uses: actions/upload-artifact@v4
@@ -214,7 +215,7 @@ jobs:
           commit_message: "Update CHANGELOG and version"
           repo: ${{ github.repository }}
           branch: ${{ github.head_ref || github.ref_name }}
-          file_pattern: "CHANGELOG.md package.json"
+          file_pattern: "CHANGELOG.md package.json src/version.ts"
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 

@@ -11,13 +11,14 @@ import { OpenAPIGenerator } from "./generators/openapi";
 import { loadEntities } from "./models";
 import { loadTemplateOpenAPISpecification } from "./spec";
 import { ServiceSpecification, loadService } from "./specification";
+import { version } from "./version";
 
 Handlebars.registerHelper("toPascalCase", toPascalCase);
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Process the command line arguments.
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-program.name("generate").description("Generates a service implementation from a given service specification").version("0.0.1");
+program.name("api-scaffolding").description("Generates a service implementation from a given service specification").version(version);
 
 program
   .command("openapi")
