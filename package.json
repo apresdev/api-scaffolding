@@ -23,7 +23,7 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "generate": "npm run generate.openapi",
-    "generate.version": "npx genversion --esm src/version.ts",
+    "generate.version": "npx genversion --esm src/version.ts && prettier --write './src/version.ts' --config ./.prettierrc.json",
     "generate.openapi": "npm run generate.openapi.spec && npm run generate.openapi.client",
     "generate.openapi.spec": "npm run generate.openapi.template && npx ts-node src/index.ts openapi",
     "generate.openapi.template": "yq -o=json template.openapi.yaml > src/generators/openapi/template.openapi.json",
