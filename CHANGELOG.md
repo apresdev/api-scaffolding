@@ -2,6 +2,10 @@
 
 This change log is automatically generated.
 
+## 0.0.19 - 2024-10-29
+
+Update release workflow to include runtime version.
+
 ## 0.0.18 - 2024-10-29
 
 Puling in latest dependabot updates.
