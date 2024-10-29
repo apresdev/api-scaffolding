@@ -62,6 +62,7 @@ jobs:
         with:
           script: |
             console.log( "GitHub Actor: " + context.actor );
+            console.log( "Pull Request Body: " + context.payload.pull_request.body );
             // if the trigger is dependabot, use the PR title as the changelog
             if (context.actor == 'dependabot[bot]') {
               return github.event.pull_request.title;
@@ -91,9 +92,10 @@ jobs:
     name: Build
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout the code
+        uses: actions/checkout@v4
 
-      - name: Use Node.js 20.x
+      - name: Setup Node.js 20.x
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
@@ -101,13 +103,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build code
+      - name: Build the code
         run: npm run build
 
-      - name: Lint code
+      - name: Lint the code
         run: npm run lint
 
-      - name: Run all tests
+      - name: Test the code
         run: npm run test
 
   plan:
@@ -126,8 +128,6 @@ jobs:
       - name: Detect previous version number
         uses: actions/github-script@v4
         id: prev-version
-        env:
-          PACKAGE_NAME: "lambda-ddb-sns-publisher"
         with:
           script: |
             const { owner, repo } = context.repo;
