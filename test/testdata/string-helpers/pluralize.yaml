@@ -17,3 +17,13 @@
 # -ies use cases
 - input: ferry
   expected: ferries
+- input: day
+  expected: days
+- input: abbey
+  expected: abbeys
+- input: ciy
+  expected: ciys
+- input: toy
+  expected: toys
+- input: guy
+  expected: guys
