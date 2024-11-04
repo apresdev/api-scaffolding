@@ -223,7 +223,7 @@ const ES_SUFFIXES = ["s", "ss", "sh", "ch", "x", "z"];
  * Pluralizes a singular noun.
  *
  * If the noun ends with an "s", "ss", "sh", "ch", "x", or "z", then it appends an "es".
- * If the noun ends with an "y", then it removes the "y" and appends an "ies".
+ * If the noun ends with an "y", then it removes the "y" and appends an "ies" if and only if the preceding character is a consonant.
  * Otherwise, it appends an "s".
  *
  * @param noun The noun to pluralize.
@@ -234,13 +234,18 @@ export function pluralize(noun: string | undefined): string {
     return "undefined";
   }
 
+  const asLower = noun.toLowerCase();
+
   for (const suffix of ES_SUFFIXES) {
-    if (noun.endsWith(suffix)) {
+    if (asLower.endsWith(suffix)) {
       return `${noun}es`;
     }
   }
 
-  if (noun.endsWith("y")) {
+  if (asLower.endsWith("y")) {
+    if (asLower.endsWith("ay") || asLower.endsWith("ey") || asLower.endsWith("iy") || asLower.endsWith("oy") || asLower.endsWith("uy")) {
+      return `${noun}s`;
+    }
     return `${noun.slice(0, Math.max(0, noun.length - 1))}ies`;
   }
 
