@@ -1251,6 +1251,14 @@ components:
         listedOn:
           type: string
           format: date-time
+        frontWheelType:
+          type: string
+        rearWheelType:
+          type: string
+        treadType:
+          type: string
+        propellorType:
+          type: string
         features:
           type: object
           properties:
@@ -1260,6 +1268,12 @@ components:
                 The collection of named add-ons the vehicle has.
               items:
                 type: string
+      required:
+        - model
+      x-apres-requiresOneOf:
+        - [frontWheelType, rearWheelType]
+        - [treadType]
+        - [propellorType]
     Vehicle:
       type: object
       properties:
@@ -1275,6 +1289,14 @@ components:
         listedOn:
           type: string
           format: date-time
+        frontWheelType:
+          type: string
+        rearWheelType:
+          type: string
+        treadType:
+          type: string
+        propellorType:
+          type: string
         features:
           type: object
           properties:
@@ -1297,6 +1319,11 @@ components:
           format: date-time
       required:
         - id
+        - model
+      x-apres-requiresOneOf:
+        - [frontWheelType, rearWheelType]
+        - [treadType]
+        - [propellorType]
     ModelIdentifier:
       $ref: "#/components/schemas/EntityIdentifier"
     ModelInput:
@@ -1388,6 +1415,8 @@ components:
           minimum: 1900
           maximum: 3000
           default: 2024
+      required:
+        - model
     ListVehiclesResponse:
       type: object
       properties:

@@ -1,0 +1,16 @@
+type: object
+required:
+  - name
+requiresOneOf:
+  - [foo]
+  - [foo, bar]
+  - [foo, bar, baz]
+properties:
+  foo:
+    type: string
+  bar:
+    type: string
+  nested:
+    type: object
+    requiresOneOf:
+      - [name]

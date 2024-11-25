@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { Arrays, Objects, pluralize, toCamelCase, toPascalCase } from "../common";
 import { FileProcessor, FileProcessorContext } from "../common/io";
-import { FileErrors, SchemaValidator, SourceMaps } from "../common/schema";
+import { FileErrors, JsonPath, SchemaValidator, SourceMaps } from "../common/schema";
 import { buildStrategies, isMutable, isSingleton, visitSchema } from "../entities";
 import { entitySchemaReference } from "../generators/openapi/util";
 import {
@@ -78,7 +78,7 @@ class ModelProcessor extends FileProcessor<EntitySchema, ModelProcessorContext> 
     // Load the base model definition.  This should include all user-defined properties
     // const inputModel = loadEntity(entity, schemaRegistry, results);
 
-    this.preProcessModel(inputModel);
+    this.preProcessModel(inputModel, context);
     removeDefinitions(inputModel);
 
     const hasNaturalIdentifier = inputModel.properties && "id" in inputModel.properties;
@@ -114,9 +114,10 @@ class ModelProcessor extends FileProcessor<EntitySchema, ModelProcessorContext> 
     }
   }
 
-  private preProcessModel(model: EntitySchema) {
+  private preProcessModel(model: EntitySchema, context: FileProcessorContext<ModelProcessorContext>) {
     this.preProcessReferences(model);
     enforcePropertyCase(model);
+    this.validateRequiresOneOf(model, context);
   }
 
   private preProcessReferences(model: EntitySchema) {
@@ -127,6 +128,41 @@ class ModelProcessor extends FileProcessor<EntitySchema, ModelProcessorContext> 
 
       if ("$ref" in schema) {
         schema["$ref"] = resolveReference(schema["$ref"], model, this.schemaRegistry, this.fileErrors);
+      }
+    });
+  }
+
+  private validateRequiresOneOf(model: EntitySchema, context: FileProcessorContext<ModelProcessorContext>) {
+    visitSchema(model, (schema, jsonPath) => {
+      if (typeof schema != "object") {
+        return;
+      }
+
+      if (!("requiresOneOf" in schema)) {
+        return;
+      }
+
+      const asEntitySchema = schema as EntitySchema;
+      if (!asEntitySchema.requiresOneOf) {
+        return;
+      }
+
+      if (!asEntitySchema.properties) {
+        this.withError(jsonPath, "requiresOneOf", "requiresOneOf without properties defined", context);
+        return;
+      }
+
+      for (const [oneOfIndex, required] of asEntitySchema.requiresOneOf.entries()) {
+        for (const [requiredIndex, property] of required.entries()) {
+          if (!(property in asEntitySchema.properties)) {
+            this.withError(
+              JsonPath.resolve(jsonPath, "requiresOneOf", String(oneOfIndex), String(requiredIndex)),
+              "requiresOneOf",
+              `missing property ${property}`,
+              context,
+            );
+          }
+        }
       }
     });
   }

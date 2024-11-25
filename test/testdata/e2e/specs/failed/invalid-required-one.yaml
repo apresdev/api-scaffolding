@@ -1,0 +1,16 @@
+apresApi: 1.0.0
+info:
+  title: Invalid Required OneOf Entity API
+  version: 1.0.0
+  baseUrl: https://example.com/api/v1/admin
+  description: The administrative API.
+  contact:
+    email: developers@example.com
+
+entities:
+  - invalid-required-one
+
+operations:
+  mutations: []
+  queries:
+    - findOne: invalid-required-one
