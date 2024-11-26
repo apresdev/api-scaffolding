@@ -150,7 +150,7 @@ export class EntityProjections {
   /* eslint-enable sonarjs/cognitive-complexity */
 
   /**
-   * Prunes the required properties to only include properties that exist in the ObjectSchema.
+   * Prunes the required and requiresOneOf properties to only include properties that exist in the ObjectSchema.
    *
    * @param schema The original object schema.
    * @param result The projected object schema.
@@ -164,6 +164,20 @@ export class EntityProjections {
 
       if (result.required && result.required?.length <= 0) {
         delete result.required;
+      }
+    }
+
+    if ("requiresOneOf" in schema && "properties" in result) {
+      result.requiresOneOf = schema.requiresOneOf
+        ?.map((required) =>
+          required.filter((name) => {
+            return name in Objects.requireNonNull(result.properties);
+          }),
+        )
+        .filter((required) => required.length > 0);
+
+      if (result.requiresOneOf && result.requiresOneOf?.length <= 0) {
+        delete result.requiresOneOf;
       }
     }
 

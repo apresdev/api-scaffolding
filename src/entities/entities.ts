@@ -70,6 +70,7 @@ const entityKeywordExtensions: string[] = [
   "versioned",
   "sensitive",
   "examples",
+  "requiresOneOf",
   ...Object.values(MutationKeywords),
 ];
 export function removeExtensionKeywords(entityModel: EntitySchema | AnySchema | OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject) {

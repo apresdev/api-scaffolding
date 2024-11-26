@@ -2,6 +2,10 @@
 
 This change log is automatically generated.
 
+## 0.0.20 - 2024-11-26
+
+Added support for requiresOneOf property.
+
 ## 0.0.19 - 2024-10-29
 
 Update release workflow to include runtime version.
