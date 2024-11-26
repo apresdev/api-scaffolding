@@ -1,0 +1,13 @@
+entities/invalid-required-one.yaml:
+  - line: 7
+    column: 9
+    severity: error
+    keyword: requiresOneOf
+    message: missing property baz
+    path: requiresOneOf.2.2
+  - line: 14
+    column: 9
+    severity: error
+    keyword: requiresOneOf
+    message: requiresOneOf without properties defined
+    path: properties.nested

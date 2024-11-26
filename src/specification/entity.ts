@@ -114,6 +114,14 @@ export interface ObjectSchema extends BaseSchemaWithExample<object> {
    * using the `required` keyword.
    */
   required?: string[];
+
+  /**
+   * By default, the properties defined by the `properties` keyword are not required. However, one can provide a list of required properties
+   * using the `requiresOneOf` keyword.  The requiresOneOf keyword is similar to the `required` keyword in that they both define sets of
+   * properties which are required; however, they differ in that `requiresOneOf` lets you define multiple scenarios of required properties,
+   * where one and only of the the required scenarios can be valid.
+   */
+  requiresOneOf?: string[][];
 }
 
 /**
