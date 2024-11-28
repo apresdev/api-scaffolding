@@ -2,6 +2,10 @@
 
 This change log is automatically generated.
 
+## 0.0.21 - 2024-11-28
+
+Adding support for handling files.
+
 ## 0.0.20 - 2024-11-26
 
 Added support for requiresOneOf property.
