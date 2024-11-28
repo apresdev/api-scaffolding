@@ -36,7 +36,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "example": {
@@ -114,7 +114,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "enum": {
@@ -187,6 +187,7 @@
           "type": "boolean"
         },
         "createable": {
+          "description": "An optional flag indicating if the data is createable.  Defaults to true.",
           "type": "boolean"
         },
         "default": {
@@ -196,6 +197,7 @@
           "$ref": "#/definitions/Definitions"
         },
         "deleteable": {
+          "description": "An optional flag indicating if the data is deleteable.  Defaults to true.",
           "type": "boolean"
         },
         "description": {
@@ -203,7 +205,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "example": {
@@ -215,17 +217,13 @@
           },
           "type": "array"
         },
-        "linkProperties": {
-          "additionalProperties": {
-            "$ref": "#/definitions/LinkProperty"
-          },
-          "type": "object"
-        },
         "links": {
-          "$ref": "#/definitions/Links"
+          "$ref": "#/definitions/Links",
+          "description": "The optional collection of links to additional data elements."
         },
         "ownership": {
-          "$ref": "#/definitions/OwnershipTypes"
+          "$ref": "#/definitions/OwnershipTypes",
+          "description": "The ownership model for the large object.  Defaults to global."
         },
         "properties": {
           "additionalProperties": {
@@ -256,6 +254,7 @@
           "type": "array"
         },
         "singleton": {
+          "description": "An optional flag to indicate that the data is or is not a singleton.  Defaults to false.",
           "type": "boolean"
         },
         "title": {
@@ -267,6 +266,7 @@
           "type": "string"
         },
         "versioned": {
+          "description": "The optional flag indicating if the data is versioned.  Defaults to false.",
           "type": "boolean"
         }
       },
@@ -303,31 +303,6 @@
       ],
       "type": "object"
     },
-    "LinkProperty": {
-      "additionalProperties": false,
-      "properties": {
-        "cardinality": {
-          "$ref": "#/definitions/Cardinality"
-        },
-        "description": {
-          "type": "string"
-        },
-        "readOnly": {
-          "type": "boolean"
-        },
-        "rel": {
-          "$ref": "#/definitions/EntityName"
-        },
-        "via": {
-          "$ref": "#/definitions/RelationshipName"
-        }
-      },
-      "required": [
-        "rel",
-        "cardinality"
-      ],
-      "type": "object"
-    },
     "Links": {
       "additionalProperties": {
         "$ref": "#/definitions/Link"
@@ -350,7 +325,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "readOnly": {
@@ -393,7 +368,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "enum": {
@@ -463,7 +438,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "example": {
@@ -557,7 +532,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "fromOne": {
@@ -621,7 +596,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "enum": {

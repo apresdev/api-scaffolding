@@ -51,3 +51,11 @@ links:
     via: make
     description: >
       Every vehicle is manufactured by the given manufacturer, which can be determined by the vehicle's model.
+
+  # This tests files.
+  photos:
+    rel: vehicle-photo
+    type: composition
+    cardinality: "1..*"
+    description: >
+      The photos of the vehicle.

@@ -98,12 +98,10 @@ class ModelProcessor extends FileProcessor<EntitySchema, ModelProcessorContext> 
     // defined properties, like id, version, created_at, etc.
     if (isMutable(inputModel)) {
       postProcessInputModel(inputModel, this.schemaRegistry);
-      removeLinkProperties(inputModel);
       this.schemaRegistry.set(`${toPascalCase(context.entity)}Input`, inputModel as EntitySchema);
     }
 
     // Use the decorated entity model for the entity.
-    removeLinkProperties(entityModel);
     this.schemaRegistry.set(context.entity, entityModel as EntitySchema);
     if (hasNaturalIdentifier) {
       this.schemaRegistry.markNaturalIdentifier(context.entity);
@@ -281,10 +279,6 @@ class ModelProcessor extends FileProcessor<EntitySchema, ModelProcessorContext> 
 }
 /* eslint-enable sonarjs/cognitive-complexity */
 
-function removeLinkProperties(model: EntitySchema): void {
-  delete model["linkProperties"];
-}
-
 /**
  * Ensures that every relationship has a name.  If no name is given it is derived from the cardinality and right node of the relationship.
  *
@@ -315,20 +309,23 @@ function embedParentId(relationship: Relationship, schemaRegistry: SchemaRegistr
     return;
   }
 
-  const childSchema: EntitySchema = schemaRegistry.get(relationship.right);
-  childSchema.properties = Objects.orEmpty(childSchema.properties);
+  // Check if the child is an entity.
+  if (schemaRegistry.has(relationship.right)) {
+    const childSchema: EntitySchema = schemaRegistry.get(relationship.right);
+    childSchema.properties = Objects.orEmpty(childSchema.properties);
 
-  // Check if this is a one-to-one relationship based on COMPOSITION.
-  if (Cardinality.isToOne(relationship.cardinality)) {
-    // if it is, then assign the parent identifier as the child identifier
-    childSchema.properties["id"] = entitySchemaReference(`${toPascalCase(relationship.left)}Identifier`) as ReferenceSchema;
-  } else {
-    // Otherwise, insert the parent identifier in the schema.
-    const parentId = `${toCamelCase(relationship.left)}Id`;
-    childSchema.required = [...Arrays.orEmpty(childSchema.required), parentId];
-    childSchema.properties[parentId] = entitySchemaReference(`${toPascalCase(relationship.left)}Identifier`) as ReferenceSchema;
+    // Check if this is a one-to-one relationship based on COMPOSITION.
+    if (Cardinality.isToOne(relationship.cardinality)) {
+      // if it is, then assign the parent identifier as the child identifier
+      childSchema.properties["id"] = entitySchemaReference(`${toPascalCase(relationship.left)}Identifier`) as ReferenceSchema;
+    } else {
+      // Otherwise, insert the parent identifier in the schema.
+      const parentId = `${toCamelCase(relationship.left)}Id`;
+      childSchema.required = [...Arrays.orEmpty(childSchema.required), parentId];
+      childSchema.properties[parentId] = entitySchemaReference(`${toPascalCase(relationship.left)}Identifier`) as ReferenceSchema;
+    }
+    schemaRegistry.set(relationship.right, childSchema);
   }
-  schemaRegistry.set(relationship.right, childSchema);
 }
 
 function isRelationshipSchema(schema: AnySchema): boolean {
@@ -352,24 +349,29 @@ function isArraySchema(schema: AnySchema): boolean {
  * @param results       The file processing results.
  */
 function ensureEntityExists(sourceEntity: string, linkedEntity: string, jsonPath: string, spec: ServiceSpecification, results: FileErrors) {
-  // Check the service specification to ensure that the "rel" entity exists.
-  if (!spec.entities.includes(linkedEntity)) {
-    // If not, lookup the file location where the link was defined...
-    const sourcePath = toModelPath(sourceEntity);
-    const location = sourceMaps.getLocation(sourcePath, jsonPath.split("."));
-
-    // ... and add an error indicating the unknown entity.
-    results.withErrors(sourcePath, [
-      {
-        line: location?.line || 0,
-        column: location?.column || 0,
-        severity: "error",
-        keyword: "unknown-entity",
-        message: `entity [${linkedEntity}] is missing in specification entities`,
-        path: jsonPath,
-      },
-    ]);
+  if (spec.entities.includes(linkedEntity)) {
+    return;
   }
+
+  if (spec.files && spec.files.includes(linkedEntity)) {
+    return;
+  }
+
+  // If not, lookup the file location where the link was defined...
+  const sourcePath = toModelPath(sourceEntity);
+  const location = sourceMaps.getLocation(sourcePath, jsonPath.split("."));
+
+  // ... and add an error indicating the unknown entity.
+  results.withErrors(sourcePath, [
+    {
+      line: location?.line || 0,
+      column: location?.column || 0,
+      severity: "error",
+      keyword: "unknown-entity",
+      message: `entity [${linkedEntity}] is missing in specification entities`,
+      path: jsonPath,
+    },
+  ]);
 }
 
 function postProcessInputModel(model: EntitySchema, schemaRegistry: SchemaRegistry) {
@@ -389,21 +391,6 @@ function removeReadOnlyFields(model: EntitySchema, schemaRegistry: SchemaRegistr
       }
     }
   });
-
-  // Remove all auto-generated link properties where the link is flagged as readOnly.
-  if (!("linkProperties" in model)) {
-    return;
-  }
-
-  const linkProperties = model.linkProperties;
-  if (linkProperties) {
-    for (const property of Object.keys(linkProperties)) {
-      const link = linkProperties[property];
-      if (link.readOnly && model.properties) {
-        delete model.properties[property];
-      }
-    }
-  }
 }
 
 function isReadOnly(schema: AnySchema, schemaRegistry: SchemaRegistry): boolean {
@@ -489,7 +476,7 @@ function preProcessReferences(schema: AnySchema, model: AnySchema, models: Schem
 const INTERNAL_REFERENCE_PREFIX = "#/definitions/";
 const OPENAPI_REFERENCE_PREFIX = "#/components/schemas/";
 
-function resolveReference($reference: string | undefined, model: AnySchema, models: SchemaRegistry, results: FileErrors): string {
+export function resolveReference($reference: string | undefined, model: AnySchema, models: SchemaRegistry, results: FileErrors): string {
   if (!$reference) {
     throw new Error("Detected null or missing $ref value");
   }

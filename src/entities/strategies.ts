@@ -1,32 +1,41 @@
 import { Arrays, Objects } from "../common";
 import { entitySchemaReference } from "../generators/openapi/util";
-import { EntitySchema, MutationKeywords } from "../specification";
+import { Createable, Deleteable, Editable, EntitySchema, Multiplicity, Versionable, Writeable } from "../specification";
 import { entityIdentifier } from "./entities";
 
 export type EntityStrategy = (entity: EntitySchema, name: string) => EntitySchema;
 
-export function isMutable(model: EntitySchema): boolean {
-  if ("readOnly" in model) {
-    return model.readOnly !== true;
-  }
-
-  return true;
+/**
+ * Determines if a schema is mutable, defaults to `true`.
+ *
+ * @param model The model to check.
+ *
+ * @returns true if and only if the readOnly flag is not set to true.
+ */
+export function isMutable(model: Writeable): boolean {
+  return !Objects.orElse(model.readOnly, false);
 }
 
-export function isVersioned(model: EntitySchema): boolean {
-  if ("versioned" in model) {
-    return model.versioned === true;
-  }
-
-  return false;
+/**
+ * Determines if a schema is versioned, defaults to `false`.
+ *
+ * @param model The model to check.
+ *
+ * @returns true if and only if the versioned flag is set to true.
+ */
+export function isVersioned(model: Versionable): boolean {
+  return Objects.orElse(model.versioned, false);
 }
 
-export function isSingleton(model: EntitySchema): boolean {
-  if ("singleton" in model) {
-    return model.singleton === true;
-  }
-
-  return false;
+/**
+ * Determines if a schema is a singleton, defaults to `false`.
+ *
+ * @param model The model to check.
+ *
+ * @returns true if and only if the singleton flag is set to true.
+ */
+export function isSingleton(model: Multiplicity): boolean {
+  return Objects.orElse(model.singleton, false);
 }
 
 /**
@@ -36,12 +45,19 @@ export function isSingleton(model: EntitySchema): boolean {
  *
  * @returns true if and only if the createable flag is not set to false.
  */
-export function isCreateable(model: EntitySchema): boolean {
-  if (MutationKeywords.Createable in model) {
-    return model[MutationKeywords.Createable] === true;
-  }
+export function isCreateable(model: Createable): boolean {
+  return isMutable(model) && Objects.orElse(model.createable, true);
+}
 
-  return true;
+/**
+ * Determines if a schema is deletable, defaults to `true`.
+ *
+ * @param model The model to check.
+ *
+ * @returns true if and only if the deleteable flag is not set to false.
+ */
+export function isDeleteable(model: Deleteable): boolean {
+  return isMutable(model) && Objects.orElse(model.deleteable, true);
 }
 
 /**
@@ -51,27 +67,8 @@ export function isCreateable(model: EntitySchema): boolean {
  *
  * @returns true if and only if the editable flag is not set to false.
  */
-export function isEditable(model: EntitySchema): boolean {
-  if (MutationKeywords.Editable in model) {
-    return model[MutationKeywords.Editable] === true;
-  }
-
-  return true;
-}
-
-/**
- * Determines if a schema is deleteable, defaults to `true`.
- *
- * @param model The model to check.
- *
- * @returns true if and only if the deleteable flag is not set to false.
- */
-export function isDeleteable(model: EntitySchema): boolean {
-  if (MutationKeywords.Deleteable in model) {
-    return model[MutationKeywords.Deleteable] === true;
-  }
-
-  return true;
+export function isEditable(model: Editable): boolean {
+  return isMutable(model) && Objects.orElse(model.editable, true);
 }
 
 export function buildStrategies(model: EntitySchema): EntityStrategy[] {

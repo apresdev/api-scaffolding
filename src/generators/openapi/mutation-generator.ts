@@ -6,9 +6,11 @@ import { OpenAPISpecification } from "./types";
 import { entitySchemaReference, toSummaryCase } from "./util";
 
 import { aOrAn, pluralize, toPascalCase, toTitleCase } from "../../common";
+import { DependencyGraph } from "../../dependency-graph";
 import { isCreateable, isDeleteable, isEditable } from "../../entities";
 import { SchemaRegistry } from "../../models";
-import { DependencyGraph, EntitySchema, Mutation } from "../../specification";
+import { EntityMutation, EntitySchema, FileMutation, isEntityMutation, isFileMutation, Mutation } from "../../specification";
+import { renderFileMutations } from "./mutations/file-mutation";
 
 /**
  * Adds the standard CRUD operations to an OpenAPI specication.  This includes two operations at the container path: list (GET) and create
@@ -19,6 +21,29 @@ import { DependencyGraph, EntitySchema, Mutation } from "../../specification";
  * @param openAPI   The OpenAPI specification.
  */
 export function renderMutations(mutation: Mutation, openAPI: OpenAPISpecification, graph: DependencyGraph, schemaRegistry: SchemaRegistry) {
+  if (isEntityMutation(mutation)) {
+    return renderEntityMutations(mutation as EntityMutation, openAPI, graph, schemaRegistry);
+  }
+
+  if (isFileMutation(mutation)) {
+    return renderFileMutations(mutation as FileMutation, openAPI, graph, schemaRegistry);
+  }
+}
+
+/**
+ * Adds the standard CRUD operations to an OpenAPI specication.  This includes two operations at the container path: list (GET) and create
+ * (POST), and three operations at the item path: retrieve (GET), update (PUT), and delete (DELETE).
+ *
+ * @param mutation  The mutation operation.
+ * @param service   The service specification, used to determine ancestry.
+ * @param openAPI   The OpenAPI specification.
+ */
+export function renderEntityMutations(
+  mutation: EntityMutation,
+  openAPI: OpenAPISpecification,
+  graph: DependencyGraph,
+  schemaRegistry: SchemaRegistry,
+) {
   if (graph.isCollection(mutation.entity)) {
     renderCrudOperations(mutation, openAPI, graph, schemaRegistry);
   } else {
@@ -34,7 +59,12 @@ export function renderMutations(mutation: Mutation, openAPI: OpenAPISpecificatio
  * @param service The service specification, used to determine ancestry.
  * @param openAPI The OpenAPI specification.
  */
-function renderCrudOperations(mutation: Mutation, openAPI: OpenAPISpecification, graph: DependencyGraph, schemaRegistry: SchemaRegistry) {
+function renderCrudOperations(
+  mutation: EntityMutation,
+  openAPI: OpenAPISpecification,
+  graph: DependencyGraph,
+  schemaRegistry: SchemaRegistry,
+) {
   const entity = mutation.entity;
 
   // Build the ancestral paths.
@@ -76,7 +106,12 @@ function renderCrudOperations(mutation: Mutation, openAPI: OpenAPISpecification,
  * @param openAPI The OpenAPI specification.
  * @param graph   The entity-relationship dependency graph.
  */
-function renderUpsertOperations(mutation: Mutation, openAPI: OpenAPISpecification, graph: DependencyGraph, schemaRegistry: SchemaRegistry) {
+function renderUpsertOperations(
+  mutation: EntityMutation,
+  openAPI: OpenAPISpecification,
+  graph: DependencyGraph,
+  schemaRegistry: SchemaRegistry,
+) {
   const entity = mutation.entity;
   const itemUrl = buildAncestralPath(entity, graph, schemaRegistry).path().withNoun(schemaRegistry.getAlias(entity), false).end().build();
   generateUpsertOp(mutation, itemUrl, openAPI, schemaRegistry);
@@ -94,7 +129,7 @@ function renderUpsertOperations(mutation: Mutation, openAPI: OpenAPISpecificatio
  * @param openAPI The OpenAPI specification.
  */
 function generateCreateOp(
-  mutation: Mutation,
+  mutation: EntityMutation,
   url: Url,
   openAPI: OpenAPISpecification,
   schemaRegistry: SchemaRegistry,
@@ -125,7 +160,7 @@ function generateCreateOp(
 
  */
 function generateUpdateOp(
-  mutation: Mutation,
+  mutation: EntityMutation,
   url: Url,
   openAPI: OpenAPISpecification,
   schemaRegistry: SchemaRegistry,
@@ -158,7 +193,7 @@ function generateUpdateOp(
 
  */
 function generateDeleteOp(
-  mutation: Mutation,
+  mutation: EntityMutation,
   url: Url,
   openAPI: OpenAPISpecification,
   schemaRegistry: SchemaRegistry,
@@ -194,7 +229,7 @@ function generateDeleteOp(
 
  */
 function generateUpsertOp(
-  mutation: Mutation,
+  mutation: EntityMutation,
   url: Url,
   openAPI: OpenAPISpecification,
   schemaRegistry: SchemaRegistry,
@@ -238,7 +273,7 @@ function generateUpsertOp(
  * @param graph The dependency graph of entities.
  * @returns The URL Builder with the ancestral entities included as path segments and parameters.
  */
-function buildAncestralPath(entity: string, graph: DependencyGraph, schemaRegistry: SchemaRegistry): UrlBuilder {
+export function buildAncestralPath(entity: string, graph: DependencyGraph, schemaRegistry: SchemaRegistry): UrlBuilder {
   const urlBuilder = UrlBuilder.newBuilder();
   for (const ancestor of graph.listAncestors(entity)) {
     const alias = schemaRegistry.getAlias(ancestor.name);

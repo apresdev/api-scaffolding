@@ -4,7 +4,7 @@ import { lstatSync, mkdtempSync, readdirSync, rmSync } from "fs";
 import path from "path";
 import { FileErrors, logErrors, ProcessingErrors } from "../../src/common";
 import { OpenAPIGenerator } from "../../src/generators/openapi";
-import { loadEntities } from "../../src/models";
+import { loadEntities, loadFiles } from "../../src/models";
 import { loadTemplateOpenAPISpecification } from "../../src/spec";
 import { loadService } from "../../src/specification";
 import { loadYaml } from "../../src/util";
@@ -105,6 +105,9 @@ describe("End to End Tests", () => {
             await exitOnFailure(results);
 
             const schemaRegistry = loadEntities(serviceDescriptor, results);
+            await exitOnFailure(results);
+
+            loadFiles(serviceDescriptor, schemaRegistry, results);
             await exitOnFailure(results);
 
             const outputFile = path.resolve(`${outputPath}/${item}`);

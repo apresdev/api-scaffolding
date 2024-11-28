@@ -7,17 +7,10 @@ import { CONTENT_TYPE_JSON, trimTrailingSlash } from "./util";
 
 import { OpenAPIV3 } from "openapi-types";
 import { Arrays, FileErrors, Objects } from "../../common";
+import { buildGraph } from "../../dependency-graph";
 import { asSchemaObject } from "../../entities/entities";
 import { SchemaRegistry, enforcePropertyCase } from "../../models";
-import {
-  EntitySchema,
-  Fragments,
-  Queries,
-  ServiceSpecification,
-  buildGraph,
-  getServicePath,
-  getServiceSourceMap,
-} from "../../specification";
+import { EntitySchema, Fragments, Queries, ServiceSpecification, getServicePath, getServiceSourceMap } from "../../specification";
 import { dumpJson, dumpYaml, sortKeys } from "../../util";
 import { FragmentsProcessor } from "./fragment-processor";
 import { lintSpecification } from "./lint";
