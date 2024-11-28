@@ -1,7 +1,8 @@
 import { OpenAPIV3 } from "openapi-types";
 import { pluralize } from "../../../../common";
+import { Node } from "../../../../dependency-graph";
 import { isSingleton } from "../../../../entities";
-import { Node } from "../../../../specification";
+import { EntitySchema } from "../../../../specification";
 import { entitySchemaReference } from "../../util";
 import { QueryProcessorContext } from "../query-generator";
 import { EntityDirective } from "./entity-directive";
@@ -22,7 +23,7 @@ export class NodeDirective implements EntityDirective {
     return pluralize(this._node.name);
   }
   isSingleton(context: QueryProcessorContext): boolean {
-    return isSingleton(context.schemaRegistry.get(this.entity()));
+    return isSingleton(context.schemaRegistry.get(this.entity()) as EntitySchema);
   }
 
   schema(): OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject {

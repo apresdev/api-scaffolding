@@ -1,7 +1,7 @@
 import { OpenAPIV3 } from "openapi-types";
 import { pluralize } from "../../../../common";
 import { isSingleton } from "../../../../entities";
-import { EntityName } from "../../../../specification";
+import { EntityName, EntitySchema } from "../../../../specification";
 import { entitySchemaReference } from "../../util";
 import { QueryProcessorContext } from "../query-generator";
 import { EntityDirective } from "./entity-directive";
@@ -22,7 +22,7 @@ export class EntityNameDirective implements EntityDirective {
     return pluralize(this._entityName);
   }
   isSingleton(context: QueryProcessorContext): boolean {
-    return isSingleton(context.schemaRegistry.get(this.entity()));
+    return isSingleton(context.schemaRegistry.get(this.entity()) as EntitySchema);
   }
 
   schema(): OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject {

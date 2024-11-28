@@ -1,7 +1,8 @@
 import { OpenAPIV3 } from "openapi-types";
-import { toPascalCase } from "../common";
+import { Objects, toPascalCase } from "../common";
 import { asSchemaObject } from "../entities";
 import { AnySchema, EntitySchema, Fragment } from "../specification";
+import { FileSchema } from "../specification/file";
 import { deepCopy } from "../util";
 
 /**
@@ -11,10 +12,11 @@ export class SchemaRegistry {
   /**
    * The internal storage of the schemas, indexed by entity name.
    */
-  private schemas: Map<string, EntitySchema>;
-  private aliases: Map<string, string>;
-  private fragments: Map<string, Fragment>;
-  private naturalIdenfiers: Set<string>;
+  private readonly schemas: Map<string, EntitySchema>;
+  private readonly aliases: Map<string, string>;
+  private readonly files: Map<string, FileSchema>;
+  private readonly fragments: Map<string, Fragment>;
+  private readonly naturalIdenfiers: Set<string>;
 
   /**
    * Creates an instance of a SchemaRegistry.
@@ -22,6 +24,7 @@ export class SchemaRegistry {
   constructor() {
     this.schemas = new Map<string, EntitySchema>();
     this.aliases = new Map<string, string>();
+    this.files = new Map<string, FileSchema>();
     this.fragments = new Map<string, Fragment>();
     this.naturalIdenfiers = new Set<string>();
   }
@@ -35,6 +38,21 @@ export class SchemaRegistry {
   public set<T extends AnySchema>(entity: string, schema: T) {
     // Store a copy of the schema, to prevent the caller from manipulating the schema post-insert.
     this.schemas.set(toPascalCase(entity), deepCopy(schema) as EntitySchema);
+  }
+
+  /**
+   * Adds a file schema to the registry.
+   *
+   * @param name The name of the file type.
+   * @param schema The file's schema.
+   */
+  public setFile(name: string, schema: FileSchema) {
+    // Store a copy of the schema, to prevent the caller from manipulating the schema post-insert.
+    this.files.set(toPascalCase(name), deepCopy(schema) as FileSchema);
+
+    if (schema.alias) {
+      this.setAlias(name, schema.alias);
+    }
   }
 
   /**
@@ -52,6 +70,21 @@ export class SchemaRegistry {
   }
 
   /**
+   * Lookup a the schema for a given entity.
+   *
+   * @param entity The name of the entity.
+   * @returns The entity's schema.
+   */
+  public getFile(file: string): FileSchema {
+    if (!this.hasFile(file)) {
+      throw new Error(`unknown file ${file}`);
+    }
+
+    // Return a copy of the schema to prevent the caller from manipulating the internal representation.
+    return Objects.requireNonNull(deepCopy(this.files.get(toPascalCase(file))));
+  }
+
+  /**
    * Determines if a schema already exists for a given entity.
    *
    * @param entity The name of the entity.
@@ -59,6 +92,16 @@ export class SchemaRegistry {
    */
   public has(entity: string): boolean {
     return this.schemas.has(toPascalCase(entity));
+  }
+
+  /**
+   * Determines if a file schema already exists for a given file schema name.
+   *
+   * @param entity The name of the file schema.
+   * @returns true if and only if a schema exists with the given file name.
+   */
+  public hasFile(file: string): boolean {
+    return this.files.has(toPascalCase(file));
   }
 
   /**

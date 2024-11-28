@@ -7,6 +7,8 @@ info:
   contact:
     email: developers@example.com
 
+files:
+  - vehicle-photo
 entities:
   - vehicle
   - model
@@ -14,6 +16,7 @@ entities:
 
 operations:
   mutations:
+    - file: vehicle-photo
     - entity: vehicle
     - entity: model
     - entity: manufacturer

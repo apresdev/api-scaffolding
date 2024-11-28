@@ -1,9 +1,10 @@
 import { Arrays, pluralize, toCamelCase } from "../common";
 import { SchemaRegistry } from "../models";
 
-import { getOrSet } from "./util";
+import { getOrSet } from "../specification/util";
 
-import { Cardinality, EntityName, RelationshipType, ServiceSpecification } from ".";
+import { isSingleton } from "../entities";
+import { Cardinality, EntityName, EntitySchema, RelationshipType, ServiceSpecification } from "../specification";
 
 export interface Node {
   name: EntityName;
@@ -197,9 +198,12 @@ export class DependencyGraph {
       return Cardinality.isFromMany(node.parent.cardinality);
     }
 
-    const schema = this.schemaRegistry.get(entity);
-    if (schema && "singleton" in schema) {
-      return schema.singleton !== true;
+    if (this.schemaRegistry.has(entity)) {
+      return !isSingleton(this.schemaRegistry.get(entity) as EntitySchema);
+    }
+
+    if (this.schemaRegistry.hasFile(entity)) {
+      return !isSingleton(this.schemaRegistry.getFile(entity));
     }
 
     // We will assume that most entities are collections.

@@ -1,6 +1,7 @@
 import { JsonPath } from "../../../../common";
 import { PathError } from "../../../../common/io";
-import { BaseQuery, EntityName, EntityProjection, FindQuery, FragmentName, Node, Nodes, RelationshipName } from "../../../../specification";
+import { Node, Nodes } from "../../../../dependency-graph";
+import { BaseQuery, EntityName, EntityProjection, FindQuery, FragmentName, RelationshipName } from "../../../../specification";
 import { Joins } from "../../../../specification/joins";
 import { asArray } from "../../util";
 import { FindQueryProcessorContext } from "../find-query";

@@ -23,7 +23,12 @@
     // Configure properties specific to VS Code.
     "vscode": {
       "settings": {},
-      "extensions": ["42Crunch.vscode-openapi", "Orta.vscode-jest"]
+      "extensions": [
+        "42Crunch.vscode-openapi",
+        "Orta.vscode-jest",
+        "esbenp.prettier-vscode",
+        "bierner.markdown-mermaid"
+      ]
     }
   },
   // Use 'forwardPorts' to make a list of ports inside the container available locally.

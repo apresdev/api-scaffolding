@@ -3,19 +3,112 @@ import { Cardinality, EntityName, RelationshipName, RelationshipType } from ".";
 export type OwnershipTypes = "global" | "tenant" | "user";
 export type Definitions = Record<string, AnySchema>;
 export type Links = Record<string, Link>;
-export interface EntitySchema extends ObjectSchema {
+
+/**
+ * Defines the interface for any class of data that is conditionally editable.
+ */
+export interface Writeable {
+  /**
+   * An optional flag indicating if the data is read-only.  Defaults to false.
+   */
+  readOnly?: boolean;
+}
+
+/**
+ * Defines the interface for any class of data that is conditionally creatable.
+ */
+export interface Createable extends Writeable {
+  /**
+   * An optional flag indicating if the data is createable.  Defaults to true.
+   */
+  createable?: boolean;
+}
+
+/**
+ * Defines the interface for any class of data that is conditionally editable.
+ */
+export interface Editable extends Writeable {
+  /**
+   * An optional flag indicating if the data is editable.  Defaults to true.
+   */
+  editable?: boolean;
+}
+
+/**
+ * Defines the interface for any class of data that is conditionally deleteable.
+ */
+export interface Deleteable extends Writeable {
+  /**
+   * An optional flag indicating if the data is deleteable.  Defaults to true.
+   */
+  deleteable?: boolean;
+}
+
+/**
+ * Defines the interface for any data that is ownable in the system (i.e. owned by a user, by a tenant, or globally owned.)
+ */
+export interface Ownable {
+  /**
+   * The ownership model for the large object.  Defaults to global.
+   */
   ownership?: OwnershipTypes;
-  singleton?: boolean;
+}
+
+/**
+ * Defines the interface for any data that is potentially versionable.
+ */
+export interface Versionable {
+  /**
+   * The optional flag indicating if the data is versioned.  Defaults to false.
+   */
   versioned?: boolean;
-  links?: Links;
+}
+
+/**
+ * Defines the interface for any data where the multiplicity is defined at the entity level, rather than just at the relationship level.
+ * Put another way, if we assume that all elements exist within a collection, what is the maximum size of said collection (1 == singleton)
+ */
+export interface Multiplicity {
+  /**
+   * An optional flag to indicate that the data is or is not a singleton.  Defaults to false.
+   */
+  singleton?: boolean;
+}
+
+/**
+ * Defines the interface for any data where the data may have additional names beyond the unique name for the data element.
+ *
+ * This is primarily used to influence the routes in the REST APIs.
+ */
+export interface Aliasable {
   /**
    * The alias for the entity name.  Renames all references to the entity with the given alias.
    */
   alias?: string;
-  createable?: boolean;
-  deleteable?: boolean;
-  linkProperties?: Record<string, LinkProperty>;
 }
+
+/**
+ * Defines the interface for any data where the data may be linked to another data element in the system.
+ */
+export interface Linkable {
+  /**
+   * The optional collection of links to additional data elements.
+   */
+  links?: Links;
+}
+
+/**
+ * Defines the interface for any data where the data has a well known name property.
+ * The name property is always expected to be a string.
+ */
+export interface Nameable {
+  /**
+   * The schema for the name.
+   */
+  name?: StringSchema;
+}
+
+export interface EntitySchema extends ObjectSchema, Ownable, Createable, Deleteable, Multiplicity, Aliasable, Linkable, Versionable {}
 
 export type ObjectSelector = ObjectSchema;
 
@@ -51,7 +144,7 @@ export type ValueSchema =
    */
   | NullSchema;
 
-export interface BaseSchema {
+export interface BaseSchema extends Editable {
   /**
    * The `title` keyword must be a string. A "title" will preferably be short explanation about the purpose of the data described by the
    * schema.
@@ -68,11 +161,6 @@ export interface BaseSchema {
    * Flag the indicates that the schema contents are read-only (defaults false).
    */
   readOnly?: boolean;
-
-  /**
-   * Flag the indicates that the schema contents are editable after creation (defaults true).
-   */
-  editable?: boolean;
 
   /**
    * Flag the indicates that the schema contents are calculated (defaults false).

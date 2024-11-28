@@ -3,6 +3,7 @@ import { Predicates } from "../common";
 import { Policies } from "./policies";
 
 import { IncludeDirective } from ".";
+import { FileTypeName } from "./file";
 import { NamedQuery } from "./named-query";
 
 export type EntityName = string;
@@ -49,6 +50,11 @@ export interface ServiceSpecificationVersion1 extends BaseServiceSpecification {
    * documentation generation tools for convenience.
    */
   info: Information;
+
+  /**
+   * An optional collection of file type names.
+   */
+  files?: FileTypeName[];
 
   /**
    * The collection of entities managed by the service.
@@ -231,7 +237,12 @@ export type Mutations = Mutation[];
 /**
  * Defines a mutable entity in the service.
  */
-export interface Mutation {
+export type Mutation = EntityMutation | FileMutation;
+
+/**
+ * Defines a mutable entity in the service.
+ */
+export interface EntityMutation {
   /**
    * The name of the entity to mutate.
    */
@@ -241,6 +252,29 @@ export interface Mutation {
    * The optional operation tag.
    */
   tag?: string;
+}
+
+/**
+ * Defines a mutable entity in the service.
+ */
+export interface FileMutation {
+  /**
+   * The name of the file to mutate.
+   */
+  file: FileTypeName;
+
+  /**
+   * The optional operation tag.
+   */
+  tag?: string;
+}
+
+export function isFileMutation(mutation: Mutation): boolean {
+  return "file" in mutation;
+}
+
+export function isEntityMutation(mutation: Mutation): boolean {
+  return "entity" in mutation;
 }
 
 export type Queries = Query[];

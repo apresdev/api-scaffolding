@@ -9,6 +9,7 @@ import { CodeGenerator } from "./generators/base";
 import { EntityRelationshipGenerator } from "./generators/docs";
 import { OpenAPIGenerator } from "./generators/openapi";
 import { loadEntities } from "./models";
+import { loadFiles } from "./models/files";
 import { loadTemplateOpenAPISpecification } from "./spec";
 import { ServiceSpecification, loadService } from "./specification";
 import { version } from "./version";
@@ -76,14 +77,17 @@ async function generateService(specPath: string, ...generators: CodeGenerator[])
     const serviceDescriptor: ServiceSpecification = loadService(specPath, results);
     await exitOnFailure(results);
 
-    const entityMap = loadEntities(serviceDescriptor, results);
+    const schemaRegistry = loadEntities(serviceDescriptor, results);
+    await exitOnFailure(results);
+
+    loadFiles(serviceDescriptor, schemaRegistry, results);
     await exitOnFailure(results);
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Run all of the code generators.
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     for (const generator of generators) {
-      generator.generate(serviceDescriptor, entityMap, openAPISpecification, results);
+      generator.generate(serviceDescriptor, schemaRegistry, openAPISpecification, results);
     }
 
     await exitOnFailure(results);

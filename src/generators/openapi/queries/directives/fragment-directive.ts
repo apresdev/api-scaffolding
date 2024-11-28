@@ -1,7 +1,7 @@
 import { OpenAPIV3 } from "openapi-types";
 import { pluralize } from "../../../../common";
 import { isSingleton } from "../../../../entities";
-import { Fragment } from "../../../../specification";
+import { EntitySchema, Fragment } from "../../../../specification";
 import { Joins } from "../../../../specification/joins";
 import { entitySchemaReference } from "../../util";
 import { QueryProcessorContext } from "../query-generator";
@@ -26,7 +26,7 @@ export class FragmentDirective implements EntityDirective {
   }
 
   isSingleton(context: QueryProcessorContext): boolean {
-    return isSingleton(context.schemaRegistry.get(this.entity()));
+    return isSingleton(context.schemaRegistry.get(this.entity()) as EntitySchema);
   }
 
   schema(): OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject {

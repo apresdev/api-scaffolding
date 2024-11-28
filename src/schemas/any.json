@@ -36,7 +36,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "example": {
@@ -114,7 +114,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "enum": {
@@ -182,7 +182,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "readOnly": {
@@ -225,7 +225,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "enum": {
@@ -295,7 +295,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "example": {
@@ -381,7 +381,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "fromOne": {
@@ -445,7 +445,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "enum": {
