@@ -9,6 +9,8 @@ properties:
   id:
     # This tests a natural identifer.
     $ref: "./definitions/vin-number.yaml#"
+  license:
+    type: string
   model:
     # This tests a direct link
     rel: model

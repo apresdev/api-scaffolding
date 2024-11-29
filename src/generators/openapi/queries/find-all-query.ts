@@ -23,13 +23,14 @@ export class FindAllQueryGenerator extends FindQueryGenerator<ListQuery> {
 
     const givenDirectives = context.givenDirectives;
     const findDirective = context.findDirective;
+    const suffix = toPascalCase(Objects.orElse(query.withSuffix, ""));
 
     return `list${Objects.requireNonNull(givenDirectives)
       .map((directive) => {
         const name = directive.asCollection(context);
         return toPascalCase(name);
       })
-      .join("")}${toPascalCase(findDirective?.asCollection(context))}`;
+      .join("")}${toPascalCase(findDirective?.asCollection(context))}${suffix}`;
   }
 
   protected buildUrl(query: ListQuery, context: FindQueryProcessorContext): Url {
@@ -52,6 +53,10 @@ export class FindAllQueryGenerator extends FindQueryGenerator<ListQuery> {
 
     pathBuilder.withNoun(Objects.requireNonNull(findDirective).asCollection(context), false);
 
+    if (query.withSuffix) {
+      pathBuilder.withNoun(query.withSuffix, false);
+    }
+
     return urlBuilder.build();
   }
 
@@ -61,6 +66,7 @@ export class FindAllQueryGenerator extends FindQueryGenerator<ListQuery> {
     }
 
     const findDirective = context.findDirective;
+    const suffix = query.withSuffix ? ` ${toSummaryCase(query.withSuffix)}` : "";
 
     let summary = "List all ";
     summary += toSummaryCase(Objects.requireNonNull(findDirective).asCollection(context));
@@ -71,7 +77,7 @@ export class FindAllQueryGenerator extends FindQueryGenerator<ListQuery> {
       )}`;
     }
 
-    summary += ".";
+    summary += `${suffix}.`;
 
     return summary;
   }
