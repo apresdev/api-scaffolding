@@ -17,6 +17,19 @@ describe("Objects", () => {
     });
   });
 
+  describe("orElse", () => {
+    it("should use default value on null", () => {
+      expect(Objects.orElse(null, "test")).toStrictEqual("test");
+    });
+    it("should use default value on undefined", () => {
+      expect(Objects.orElse(undefined, "test")).toStrictEqual("test");
+    });
+    it("should use input value when defined", () => {
+      const input = "foo";
+      expect(Objects.orElse(input, "test")).toBe(input);
+    });
+  });
+
   describe("requireNonNull", () => {
     it("should throw an error on null", () => {
       expect(() => Objects.requireNonNull(null)).toThrow("value must not be null");

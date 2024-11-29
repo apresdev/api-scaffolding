@@ -337,6 +337,15 @@ export interface FindQuery extends BaseQuery {
    * Currently assumes these are relationships to the source entity of the query.
    */
   join?: Join;
+
+  /**
+   * An optional suffix to include with the find operation.  This is useful when two or more queries attempt to find the entities but will
+   * include either filterableBy request parameters or different entity projections in the reponse.
+   *
+   * This will affect both the operationId by appending the withSuffix in PascalCase and the operation path by appending the withSuffix as
+   * /kebab-case.
+   */
+  withSuffix?: string;
 }
 
 /**

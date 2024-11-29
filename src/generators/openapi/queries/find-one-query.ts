@@ -50,15 +50,17 @@ export class FindOneQueryGenerator extends FindQueryGenerator<RetrieveQuery> {
 
     const givenDirectives = context.givenDirectives;
     const findDirective = context.findDirective;
+    const suffix = toPascalCase(Objects.orElse(query.withSuffix, ""));
+
     if (!givenDirectives || !findDirective) {
       throw new Error("illegal state");
     }
 
     if (query.filterableBy || query.sortableBy || givenDirectives.length === 0) {
-      return `retrieve${toPascalCase(findDirective.path())}`;
+      return `retrieve${toPascalCase(findDirective.path())}${suffix}`;
     }
 
-    return `retrieve${givenDirectives.map((directive) => toPascalCase(directive.path())).join("")}`;
+    return `retrieve${givenDirectives.map((directive) => toPascalCase(directive.path())).join("")}${suffix}`;
   }
 
   protected buildUrl(query: RetrieveQuery, context: FindQueryProcessorContext): Url {
@@ -86,6 +88,10 @@ export class FindOneQueryGenerator extends FindQueryGenerator<RetrieveQuery> {
       }
     }
 
+    if (query.withSuffix) {
+      pathBuilder.withNoun(query.withSuffix, false);
+    }
+
     return urlBuilder.build();
   }
 
@@ -102,6 +108,7 @@ export class FindOneQueryGenerator extends FindQueryGenerator<RetrieveQuery> {
     }
 
     const sourceEntity = Joins.viaFrom(sourceDirective);
+    const suffix = query.withSuffix ? ` ${toSummaryCase(query.withSuffix)}` : "";
 
     return `Find ${aOrAn(sourceEntity)} ${toSummaryCase(sourceEntity)}${
       entities.length > 0
@@ -109,7 +116,7 @@ export class FindOneQueryGenerator extends FindQueryGenerator<RetrieveQuery> {
             return previous + (index > 0 ? " and " : "") + toSummaryCase(Joins.viaFrom(current));
           }, " for a given ")
         : ""
-    }.`;
+    }${suffix}.`;
   }
 
   protected buildResponse(query: RetrieveQuery, context: QueryProcessorContext): OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject {

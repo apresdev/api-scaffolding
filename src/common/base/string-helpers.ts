@@ -140,9 +140,10 @@ function capitalize(s: string): string {
  * @returns The converted value is the appropriate case format.
  */
 export function toKebabCase(value: string | undefined): string {
-  if (!value) {
+  if (value === undefined) {
     return "undefined";
   }
+
   return applyCase(value, "-", (s: string) => s.toLowerCase());
 }
 
@@ -155,9 +156,10 @@ export function toKebabCase(value: string | undefined): string {
  * @returns The converted value is the appropriate case format.
  */
 export function toSnakeCase(value: string | undefined): string {
-  if (!value) {
+  if (value === undefined) {
     return "undefined";
   }
+
   return applyCase(value, "_", (s: string) => s.toLowerCase());
 }
 
@@ -170,9 +172,10 @@ export function toSnakeCase(value: string | undefined): string {
  * @returns The converted value is the appropriate case format.
  */
 export function toCamelCase(value: string | undefined): string {
-  if (!value) {
+  if (value === undefined) {
     return "undefined";
   }
+
   return applyCase(value, "", (s: string, index: number) => {
     if (0 === index) {
       return s.toLowerCase();
@@ -191,7 +194,7 @@ export function toCamelCase(value: string | undefined): string {
  * @returns The converted value is the appropriate case format.
  */
 export function toPascalCase(value: string | undefined): string {
-  if (!value) {
+  if (value === undefined) {
     return "Undefined";
   }
 
@@ -207,7 +210,7 @@ export function toPascalCase(value: string | undefined): string {
  * @returns The converted value is the appropriate case format.
  */
 export function toTitleCase(value: string | undefined): string {
-  if (!value) {
+  if (value === undefined) {
     return "Undefined";
   }
 
@@ -230,7 +233,7 @@ const ES_SUFFIXES = ["s", "ss", "sh", "ch", "x", "z"];
  * @returns The pluralized noun
  */
 export function pluralize(noun: string | undefined): string {
-  if (!noun) {
+  if (noun === undefined) {
     return "undefined";
   }
 
@@ -263,9 +266,10 @@ export function pluralize(noun: string | undefined): string {
  * @returns The pluralized noun
  */
 export function singularize(noun: string | undefined): string {
-  if (!noun) {
+  if (noun === undefined) {
     return "undefined";
   }
+
   if (noun.endsWith("ies")) {
     return `${noun.slice(0, Math.max(0, noun.length - 3))}y`;
   }

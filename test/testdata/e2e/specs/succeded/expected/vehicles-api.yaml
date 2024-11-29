@@ -45,6 +45,28 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - oauth2: []
+  /list/vehicles/by-year:
+    post:
+      operationId: listVehiclesByYear
+      summary: List all vehicles by year.
+      tags:
+        - Vehicles
+      description: List all vehicles by year.
+      requestBody:
+        $ref: "#/components/requestBodies/ListVehiclesByYearRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/ListVehiclesByYearResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
   /manufacturers:
     get:
       operationId: listManufacturers
@@ -310,6 +332,28 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-apres-known-queries: {}
+  /retrieve/vehicle/by-license:
+    post:
+      operationId: retrieveVehicleByLicense
+      summary: Find a vehicle by license.
+      tags:
+        - Vehicles
+      description: Find a vehicle by license.
+      requestBody:
+        $ref: "#/components/requestBodies/RetrieveVehicleByLicenseRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/RetrieveVehicleByLicenseResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
   /search/manufacturers:
     post:
       operationId: searchManufacturers
@@ -557,6 +601,30 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - oauth2: []
+  /vehicles/{vehicleId}/location:
+    get:
+      operationId: retrieveVehicleLocation
+      summary: Find a vehicle location.
+      tags:
+        - Vehicles
+      parameters:
+        - $ref: "#/components/parameters/VehicleIdParameter"
+      description: Find a vehicle location.
+      responses:
+        "200":
+          $ref: "#/components/responses/RetrieveVehicleLocationResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
   /vehicles/{vehicleId}/photos/{photoId}:
     delete:
       operationId: deleteVehiclePhoto
@@ -648,6 +716,20 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ListVehiclesRequest"
+    ListVehiclesByYearRequest:
+      description: On success
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ListVehiclesByYearRequest"
+    RetrieveVehicleByLicenseRequest:
+      description: On success
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RetrieveVehicleByLicenseRequest"
     SearchManufacturersRequest:
       description: On success
       required: true
@@ -900,6 +982,24 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/RetrieveVehicleResponse"
+    ListVehiclesByYearResponse:
+      description: List all vehicles by year.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ListVehiclesByYearResponse"
+    RetrieveVehicleLocationResponse:
+      description: Find a vehicle location.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RetrieveVehicleLocationResponse"
+    RetrieveVehicleByLicenseResponse:
+      description: Find a vehicle by license.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RetrieveVehicleByLicenseResponse"
     ListModelsResponse:
       description: List all models for a given a manufacturer.
       content:
@@ -1325,6 +1425,39 @@ components:
           $ref: "#/components/schemas/Limit"
         offset:
           $ref: "#/components/schemas/Offset"
+    ListVehiclesByYearRequest:
+      type: object
+      properties:
+        filterBy:
+          type: object
+          properties:
+            vehicle:
+              type: object
+              properties:
+                year:
+                  type: array
+                  items:
+                    type: integer
+                    minimum: 1900
+                    maximum: 3000
+                    default: 2024
+        limit:
+          $ref: "#/components/schemas/Limit"
+        offset:
+          $ref: "#/components/schemas/Offset"
+    RetrieveVehicleByLicenseRequest:
+      type: object
+      properties:
+        filterBy:
+          type: object
+          properties:
+            vehicle:
+              type: object
+              properties:
+                license:
+                  type: array
+                  items:
+                    type: string
     SearchManufacturersRequest:
       type: object
       properties:
@@ -1431,6 +1564,8 @@ components:
       required:
         - model
       properties:
+        license:
+          type: string
         model:
           $ref: "#/components/schemas/ModelIdentifier"
         year:
@@ -1471,6 +1606,8 @@ components:
         - id
         - model
       properties:
+        license:
+          type: string
         model:
           $ref: "#/components/schemas/ModelIdentifier"
         year:
@@ -1623,6 +1760,34 @@ components:
           items:
             $ref: "#/components/schemas/Vehicle"
     RetrieveVehicleResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          $ref: "#/components/schemas/Vehicle"
+    ListVehiclesByYearResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        metadata:
+          $ref: "#/components/schemas/Metadata"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Vehicle"
+    RetrieveVehicleLocationResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          type: object
+          properties:
+            location:
+              $ref: "#/components/schemas/GeoLocation"
+    RetrieveVehicleByLicenseResponse:
       type: object
       properties:
         status:
