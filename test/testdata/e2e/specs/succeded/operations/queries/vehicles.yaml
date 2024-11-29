@@ -7,6 +7,22 @@
     - model: ["id"]
 - findOne: vehicle
 
+# Test list and retrieve by entity name using suffixes
+- findAll: vehicle
+  withSuffix: by-year
+  filterableBy:
+    - vehicle: [year]
+
+- findOne:
+    vehicle:
+      - location
+  withSuffix: location
+
+- findOne: vehicle
+  filterableBy:
+    - vehicle: [license]
+  withSuffix: by-license
+
 # Test list and retrieve by entity projection
 - findAll:
     model:
