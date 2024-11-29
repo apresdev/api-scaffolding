@@ -2,6 +2,10 @@
 
 This change log is automatically generated.
 
+## 0.0.22 - 2024-11-29
+
+Adding support for withSuffix to findOne and findAll.
+
 ## 0.0.21 - 2024-11-28
 
 Adding support for handling files.
