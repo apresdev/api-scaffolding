@@ -1,7 +1,7 @@
 {
   "name": "@apresdev/api-scaffolding",
   "homepage": "https://github.com/apresdev/api-scaffolding",
-  "version": "0.0.20",
+  "version": "0.0.21",
   "description": "",
   "bin": {
     "apres-api": "dist/index.js"
@@ -27,8 +27,9 @@
     "generate.openapi": "npm run generate.openapi.spec && npm run generate.openapi.client",
     "generate.openapi.spec": "npm run generate.openapi.template && npx ts-node src/index.ts openapi",
     "generate.openapi.template": "yq -o=json template.openapi.yaml > src/generators/openapi/template.openapi.json",
-    "generate.schema": "for schema in service entities any queries relationships policies fragments; do npm run generate.schema.$schema; done",
+    "generate.schema": "for schema in service entities files any queries relationships policies fragments; do npm run generate.schema.$schema; done",
     "generate.schema.service": "npx ts-json-schema-generator -f ./tsconfig.json --path 'src/specification/specification.ts' --type 'ServiceSpecification' > src/schemas/service-description.json",
+    "generate.schema.files": "npx ts-json-schema-generator -f ./tsconfig.json --path 'src/specification/file.ts' --type 'FileSchema' > src/schemas/file.json",
     "generate.schema.entities": "npx ts-json-schema-generator -f ./tsconfig.json --path 'src/specification/entity.ts' --type 'EntitySchema' > src/schemas/model.json",
     "generate.schema.any": "npx ts-json-schema-generator -f ./tsconfig.json --path 'src/specification/entity.ts' --type 'AnySchema' > src/schemas/any.json",
     "generate.schema.queries": "npx ts-json-schema-generator -f ./tsconfig.json --path 'src/specification/specification.ts' --type 'Queries' > src/schemas/queries.json",

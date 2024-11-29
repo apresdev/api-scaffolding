@@ -1,8 +1,9 @@
 import { OpenAPIV3 } from "openapi-types";
 import { JsonPath, Objects, toCamelCase } from "../../../common";
 import { PathError } from "../../../common/io";
+import { Nodes } from "../../../dependency-graph";
 import { asSchemaObject } from "../../../entities";
-import { EntityName, EntityProjection, EntitySchema, Nodes } from "../../../specification";
+import { EntityName, EntityProjection, EntitySchema } from "../../../specification";
 import { EntityProjections, Joins } from "../../../specification/joins";
 import { arraySchema } from "../util";
 import { QueryProcessorContext } from "./query-generator";

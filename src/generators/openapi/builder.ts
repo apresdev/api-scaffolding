@@ -6,7 +6,7 @@ import { BadRequestError, CommonErrors, NoContent, NotFoundError } from "./statu
 import { OpenAPISpecification, Security } from "./types";
 import { entitySchemaReference, openApiPath, pathIdentifier, pathIdentifierParameter, toPathNounCase } from "./util";
 
-import { Arrays, Objects, pluralize, toPascalCase, toTitleCase } from "../../common";
+import { Arrays, Objects, pluralize, toKebabCase, toPascalCase, toTitleCase } from "../../common";
 import { SchemaRegistry } from "../../models";
 import { EntitySchema } from "../../specification";
 
@@ -124,6 +124,12 @@ export class OpenAPIOperationBuilder {
   private successResponse?: SuccessResponse;
 
   /**
+   * The operation extensions.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private extensions: Record<string, any>;
+
+  /**
    * Creates an instance of an OperationBuilder.
    *
    * @param path The URL path.
@@ -135,6 +141,7 @@ export class OpenAPIOperationBuilder {
     this.openAPI = openAPI;
     this.method = method;
     this.schemaRegistry = schemaRegistry;
+    this.extensions = {};
   }
 
   /**
@@ -220,6 +227,13 @@ export class OpenAPIOperationBuilder {
     return this;
   }
 
+  public withExtension<T>(tag: string, value: T | undefined): OpenAPIOperationBuilder {
+    if (value !== undefined) {
+      this.extensions[`x-apres-${toKebabCase(tag)}`] = value;
+    }
+    return this;
+  }
+
   private buildTag(): [string] | undefined {
     if (!this.tag) {
       return undefined;
@@ -271,6 +285,7 @@ export class OpenAPIOperationBuilder {
         ...this.errors,
       },
       security: [Security],
+      ...this.extensions,
     };
   }
 

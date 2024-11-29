@@ -1,0 +1,5 @@
+type: file
+alias: photo
+accept: image/*
+maxLength: 10000000
+ownership: global

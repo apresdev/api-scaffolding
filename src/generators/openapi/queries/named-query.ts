@@ -1,8 +1,9 @@
 import { OpenAPIV3 } from "openapi-types";
 import { Arrays, JsonPath, Objects, ajv, toCamelCase, toKebabCase } from "../../../common";
 import { PathError } from "../../../common/io";
+import { Nodes } from "../../../dependency-graph";
 import { resolveFully } from "../../../models/util";
-import { AnySchema, Cardinality, EntityName, EntityProjection, Nodes, isEntityProjection } from "../../../specification";
+import { AnySchema, Cardinality, EntityName, EntityProjection, isEntityProjection } from "../../../specification";
 import { Joins } from "../../../specification/joins";
 import { ColumnDescriptor, Dimension, Measure, NamedQuery } from "../../../specification/named-query";
 import { CONTENT_TYPE_JSON } from "../util";

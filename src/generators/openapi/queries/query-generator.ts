@@ -1,7 +1,8 @@
 import { OpenAPISpecification } from "../types";
 
+import { DependencyGraph } from "../../../dependency-graph";
 import { SchemaRegistry } from "../../../models";
-import { BaseQuery, DependencyGraph, ServiceSpecification } from "../../../specification";
+import { BaseQuery, ServiceSpecification } from "../../../specification";
 
 /**
  * The query processing execution context.

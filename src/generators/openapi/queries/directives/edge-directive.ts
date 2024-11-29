@@ -1,6 +1,7 @@
 import { OpenAPIV3 } from "openapi-types";
 import { checkNotEmpty, checkNotNull, pluralize } from "../../../../common";
-import { Cardinality, Edge, EntityName, RelationshipName } from "../../../../specification";
+import { Edge } from "../../../../dependency-graph";
+import { Cardinality, EntityName, RelationshipName } from "../../../../specification";
 import { entitySchemaReference } from "../../util";
 import { EntityDirective } from "./entity-directive";
 

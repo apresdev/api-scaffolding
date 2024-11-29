@@ -12,6 +12,8 @@ tags:
     description: Manufacturers operations
   - name: Models
     description: Models operations
+  - name: Photos
+    description: Photos operations
   - name: Query
     description: Query operations.
   - name: Vehicles
@@ -383,6 +385,79 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - oauth2: []
+  /upload/vehicles/{vehicleId}/photos:
+    post:
+      operationId: createVehiclePhoto
+      summary: Generates an upload url to create a new vehicle photo file.
+      tags:
+        - Photos
+      parameters:
+        - $ref: "#/components/parameters/VehicleIdParameter"
+      description: Generates an upload url to create a new vehicle photo file.
+      requestBody:
+        $ref: "#/components/requestBodies/CreateVehiclePhotoRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/CreateVehiclePhotoResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+      x-apres-accept:
+        - image/apng
+        - image/bmp
+        - image/gif
+        - image/jpeg
+        - image/png
+        - image/svg+xml
+        - image/tiff
+        - image/webp
+      x-apres-max-length: 10000000
+  /upload/vehicles/{vehicleId}/photos/{photoId}:
+    post:
+      operationId: updateVehiclePhoto
+      summary: Generates an upload url to update an existing vehicle photo file.
+      tags:
+        - Photos
+      parameters:
+        - $ref: "#/components/parameters/VehicleIdParameter"
+        - $ref: "#/components/parameters/PhotoIdParameter"
+      description: Generates an upload url to update an existing vehicle photo file.
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateVehiclePhotoRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/UpdateVehiclePhotoResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
+      x-apres-accept:
+        - image/apng
+        - image/bmp
+        - image/gif
+        - image/jpeg
+        - image/png
+        - image/svg+xml
+        - image/tiff
+        - image/webp
+      x-apres-max-length: 10000000
   /vehicles/{vehicleId}:
     get:
       operationId: retrieveVehicle
@@ -482,6 +557,31 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
         - oauth2: []
+  /vehicles/{vehicleId}/photos/{photoId}:
+    delete:
+      operationId: deleteVehiclePhoto
+      summary: Deletes a vehicle photo file.
+      tags:
+        - Photos
+      parameters:
+        - $ref: "#/components/parameters/VehicleIdParameter"
+        - $ref: "#/components/parameters/PhotoIdParameter"
+      description: Deletes a vehicle photo file.
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - oauth2: []
 components:
   parameters:
     LimitParameter:
@@ -529,6 +629,12 @@ components:
       required: true
       schema:
         $ref: "#/components/schemas/ModelIdentifier"
+    PhotoIdParameter:
+      name: photoId
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/PhotoIdentifier"
   requestBodies:
     ExecuteQueryRequest:
       content:
@@ -563,6 +669,20 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/SearchVehiclesRequest"
+    CreateVehiclePhotoRequest:
+      description: On success
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UploadUrlRequest"
+    UpdateVehiclePhotoRequest:
+      description: On success
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UploadUrlRequest"
     CreateVehicleRequest:
       description: The new vehicle
       required: true
@@ -822,6 +942,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/SearchVehiclesResponse"
+    CreateVehiclePhotoResponse:
+      description: The current server side state of the newly created Vehicle Photo.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CreateVehiclePhotoResponse"
+    UpdateVehiclePhotoResponse:
+      description: The current server side state of the newly created Vehicle Photo.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UpdateVehiclePhotoResponse"
     CreateVehicleResponse:
       description: The current server side state of the newly created Vehicle.
       content:
@@ -903,6 +1035,64 @@ components:
           $ref: "#/components/schemas/Limit"
         offset:
           $ref: "#/components/schemas/Offset"
+    FileIdentifier:
+      type: string
+      example: image.png
+    Length:
+      type: integer
+      minimum: 0
+    MD5Checksum:
+      type: string
+      format: byte
+      minLength: 24
+      maxLength: 24
+      description: >
+        The MD5 message-digest algorithm is a widely used hash function producing a 128-bit hash value, represented as 24 base64 characters.
+        digits.
+      example: 4/xQqI0KNkMT30sh7yDCng==
+    ContentType:
+      type: string
+      description: >
+        A MIME type (now properly called "media type", but also sometimes "content type") is a string sent along with a file indicating the
+        type of the file (describing the content format, for example, a sound file might be labeled audio/ogg, or an image file image/png).
+      example: image/png
+    UploadUrlRequest:
+      description: |
+        Contains directives specifying aspects of the file that is requesting to be uploaded.
+      type: object
+      required:
+        - contentType
+        - md5
+      properties:
+        contentType:
+          $ref: "#/components/schemas/ContentType"
+        contentLength:
+          $ref: "#/components/schemas/Length"
+        contentMD5:
+          $ref: "#/components/schemas/MD5Checksum"
+    UploadUrlResponse:
+      description: >
+        Contains the directives as to how to upload the file.  Sent in response to an API to request a file upload. Describes the HTTP
+        method (PUT or POST) and URL where the file contents should be sent.   The file contents should be sent as raw binary data.
+      type: object
+      required:
+        - id
+        - method
+        - url
+      properties:
+        id:
+          $ref: "#/components/schemas/FileIdentifier"
+        method:
+          type: string
+          default: PUT
+          enum:
+            - POST
+            - PUT
+          example: PUT
+        url:
+          type: string
+          format: uri
+          example: http://example/com/upload
     Metadata:
       type: object
       properties:
@@ -1238,6 +1428,8 @@ components:
       $ref: "#/components/schemas/VinNumber"
     VehicleInput:
       type: object
+      required:
+        - model
       properties:
         model:
           $ref: "#/components/schemas/ModelIdentifier"
@@ -1268,14 +1460,16 @@ components:
                 The collection of named add-ons the vehicle has.
               items:
                 type: string
-      required:
-        - model
       x-apres-requiresOneOf:
-        - [frontWheelType, rearWheelType]
-        - [treadType]
-        - [propellorType]
+        - - frontWheelType
+          - rearWheelType
+        - - treadType
+        - - propellorType
     Vehicle:
       type: object
+      required:
+        - id
+        - model
       properties:
         model:
           $ref: "#/components/schemas/ModelIdentifier"
@@ -1317,13 +1511,11 @@ components:
         deletedAt:
           type: string
           format: date-time
-      required:
-        - id
-        - model
       x-apres-requiresOneOf:
-        - [frontWheelType, rearWheelType]
-        - [treadType]
-        - [propellorType]
+        - - frontWheelType
+          - rearWheelType
+        - - treadType
+        - - propellorType
     ModelIdentifier:
       $ref: "#/components/schemas/EntityIdentifier"
     ModelInput:
@@ -1381,6 +1573,8 @@ components:
           format: date-time
       required:
         - id
+    PhotoIdentifier:
+      type: string
     ManufacturerDetails:
       type: object
       properties:
@@ -1528,6 +1722,20 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/VehicleDetails"
+    CreateVehiclePhotoResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          $ref: "#/components/schemas/UploadUrlResponse"
+    UpdateVehiclePhotoResponse:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApiStatus"
+        data:
+          $ref: "#/components/schemas/UploadUrlResponse"
     CreateVehicleResponse:
       type: object
       properties:

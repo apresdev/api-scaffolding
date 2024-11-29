@@ -1,6 +1,6 @@
 import { OpenAPIV3 } from "openapi-types";
 import { asSchemaObject, isSingleton } from "../../../../entities";
-import { EntityProjection } from "../../../../specification";
+import { EntityProjection, EntitySchema } from "../../../../specification";
 import { EntityProjections } from "../../../../specification/joins";
 import { QueryProcessorContext } from "../query-generator";
 import { EntityDirective } from "./entity-directive";
@@ -22,7 +22,7 @@ export class EntityProjectionDirective implements EntityDirective {
   }
 
   isSingleton(context: QueryProcessorContext): boolean {
-    return isSingleton(context.schemaRegistry.get(this.entity()));
+    return isSingleton(context.schemaRegistry.get(this.entity()) as EntitySchema);
   }
 
   schema(context: QueryProcessorContext): OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject {

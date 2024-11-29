@@ -49,7 +49,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "example": {
@@ -127,7 +127,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "enum": {
@@ -192,7 +192,7 @@
               "type": "string"
             },
             "editable": {
-              "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+              "description": "An optional flag indicating if the data is editable.  Defaults to true.",
               "type": "boolean"
             },
             "example": {
@@ -270,7 +270,7 @@
               "type": "string"
             },
             "editable": {
-              "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+              "description": "An optional flag indicating if the data is editable.  Defaults to true.",
               "type": "boolean"
             },
             "example": {
@@ -352,7 +352,7 @@
               "type": "string"
             },
             "editable": {
-              "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+              "description": "An optional flag indicating if the data is editable.  Defaults to true.",
               "type": "boolean"
             },
             "enum": {
@@ -430,7 +430,7 @@
               "type": "string"
             },
             "editable": {
-              "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+              "description": "An optional flag indicating if the data is editable.  Defaults to true.",
               "type": "boolean"
             },
             "enum": {
@@ -507,7 +507,7 @@
               "type": "string"
             },
             "editable": {
-              "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+              "description": "An optional flag indicating if the data is editable.  Defaults to true.",
               "type": "boolean"
             },
             "enum": {
@@ -563,7 +563,7 @@
               "type": "string"
             },
             "editable": {
-              "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+              "description": "An optional flag indicating if the data is editable.  Defaults to true.",
               "type": "boolean"
             },
             "name": {
@@ -663,6 +663,24 @@
       ],
       "type": "string"
     },
+    "EntityMutation": {
+      "additionalProperties": false,
+      "description": "Defines a mutable entity in the service.",
+      "properties": {
+        "entity": {
+          "$ref": "#/definitions/EntityName",
+          "description": "The name of the entity to mutate."
+        },
+        "tag": {
+          "description": "The optional operation tag.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "entity"
+      ],
+      "type": "object"
+    },
     "EntityName": {
       "type": "string"
     },
@@ -677,6 +695,28 @@
       "maxProperties": 1,
       "minProperties": 1,
       "type": "object"
+    },
+    "FileMutation": {
+      "additionalProperties": false,
+      "description": "Defines a mutable entity in the service.",
+      "properties": {
+        "file": {
+          "$ref": "#/definitions/FileTypeName",
+          "description": "The name of the file to mutate."
+        },
+        "tag": {
+          "description": "The optional operation tag.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "file"
+      ],
+      "type": "object"
+    },
+    "FileTypeName": {
+      "description": "A strongly typed name for a file type name. (e.g. vehicle-photo)",
+      "type": "string"
     },
     "FindType": {
       "$ref": "#/definitions/JoinDirective",
@@ -870,22 +910,15 @@
       "description": "A description of a measure."
     },
     "Mutation": {
-      "additionalProperties": false,
-      "description": "Defines a mutable entity in the service.",
-      "properties": {
-        "entity": {
-          "$ref": "#/definitions/EntityName",
-          "description": "The name of the entity to mutate."
+      "anyOf": [
+        {
+          "$ref": "#/definitions/EntityMutation"
         },
-        "tag": {
-          "description": "The optional operation tag.",
-          "type": "string"
+        {
+          "$ref": "#/definitions/FileMutation"
         }
-      },
-      "required": [
-        "entity"
       ],
-      "type": "object"
+      "description": "Defines a mutable entity in the service."
     },
     "Mutations": {
       "description": "A collection of Mutation objects.",
@@ -940,7 +973,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "readOnly": {
@@ -983,7 +1016,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "enum": {
@@ -1053,7 +1086,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "example": {
@@ -1379,7 +1412,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "fromOne": {
@@ -1585,6 +1618,13 @@
           },
           "type": "array"
         },
+        "files": {
+          "description": "An optional collection of file type names.",
+          "items": {
+            "$ref": "#/definitions/FileTypeName"
+          },
+          "type": "array"
+        },
         "info": {
           "$ref": "#/definitions/Information",
           "description": "The object provides metadata about the API. The metadata MAY be used by the clients if needed, and MAY be presented in editing or documentation generation tools for convenience."
@@ -1632,7 +1672,7 @@
           "type": "string"
         },
         "editable": {
-          "description": "Flag the indicates that the schema contents are editable after creation (defaults true).",
+          "description": "An optional flag indicating if the data is editable.  Defaults to true.",
           "type": "boolean"
         },
         "enum": {

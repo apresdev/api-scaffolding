@@ -8,12 +8,11 @@ import {
   EntityProjection,
   EntitySchema,
   JoinDirective,
-  Node,
-  Nodes,
   ObjectSchema,
   ViaEntry,
   isEntityProjection,
 } from ".";
+import { Node, Nodes } from "../dependency-graph";
 import { QueryProcessorContext } from "../generators/openapi/queries/query-generator";
 
 export class Joins {
