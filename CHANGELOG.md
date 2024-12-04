@@ -2,6 +2,10 @@
 
 This change log is automatically generated.
 
+## 0.0.23 - 2024-12-04
+
+Updating "x-apres-" extensions to use kebab-case..
+
 ## 0.0.22 - 2024-11-29
 
 Adding support for withSuffix to findOne and findAll.
