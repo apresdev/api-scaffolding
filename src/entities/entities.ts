@@ -1,6 +1,6 @@
 import { OpenAPIV3 } from "openapi-types";
 
-import { Objects, toPascalCase } from "../common";
+import { Objects, toKebabCase, toPascalCase } from "../common";
 import { toSchemaObject } from "../generators/openapi/entities";
 import { AnySchema, EntitySchema, MutationKeywords } from "../specification";
 
@@ -84,7 +84,16 @@ export function removeExtensionKeywords(entityModel: EntitySchema | AnySchema | 
       }
 
       for (const keyword of [...entityKeywordExtensions, ...propertyKeywordExtensions]) {
-        schema[`x-apres-${keyword}`] = schema[keyword];
+        // While we normally use camelCase for property names, we shall use kebab-case for the OpenAPI extensions.
+        // This is a common pattern.  For example AWS uses kebab-case for all OpenAPI extensions for API gateway support
+        // https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-swagger-extensions.html.  Similarily, Google uses
+        // kebab-case as well  https://cloud.google.com/endpoints/docs/openapi/openapi-extensions.
+        //
+        // Moreover, the OpenAPI specification dicatates that all extensions start with "x-"
+        // (https://swagger.io/docs/specification/v3_0/openapi-extensions/).
+        //
+        // As such, kebab-case is somewhat implied.
+        schema[`x-apres-${toKebabCase(keyword)}`] = schema[keyword];
         delete schema[keyword];
       }
     }
