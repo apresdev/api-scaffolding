@@ -1595,7 +1595,7 @@ components:
                 The collection of named add-ons the vehicle has.
               items:
                 type: string
-      x-apres-requiresOneOf:
+      x-apres-requires-one-of:
         - - frontWheelType
           - rearWheelType
         - - treadType
@@ -1648,7 +1648,7 @@ components:
         deletedAt:
           type: string
           format: date-time
-      x-apres-requiresOneOf:
+      x-apres-requires-one-of:
         - - frontWheelType
           - rearWheelType
         - - treadType
