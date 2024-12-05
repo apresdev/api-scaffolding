@@ -2,6 +2,10 @@
 
 This change log is automatically generated.
 
+## 0.0.24 - 2024-12-05
+
+Convert all requiresOneOf names into camelCase..
+
 ## 0.0.23 - 2024-12-04
 
 Updating "x-apres-" extensions to use kebab-case..
