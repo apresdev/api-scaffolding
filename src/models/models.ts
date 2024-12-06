@@ -145,6 +145,9 @@ class ModelProcessor extends FileProcessor<EntitySchema, ModelProcessorContext> 
         return;
       }
 
+      // We expect all property names to be converted to camelCase, so we should convert all requiresOneOf references to camelCase as well.
+      asEntitySchema.requiresOneOf = asEntitySchema.requiresOneOf.map((scenario) => scenario.map((property) => toCamelCase(property)));
+
       if (!asEntitySchema.properties) {
         this.withError(jsonPath, "requiresOneOf", "requiresOneOf without properties defined", context);
         return;
