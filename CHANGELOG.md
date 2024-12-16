@@ -2,6 +2,10 @@
 
 This change log is automatically generated.
 
+## 0.0.25 - 2024-12-16
+
+fix typo in successful test cases
+
 ## 0.0.24 - 2024-12-05
 
 Convert all requiresOneOf names into camelCase..
