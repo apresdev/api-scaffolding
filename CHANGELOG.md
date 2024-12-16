@@ -2,6 +2,10 @@
 
 This change log is automatically generated.
 
+## 0.0.26 - 2024-12-16
+
+All filterableBy fields should be optional.
+
 ## 0.0.25 - 2024-12-16
 
 fix typo in successful test cases
