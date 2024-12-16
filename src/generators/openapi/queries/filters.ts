@@ -101,6 +101,20 @@ function clearReadOnly(schema: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObjec
   return schema;
 }
 
+/**
+ * Removes the required field from a schema.
+ *
+ * @param schema the schema to clear
+ * @returns the cleared schema.
+ */
+function clearRequired(schema: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject): OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject {
+  if ("required" in schema) {
+    delete schema.required;
+  }
+
+  return schema;
+}
+
 /* eslint-disable sonarjs/cognitive-complexity */
 export function filterBy(
   filterableBy: EntityProjection[],
@@ -157,7 +171,7 @@ export function filterBy(
     }
 
     filters.properties = Objects.orEmpty(filters.properties);
-    filters.properties[toCamelCase(entity)] = projectionSchema;
+    filters.properties[toCamelCase(entity)] = clearRequired(projectionSchema);
   }
 
   return filters;
