@@ -11,7 +11,7 @@ import { loadYaml } from "../../src/util";
 
 const testDataDirectory = "test/testdata";
 const specificationDirectory = `${testDataDirectory}/e2e/specs`;
-const successModeDirectory = `${specificationDirectory}/succeded`;
+const successModeDirectory = `${specificationDirectory}/succeeded`;
 const failureModeDirectory = `${specificationDirectory}/failed`;
 
 function successPath(item: string): string {
