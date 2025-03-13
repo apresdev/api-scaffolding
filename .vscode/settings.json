@@ -17,5 +17,6 @@
   "eslint.validate": ["typescript"],
   "editor.codeActionsOnSave": {
     "source.fixAll": "explicit"
-  }
+  },
+  "editor.tabSize": 2
 }
