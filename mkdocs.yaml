@@ -1,0 +1,23 @@
+site_name: Apres API Scaffolding
+site_description: >
+  Documentation for the Apres API Scaffolding tool.
+repo_url: https://github.com/apresdev/api-scaffolding
+plugins:
+  - search
+nav:
+  - Home: index.md
+  - Specification:
+      - Specification: specification/index.md
+      - Concepts:
+          - Collections: specification/collections.md
+          - Entity Projection: specification/entity-projection.md
+      - Entities: specification/entity/index.md
+      - Files: specification/file/index.md
+      - Operations:
+          - Mutations:
+              - Entity Mutations: specification/operations/mutations/entity-mutation.md
+              - File Mutations: specification/operations/mutations/file-mutation.md
+          - Queries:
+              - Find: specification/operations/queries/find.md
+              - Search: specification/operations/queries/search.md
+              - Named Queries: specification/operations/queries/named-query.md
