@@ -3,11 +3,11 @@ import path from "node:path";
 import Ajv, { Schema, ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
 import ajvKeywords from "ajv-keywords";
+import { DEFAULT_SCHEMA, Type, load } from "js-yaml";
 import SourceMap from "js-yaml-source-map";
-import { read } from "yaml-import";
+import fs from "node:fs";
 import { deepCopy } from "../../util";
 import { Arrays } from "../base";
-
 export const ajv = new Ajv();
 addFormats(ajv);
 ajvKeywords(ajv);
@@ -64,6 +64,16 @@ export class SourceMaps {
   }
 }
 
+const RangeYamlType = new Type("!range", {
+  kind: "scalar",
+  construct(data) {
+    const result: Record<string, string[]> = {};
+    result[data] = ["range"];
+    return result;
+  },
+});
+const YamlSchema = DEFAULT_SCHEMA.extend([RangeYamlType]);
+
 export class SchemaValidator<T> {
   private readonly schema: Schema;
   private readonly sourceMaps: SourceMaps;
@@ -79,13 +89,26 @@ export class SchemaValidator<T> {
     this.validatorFn = ajv.compile(schema);
   }
 
+  private read(filePath: string, sourceMap: SourceMap): T {
+    const source = fs.readFileSync(filePath, "utf8");
+    const options = {
+      // safe: true,
+      listener: sourceMap.listen(),
+      filename: filePath,
+      schema: YamlSchema,
+    };
+
+    return load(source, options) as T;
+  }
+
   public loadYaml(yamlSource: string): LoadResult<T> {
     const absolutePath = path.resolve(yamlSource);
     const sourceMap = new SourceMap();
     // const data = fs.readFileSync(absolutePath, "utf8");
 
     // Load the model with the source map.
-    const model = read(absolutePath, { listener: sourceMap.listen() }) as T;
+    // const model = read(absolutePath, { listener: sourceMap.listen() }) as T;
+    const model = this.read(absolutePath, sourceMap);
     const errors: ProcessingErrors = [];
 
     this.sourceMaps.set(yamlSource, sourceMap);

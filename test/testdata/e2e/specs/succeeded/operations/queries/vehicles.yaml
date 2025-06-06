@@ -11,7 +11,7 @@
 - findAll: vehicle
   withSuffix: by-year
   filterableBy:
-    - vehicle: [year]
+    - vehicle: [!range year]
 
 - findOne:
     vehicle:

@@ -427,6 +427,108 @@
         "type": "integer",
         "minimum": 0
       },
+      "IntegerFilter": {
+        "type": "object",
+        "description": "A filter used to filter results based on a given `integer` field.\nSpecific filters allow the client to search between a starting and ending integer range.\n",
+        "properties": {
+          "between": {
+            "$ref": "#/components/schemas/IntegerRange"
+          }
+        },
+        "minProperties": 1,
+        "maxProperties": 1,
+        "additionalProperties": false,
+        "example": {
+          "between": {
+            "start": 1,
+            "end": 10
+          }
+        }
+      },
+      "IntegerRange": {
+        "type": "object",
+        "description": "A fixed integer range, represented by a start integer and an end integer.\n",
+        "required": [
+          "start",
+          "end"
+        ],
+        "properties": {
+          "start": {
+            "type": "integer"
+          },
+          "end": {
+            "type": "integer"
+          }
+        }
+      },
+      "NumberFilter": {
+        "type": "object",
+        "description": "A filter used to filter results based on a given `number` field.\nSpecific filters allow the client to search between a starting and ending integer range.\n",
+        "properties": {
+          "between": {
+            "$ref": "#/components/schemas/NumberRange"
+          }
+        },
+        "minProperties": 1,
+        "maxProperties": 1,
+        "additionalProperties": false,
+        "example": {
+          "between": {
+            "start": 1.2,
+            "end": 3.4
+          }
+        }
+      },
+      "NumberRange": {
+        "type": "object",
+        "description": "A fixed number range, represented by a start number and an end number.\n",
+        "required": [
+          "start",
+          "end"
+        ],
+        "properties": {
+          "start": {
+            "type": "number"
+          },
+          "end": {
+            "type": "number"
+          }
+        }
+      },
+      "StringFilter": {
+        "type": "object",
+        "description": "A filter used to filter results based on a given `string` field.\nSpecific filters allow the client to search between a starting and ending string range.\n",
+        "properties": {
+          "between": {
+            "$ref": "#/components/schemas/StringRange"
+          }
+        },
+        "minProperties": 1,
+        "maxProperties": 1,
+        "additionalProperties": false,
+        "example": {
+          "between": {
+            "start": 1.2,
+            "end": 3.4
+          }
+        }
+      },
+      "StringRange": {
+        "type": "object",
+        "description": "A fixed number range, represented by a start string and an end string.\n",
+        "required": [
+          "start",
+          "end"
+        ],
+        "properties": {
+          "start": {
+            "type": "string"
+          },
+          "end": {
+            "type": "string"
+          }
+        }
+      },
       "DateTimeFilter": {
         "type": "object",
         "description": "A filter used to filter results based on a given `date-time` field.\nSpecific filters allow the client to search between a starting and ending date-time range, before a given date-time, at a specific date-time, and after a given date-time.\nRelative filters allow the client to search the past X chrono units (e.g. past 30 days), the next X chrono units (e.g. the next 7 days), or within the current chrono unit (e.g. in the current month or year).\n",
