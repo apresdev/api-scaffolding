@@ -1212,6 +1212,33 @@ components:
     Offset:
       type: integer
       minimum: 0
+    IntegerFilter:
+      type: object
+      description: |
+        A filter used to filter results based on a given `integer` field.
+        Specific filters allow the client to search between a starting and ending integer range.
+      properties:
+        between:
+          $ref: "#/components/schemas/IntegerRange"
+      minProperties: 1
+      maxProperties: 1
+      additionalProperties: false
+      example:
+        between:
+          start: 1
+          end: 10
+    IntegerRange:
+      type: object
+      description: |
+        A fixed integer range, represented by a start integer and an end integer.
+      required:
+        - start
+        - end
+      properties:
+        start:
+          type: integer
+        end:
+          type: integer
     DateTimeFilter:
       type: object
       description: >
@@ -1433,12 +1460,7 @@ components:
               type: object
               properties:
                 year:
-                  type: array
-                  items:
-                    type: integer
-                    minimum: 1900
-                    maximum: 3000
-                    default: 2024
+                  $ref: "#/components/schemas/IntegerFilter"
         limit:
           $ref: "#/components/schemas/Limit"
         offset:

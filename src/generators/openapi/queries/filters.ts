@@ -3,7 +3,7 @@ import { JsonPath, Objects, toCamelCase } from "../../../common";
 import { PathError } from "../../../common/io";
 import { Nodes } from "../../../dependency-graph";
 import { asSchemaObject } from "../../../entities";
-import { EntityName, EntityProjection, EntitySchema } from "../../../specification";
+import { EntityName, EntityProjection, EntitySchema, JoinDirective } from "../../../specification";
 import { EntityProjections, Joins } from "../../../specification/joins";
 import { arraySchema } from "../util";
 import { QueryProcessorContext } from "./query-generator";
@@ -16,13 +16,38 @@ const DateTimeFilter: OpenAPIV3.ReferenceObject = {
 };
 
 /**
+ * A specialized filter used for integer fields.
+ */
+const IntegerFilter: OpenAPIV3.ReferenceObject = {
+  $ref: "#/components/schemas/IntegerFilter",
+};
+
+/**
+ * A specialized filter used for number fields.
+ */
+const NumberFilter: OpenAPIV3.ReferenceObject = {
+  $ref: "#/components/schemas/NumberFilter",
+};
+
+/**
+ * A specialized filter used for string fields.
+ */
+const StringFilter: OpenAPIV3.ReferenceObject = {
+  $ref: "#/components/schemas/StringFilter",
+};
+
+/**
  * Creates a filter on a given schema value.
  *
  * @param schema the source schema for which a filter will be created.
  * @param path  the path to the current filter directive.
  * @returns the schema for the filer.
  */
-export function filterOn(schema: OpenAPIV3.SchemaObject, path: string): OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject {
+export function filterOn(
+  schema: OpenAPIV3.SchemaObject,
+  path: string,
+  directive: JoinDirective,
+): OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject {
   // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Handle format specific filters.
   // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -46,7 +71,7 @@ export function filterOn(schema: OpenAPIV3.SchemaObject, path: string): OpenAPIV
         return filterOnArray(result, path);
       }
       case "object": {
-        return filterOnObject(result, path);
+        return filterOnObject(result, path, directive as EntityProjection);
       }
     }
   }
@@ -57,7 +82,32 @@ export function filterOn(schema: OpenAPIV3.SchemaObject, path: string): OpenAPIV
   // The in operator accepts an array of scalars of the given field type (so an array of strings, integers, or numbers, including the
   // format and other validation keywords as well).  This performans an exact match on at least one of the values provided by the client.
   // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if (Joins.isEntityProjection(directive) && isRangeFilter(directive as EntityProjection)) {
+    return rangeSchema(result as OpenAPIV3.SchemaObject, path);
+  }
+
   return arraySchema(result);
+}
+
+function isRangeFilter(directive: EntityProjection): boolean {
+  const directives = directive[Joins.viaFrom(directive)];
+  return directives.length === 1 && directives[0] === "range";
+}
+
+export function rangeSchema(schema: OpenAPIV3.SchemaObject, path: string): OpenAPIV3.ReferenceObject {
+  switch (schema.type) {
+    case "string": {
+      return StringFilter;
+    }
+    case "integer": {
+      return IntegerFilter;
+    }
+    case "number": {
+      return NumberFilter;
+    }
+  }
+
+  throw new PathError(`range filter not supported on type: ${schema.type}`, path, "filterableBy");
 }
 
 function filterOnArray(result: OpenAPIV3.ArraySchemaObject, path: string) {
@@ -76,11 +126,18 @@ function filterOnArray(result: OpenAPIV3.ArraySchemaObject, path: string) {
   return result;
 }
 
-function filterOnObject(result: OpenAPIV3.NonArraySchemaObject, path: string) {
+function filterOnObject(result: OpenAPIV3.NonArraySchemaObject, path: string, directive: EntityProjection) {
+  const entity = Joins.viaFrom(directive);
+  const directives = Joins.directives(directive);
   if ("properties" in result && result.properties) {
-    for (const property of Object.keys(result.properties)) {
+    for (const [propertyIndex, subDirective] of directives.entries()) {
+      const property = Joins.viaFrom(subDirective);
       result.properties = Objects.orEmpty(result.properties);
-      result.properties[property] = filterOn(result.properties[property] as OpenAPIV3.SchemaObject, JsonPath.resolve(path, property));
+      result.properties[property] = filterOn(
+        result.properties[property] as OpenAPIV3.SchemaObject,
+        JsonPath.resolve(path, entity, propertyIndex.toString(), property),
+        subDirective,
+      );
     }
   }
 
@@ -157,16 +214,19 @@ export function filterBy(
       }
     }
 
-    const projectionSchema = asSchemaObject(
-      EntityProjections.projectionSchema(join as EntityProjection, entityName, JsonPath.resolve(path, entity), context),
-    );
+    const ep = join as EntityProjection;
+    const projectionSchema = asSchemaObject(EntityProjections.projectionSchema(ep, entityName, JsonPath.resolve(path, entity), context));
+    const directives = Joins.directives(ep)
 
-    for (const [propertyIndex, property] of Object.keys(Objects.orEmpty(projectionSchema.properties)).entries()) {
+    for (let propertyIndex = 0; propertyIndex < directives.length; propertyIndex++) {
+      const directive = directives[propertyIndex];
+      const property = Joins.viaFrom(directive);
       // Convert the field schema into a field filter schema.
       projectionSchema.properties = Objects.orEmpty(projectionSchema.properties);
       projectionSchema.properties[property] = filterOn(
         context.schemaRegistry.resolve(projectionSchema.properties[property]),
         JsonPath.resolve(path, entity, propertyIndex.toString()),
+        directive,
       );
     }
 
