@@ -2,6 +2,10 @@
 
 This change log is automatically generated.
 
+## 0.0.27 - 2025-06-09
+
+Updating github workflow to stop using deprecated build runner Ubuntu-20.04.
+
 ## 0.0.26 - 2024-12-16
 
 All filterableBy fields should be optional.

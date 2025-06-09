@@ -2,7 +2,7 @@ name: Continuous Integration
 
 on:
   pull_request:
-    types: [ opened, synchronize, reopened, labeled, unlabeled ]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
     paths:
       - "**"
       - .github/workflows/build.yml
@@ -10,7 +10,7 @@ on:
       - "!CHANGELOG.md"
 
   pull_request_target:
-    types: [ closed ]
+    types: [closed]
     paths:
       - "**"
       - .github/workflows/build.yml
@@ -23,7 +23,6 @@ permissions:
   id-token: write # This is required for requesting the JWT for AWS permissions
 
 jobs:
-
   detect:
     runs-on: ubuntu-latest
     name: "Detect pull request context"
@@ -90,7 +89,7 @@ jobs:
   validate:
     needs: detect
     name: Build
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
         uses: actions/checkout@v4
@@ -113,10 +112,8 @@ jobs:
         run: npm run test
 
   plan:
-    needs: [ detect, validate ]
+    needs: [detect, validate]
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
     name: "Plan versions:"
     outputs:
       version: ${{ steps.new-version.outputs.result }}
@@ -225,7 +222,7 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
   comment:
-    needs: [ detect, plan ]
+    needs: [detect, plan]
     if: needs.detect.outputs.is-merge-event == 'false'
     runs-on: ubuntu-latest
     name: "Comment on PR"
@@ -281,7 +278,7 @@ jobs:
             }
 
   release:
-    needs: [ detect, plan ]
+    needs: [detect, plan]
     if: needs.detect.outputs.is-merge-event == 'true' && needs.detect.outputs.release-type != 'no-version'
     runs-on: ubuntu-latest
     name: "Release"
