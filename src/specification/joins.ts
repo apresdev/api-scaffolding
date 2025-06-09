@@ -39,16 +39,13 @@ export class Joins {
     throw new Error("unsupported join directive");
   }
 
-
   public static directives(join: EntityProjection): JoinDirective[] {
-
-    const keys = Object.keys(join)
-    if( keys.length !== 1 ) {
-      throw new Error("detected entity projection with non-singular key: " + join)
+    const keys = Object.keys(join);
+    if (keys.length !== 1) {
+      throw new Error(`detected entity projection with non-singular key: ${join}`);
     }
 
-    return join[keys[0]]
-
+    return join[keys[0]];
   }
 }
 
