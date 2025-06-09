@@ -216,10 +216,9 @@ export function filterBy(
 
     const ep = join as EntityProjection;
     const projectionSchema = asSchemaObject(EntityProjections.projectionSchema(ep, entityName, JsonPath.resolve(path, entity), context));
-    const directives = Joins.directives(ep)
+    const directives = Joins.directives(ep);
 
-    for (let propertyIndex = 0; propertyIndex < directives.length; propertyIndex++) {
-      const directive = directives[propertyIndex];
+    for (const [propertyIndex, directive] of directives.entries()) {
       const property = Joins.viaFrom(directive);
       // Convert the field schema into a field filter schema.
       projectionSchema.properties = Objects.orEmpty(projectionSchema.properties);
