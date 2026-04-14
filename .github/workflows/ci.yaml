@@ -210,16 +210,16 @@ jobs:
           release-notes: ${{ needs.detect.outputs.changelog-text }}
           path-to-changelog: CHANGELOG.md
 
-      - name: Commit with signed
-        uses: planetscale/ghcommit-action@v0.1.6
-        if: needs.detect.outputs.release-type != 'no-version' # Only update the ChangeLog on a version change
-        with:
-          commit_message: "Update CHANGELOG and version"
-          repo: ${{ github.repository }}
-          branch: ${{ github.head_ref || github.ref_name }}
-          file_pattern: "CHANGELOG.md package.json src/version.ts"
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+#      - name: Commit with signed
+#        uses: planetscale/ghcommit-action@v0.1.6
+#        if: needs.detect.outputs.release-type != 'no-version' # Only update the ChangeLog on a version change
+#        with:
+#          commit_message: "Update CHANGELOG and version"
+#          repo: ${{ github.repository }}
+#          branch: ${{ github.head_ref || github.ref_name }}
+#          file_pattern: "CHANGELOG.md package.json src/version.ts"
+#        env:
+#          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
   comment:
     needs: [detect, plan]
